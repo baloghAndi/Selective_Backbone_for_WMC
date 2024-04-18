@@ -38,7 +38,7 @@ def get_best_assignment(csp, obj_type):
                     if obj_type == "MC":
                         nb_nodes, nb_edges, mc, comp_time = csp.check_mc_of(v, value)
                     else:
-                        nb_nodes, nb_edges,  wmc, mc, comp_time = csp.check_wmc_of(v, value)
+                        nb_nodes, nb_edges,  wmc, comp_time = csp.check_wmc_of(v, value)
                     size = nb_edges
                     node_count = nb_nodes
                     if obj_type == "WMC":
@@ -78,7 +78,7 @@ def get_best_assignment(csp, obj_type):
                     print("ERROR")
                     exit(666)
                 if obj_type!="count" :
-                    if score_of_assignment >= best_cost:
+                    if (score_of_assignment > best_cost) or ( score_of_assignment== best_cost and csp.literal_weights[value][v-1] >  csp.literal_weights[best_value][best_variable-1] ):
                         best_variable=v
                         best_value=value
                         best_cost=score_of_assignment
@@ -95,9 +95,13 @@ def get_best_assignment(csp, obj_type):
                         best_node_count = node_count
                     #print("best: ", v, value)
     if obj_type == "count" or "score" in obj_type:
-        nb_nodes, nb_edges,  best_wmc, best_mc, comp_time = csp.check_wmc_of(best_variable, best_value)
+        nb_nodes, nb_edges,  best_wmc, comp_time = csp.check_wmc_of(best_variable, best_value)
         best_size = nb_edges
         best_node_count = nb_nodes
+        _, _, best_mc, _ = csp.check_mc_of(best_variable, best_value)
+    if obj_type == "WMC":
+        _, _, best_mc, _ = csp.check_mc_of(best_variable, best_value)
+
     return best_variable,best_value, best_cost, best_size, best_node_count, best_mc, best_wmc
 
 
@@ -134,9 +138,11 @@ def dynamic_random(csp, max_p, obj_type, logger):
     pa = csp.partial_assignment
     p = len(pa.assigned)
     print(p, max_p)
+    best_weight = 0
     while p < max_p:
         not_yet_assigned = []
         backbone_assigned = False
+        backbones = []
         # select the assignment that maximizes the score
         p += 1
         #check if there's a backbone
@@ -147,14 +153,14 @@ def dynamic_random(csp, max_p, obj_type, logger):
                     if value == 0:
                         lit = -variable
                     if [lit] in csp.cls:
-                        best_variable = variable
-                        best_value = value
-                        best_cost = 100000
-                        backbone_assigned = True
-                        break
-                    not_yet_assigned.append(lit)
-            if backbone_assigned:
-                break
+                        if csp.literal_weights[value][variable-1] > best_weight:
+                            best_weight = csp.literal_weights[value][variable-1]
+                            best_variable = variable
+                            best_value = value
+                            best_cost = 100000
+                            backbone_assigned = True
+                    else:
+                        not_yet_assigned.append(lit)
         if not backbone_assigned:
             best_lit = random.choice(not_yet_assigned)
             if best_lit < 0:
@@ -163,7 +169,8 @@ def dynamic_random(csp, max_p, obj_type, logger):
                 best_value = 1
             best_variable = abs(best_lit)
             best_cost = 0
-        nb_nodes, nb_edges, best_wmc, best_mc, comp_time = csp.check_wmc_of(best_variable, best_value)
+        nb_nodes, nb_edges, best_wmc, comp_time = csp.check_wmc_of(best_variable, best_value)
+        _, _, best_mc, _ = csp.check_mc_of(best_variable, best_value)
         best_size = nb_edges
         best_node_count = nb_nodes
 
@@ -195,7 +202,7 @@ def order_var_assignments(csp, obj_type):
                     if obj_type == "MC":
                         nb_nodes, nb_edges, mc, comp_time = csp.check_mc_of(v, value)
                     else:
-                        node_count, nb_edges, wmc, mc, comp_time = csp.check_wmc_of(v, value)
+                        node_count, nb_edges, wmc, comp_time = csp.check_wmc_of(v, value)
                     score_of_assignment = wmc
                     size = nb_edges
                     if obj_type == "MC":
@@ -387,7 +394,8 @@ def static_greedy_pWSB(csp, obj_type,logger):
                 if obj_type == "MC":
                     nb_nodes, nb_edges, mc, comp_time = csp.check_mc_of(variable, value)
                 else:
-                    node_count, nb_edges,wmc, mc, comp_time = csp.check_wmc_of(variable, value)
+                    node_count, nb_edges,wmc, comp_time = csp.check_wmc_of(variable, value)
+                    _, _, mc, _ = csp.check_mc_of(variable, value)
                 size = nb_edges
                 score_of_assignment = wmc
                 if obj_type == "MC":
@@ -397,7 +405,7 @@ def static_greedy_pWSB(csp, obj_type,logger):
             elif obj_type == "count":
                 opp_count = csp.opposite_occurance(variable, value)
                 score_of_assignment = opp_count
-                node_count, nb_edges, wmc, mc, comp_time = csp.check_wmc_of(variable, value)
+                node_count, nb_edges, wmc, comp_time = csp.check_wmc_of(variable, value)
                 size = nb_edges
             elif "score" in obj_type:
                 if obj_type == "wscore_half":
@@ -412,7 +420,9 @@ def static_greedy_pWSB(csp, obj_type,logger):
                     score_of_assignment = csp.calculate_score(variable, value, "otherwg", weighted=True)
                 elif obj_type == "score_estimate":
                     score_of_assignment = csp.calculate_score(variable, value, "estimate", weighted=False)
-                node_count, size,wmc, mc, comp_time = csp.check_wmc_of(variable, value)
+                node_count, size,wmc, comp_time = csp.check_wmc_of(variable, value)
+                _, _,mc, _ = csp.check_mc_of(variable, value)
+
             elif obj_type == "static_ratio":
                 score_of_assignment, size, node_count, temp_root = csp.check_wmc_ratio_of(variable, value)
             elif obj_type == "g2":
@@ -501,6 +511,7 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3):
     elif alg_type == "dynamic_ratio":
         dynamic_greedy_pWSB(cnf, maxp, "dynamic_ratio",logger)
     elif alg_type == "rand_dynamic":
+        random.seed(seed)
         dynamic_random(cnf, maxp, obj_type, logger)
     elif alg_type == "static":
         static_greedy_pWSB(cnf, obj_type, logger)

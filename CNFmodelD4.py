@@ -103,7 +103,8 @@ class WCNF:
 
             if self.logger:
                 if self.logger.compile:
-                    nb_nodes, nb_edges, wmc, mc, comp_time = self.compile_d4(self.instance_name, self.weight_file)
+                    nb_nodes, nb_edges, wmc, comp_time = self.compile_d4_wmc(self.instance_name, self.weight_file)
+                    _, _, mc, _ = self.compile_d4_mc(self.instance_name)
                     # columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC"]
                     print( [0, "-1", "-1", self.n, len(self.cls),  mc, nb_edges, nb_nodes, comp_time, wmc])
                     if wmc == 0.0:
@@ -204,7 +205,7 @@ class WCNF:
                 comp_time = float(line.split(" ")[-1].strip())
         return nb_nodes, nb_edges, mc, comp_time
 
-    def compile_d4(self, cnf_file, weights_file):
+    def compile_d4_wmc(self, cnf_file, weights_file):
         """
         Call d4 on command line and return relevant statistics
         """
@@ -236,14 +237,15 @@ class WCNF:
                 #     wmc = scaled_wmc / math.pow(2, self.n)
             elif "Final time:" in line:
                 comp_time = float(line.split(" ")[-1].strip())
-        res = subprocess.run(["./d4", "-dDNNF", cnf_file ], stdout=subprocess.PIPE, text=True)
-        output = res.stdout
-        output = output.split("\n")
-        # print(output[-2])
-        mc = int(output[-2].split(" ")[-1].strip())
+
+        # res = subprocess.run(["./d4", "-dDNNF", cnf_file ], stdout=subprocess.PIPE, text=True)
+        # output = res.stdout
+        # output = output.split("\n")
+        # # print(output[-2])
+        # mc = int(output[-2].split(" ")[-1].strip())
 
         # print("nb_nodes, nb_edges, wmc, mc", nb_nodes, nb_edges, wmc, mc)
-        return nb_nodes, nb_edges, wmc, mc, comp_time
+        return nb_nodes, nb_edges, wmc, comp_time
 
     def check_wmc_of(self, var, value):
         #LOOK OUT : sdd removes node if its values are interchangeable, looking at global to include both solutions, conditioning doesn't work
@@ -255,9 +257,9 @@ class WCNF:
         #     cnf_f = self.instance_name.replace("_final", "")
         cnf_file_name = self.instance_name.replace(".cnf","_temp"+self.obj_type+self.heur_type+".cnf")
         self.write_cnf_extend(cnf_file_name, [[var]])
-        nb_nodes, nb_edges, wmc,  mc, comp_time = self.compile_d4(cnf_file_name, self.weight_file )
+        nb_nodes, nb_edges, wmc, comp_time = self.compile_d4_wmc(cnf_file_name, self.weight_file)
         # self.write_cnf()
-        return nb_nodes, nb_edges,  wmc, mc, comp_time
+        return nb_nodes, nb_edges,  wmc,  comp_time
 
     def check_mc_of(self, var, value):
         # LOOK OUT : sdd removes node if its values are interchangeable, looking at global to include both solutions, conditioning doesn't work
@@ -556,7 +558,7 @@ class PartialAssigment:
 
 if __name__ == "__main__":
     cnf = CNF()
-    cnf.compile_d4("./input/test.cnf", "./input/test_weights.w" )
+    cnf.compile_d4_wmc("./input/test.cnf", "./input/test_weights.w")
     exit(99)
 
 

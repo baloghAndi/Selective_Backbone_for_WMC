@@ -1195,7 +1195,7 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
             expr_data = ExprData(columns)
             expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=padding, filter_timeout=filter_timeout, filter_conflict=filter_conflict)
 
-            percentage_results_wmc, folder_smallest_n = expr_data.get_metric_wrt_initial_per_expr("WMC", obj)
+            percentage_results_wmc, folder_smallest_n = expr_data.get_metric_wrt_initial_per_expr(obj, obj)
             if folder_smallest_n < smallest_n:
                 smallest_n = folder_smallest_n
             percentage_results_size, folder_smallest_n = expr_data.get_metric_wrt_initial_per_expr("edge_count", obj)
@@ -3471,8 +3471,8 @@ if __name__ == "__main__":
     #            "logWMC","obj"]  # for weighted sdd
     # what_more_to_run(expr_folders, alg_types, columns)
     # group_ecai23_data(expr_folders, alg_types, columns)
-    check_benchmark_preproc2()
-    exit(6)
+    # check_benchmark_preproc2()
+    # exit(6)
     # best_ratio_per_alg(expr_folders, alg_types, columns)
 
     # plot_best_point_per_instance(expr_folders[0], alg_types, columns)
@@ -3501,14 +3501,19 @@ if __name__ == "__main__":
     # eval_progress(expr_folders, out_file+"efficiency", "title", alg_types, 50, columns, "WMC", padding=True, same_length=same_length)
     # exit(4)
 
-    subfolder = "planning"
-    # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
-    # exit(9)
+    # subfolder = "iscas"
+    subfolder = ""
+    count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
+    exit(9)
 
-    out_file = "./results/Dataset_preproc_avg_weighted_"+subfolder+"_" #this is actually ecai23 data
+    # obj = "MC"
+    obj = "WMC"
+    out_file = "./results/Dataset_preproc_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
+    if obj == "MC":
+        out_file = "./results/Dataset_preproc_avg_MC_"
     same_expr = False
     filter_timeout = False
-    filter_conflict = False
+    filter_conflict = True
     # out_file = "./results/Benchmark_preproc2_avg_weighted_"
     if not same_expr:
         out_file = out_file+"diff_exprs_"
@@ -3517,10 +3522,14 @@ if __name__ == "__main__":
     if filter_conflict:
         out_file = out_file+"filterC_"
     title = "Average weighted efficiency over instances"
-    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 50, columns, "WMC", padding=True, same_expr=same_expr,
+    if obj == "MC":
+        title = "Average MC efficiency over instances"
+    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
                        filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     title = "Average weighted ratio over instances"
-    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 50, columns, "WMC", padding=True, same_expr=same_expr,
+    if obj == "MC":
+        title = "Average MC efficiency over instances"
+    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
                   filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     # col = "WMC"
     # title = "Average weighted " + col

@@ -5,7 +5,7 @@ import greedy_selective_backboneD4 as d4wcnf
 def counts():
     wcnf = WCNF(scalar=0)
     wcnf.load_file("./input/test/nqueens_4.cnf")
-    nb_nodes, nb_edges, wmc, mc, comp_time = wcnf.compile_d4( "./input/test/nqueens_4.cnf",
+    nb_nodes, nb_edges, wmc, mc, comp_time = wcnf.compile_d4_wmc("./input/test/nqueens_4.cnf",
                                                               "./input/test/nqueens_4.w")
     print(nb_nodes, nb_edges, wmc, mc, comp_time)
     print(wcnf.occurance(1,0))
