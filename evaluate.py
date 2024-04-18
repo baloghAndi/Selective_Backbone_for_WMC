@@ -1263,15 +1263,14 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
             #create average and plot
             exprs_to_avg = len(wmc_to_average)
             print("-------------- Expr to avg", f, l, exprs_to_avg)
-            if exprs_to_avg > 0:
-                avg_wmc = [ sum([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ]) / exprs_to_avg for i in range(len(wmc_to_average[0]))]
-                avg_size = [ sum([ size_to_average[j][i] for j in range(len(size_to_average)) ]) / exprs_to_avg for i in range(len(size_to_average[0]))]
+            avg_wmc = [ sum([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ]) / exprs_to_avg for i in range(len(wmc_to_average[0]))]
+            avg_size = [ sum([ size_to_average[j][i] for j in range(len(size_to_average)) ]) / exprs_to_avg for i in range(len(size_to_average[0]))]
 
-                fname = f.split("_")[-1]
-                if "rand_dynamic" in f:
-                    fname = "random"
-                ax1.scatter(avg_size, avg_wmc, c=colors[index], label=fname+"-"+l, marker=marks[index])
-                ax1.plot(avg_size, avg_wmc, c=colors[index], alpha=0.7, linewidth=1)
+            fname = f.split("_")[-1]
+            if "rand_dynamic" in f:
+                fname = "random"
+            ax1.scatter(avg_size, avg_wmc, c=colors[index], label=fname+"-"+l, marker=marks[index])
+            ax1.plot(avg_size, avg_wmc, c=colors[index], alpha=0.7, linewidth=1)
             index +=1
 
     data_file.close()
@@ -1367,15 +1366,14 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
 
             #create average and plot
             exprs_to_avg = len(ratio_to_average)
-            if exprs_to_avg > 0:
-                print("-------------- Expr to avg", f, l, exprs_to_avg)
-                avg_wmc = [ sum([ ratio_to_average[j][i] for j in range(len(ratio_to_average)) ]) / exprs_to_avg for i in range(len(ratio_to_average[0]))]
+            print("-------------- Expr to avg", f, l, exprs_to_avg)
+            avg_wmc = [ sum([ ratio_to_average[j][i] for j in range(len(ratio_to_average)) ]) / exprs_to_avg for i in range(len(ratio_to_average[0]))]
 
-                fname = f.split("_")[-1]
-                if "rand_dynamic" in f:
-                    fname = "random"
-                ax1.scatter(x, avg_wmc, c=colors[index], label=fname+"-"+l, marker=marks[index])
-                ax1.plot(x, avg_wmc, c=colors[index])
+            fname = f.split("_")[-1]
+            if "rand_dynamic" in f:
+                fname = "random"
+            ax1.scatter(x, avg_wmc, c=colors[index], label=fname+"-"+l, marker=marks[index])
+            ax1.plot(x, avg_wmc, c=colors[index])
 
             index +=1
 
@@ -1463,15 +1461,14 @@ def average_column(folders, outputfile, title, labels, min_n, columns, obj, padd
 
             #create average and plot
             exprs_to_avg = len(col_to_average)
-            if exprs_to_avg > 0:
-                print("-------------- Expr to avg", f, l, exprs_to_avg, col_to_average_expr_name)
-                avg_col = [ sum([ col_to_average[j][i] for j in range(len(col_to_average)) ]) / exprs_to_avg for i in range(len(col_to_average[0]))]
+            print("-------------- Expr to avg", f, l, exprs_to_avg, col_to_average_expr_name)
+            avg_col = [ sum([ col_to_average[j][i] for j in range(len(col_to_average)) ]) / exprs_to_avg for i in range(len(col_to_average[0]))]
 
-                fname = f.split("_")[-1]
-                if "rand_dynamic" in f:
-                    fname = "random"
-                ax1.scatter(x, avg_col, c=colors[index], label=fname+"-"+l, marker=marks[index])
-                ax1.plot(x, avg_col, c=colors[index], alpha=0.7, linewidth=1)
+            fname = f.split("_")[-1]
+            if "rand_dynamic" in f:
+                fname = "random"
+            ax1.scatter(x, avg_col, c=colors[index], label=fname+"-"+l, marker=marks[index])
+            ax1.plot(x, avg_col, c=colors[index], alpha=0.7, linewidth=1)
             index +=1
 
     plt.title(title)
@@ -3460,8 +3457,8 @@ def check_benchmark_preproc2():
 if __name__ == "__main__":
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
-    alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
-    # alg_types = [  "dynamic" ]
+    # alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
+    alg_types = [  "dynamic" ]
     expr_folders =  [ "./results/Dataset_preproc_WMC/",   "./results/Dataset_preproc_wscore_half/", "./results/Dataset_preproc_wscore_estimate/",  "./results/Dataset_preproc_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
     # expr_folders = [ "./results/Benchmark_preproc2_wscore_half/" ,"./results/Benchmark_preproc2_wscore_estimate/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
@@ -3503,16 +3500,16 @@ if __name__ == "__main__":
 
     # subfolder = "iscas"
     subfolder = ""
-    count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
-    exit(9)
+    # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
+    # exit(9)
 
     # obj = "MC"
     obj = "WMC"
     out_file = "./results/Dataset_preproc_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
     if obj == "MC":
         out_file = "./results/Dataset_preproc_avg_MC_"
-    same_expr = False
-    filter_timeout = False
+    same_expr = True
+    filter_timeout = True
     filter_conflict = True
     # out_file = "./results/Benchmark_preproc2_avg_weighted_"
     if not same_expr:
