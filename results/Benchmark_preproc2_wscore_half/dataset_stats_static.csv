@@ -736,3 +736,5 @@ p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
 p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
 ./input/Benchmark_preproc2/or-100-5-10.cnf
 p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
+./input/Benchmark_preproc2/or-100-10-3.cnf
+p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
