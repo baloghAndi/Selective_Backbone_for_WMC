@@ -9,7 +9,7 @@ if __name__ == "__main__":
     filename = sys.argv[2]
     inobj = sys.argv[3]
     alg_type = sys.argv[4]
-    out_folder = "./results/" + folder + "_" + inobj + "/"
+    out_folder = "./results/" + folder + "_part2_" + inobj + "/"
 
     print(alg_type, inobj, filename)
 
