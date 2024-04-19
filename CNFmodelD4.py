@@ -23,6 +23,7 @@ class WCNF:
         self.scalar = scalar
         self.init_MC = -1
         self.init_WMC = -1
+        self.trivial_backbone = []
 
     def load_file(self, filename, obj_type=None, heur_type=None):
         self.obj_type = obj_type
@@ -73,6 +74,8 @@ class WCNF:
                     lits = [int(i) for i in str_clause.strip().split(" ")[:-1] if i != '']
                     if len(lits) == 0:
                         continue
+                    if len(lits) == 1:
+                        self.trivial_backbone.append(lits[0])
                     self.cls.append(lits)
 
             self.literals = [i for i in range(1, nb_vars + 1)]
@@ -326,6 +329,7 @@ class WCNF:
             # do not change number of variables
             csp_clauses = []
             csp_clauses.append([var]) #use this for type 2 extend
+            self.trivial_backbone = [] #eliminate all trivial backbones as we go through the whole cnf again here
             for c in self.cls:
                 if var not in c:
                     updated_c = []
@@ -334,6 +338,10 @@ class WCNF:
                             updated_c.append(i)
                     # print(c, updated_c, variable, value)
                     csp_clauses.append(updated_c)
+                    if len(updated_c) == 1 and abs(updated_c[0]) not in self.partial_assignment.assigned:
+                        #check that variable has not been assigned alredy
+                        self.trivial_backbone.append(updated_c[0])
+                # if var in c we should just eliminate it so not adding to new clauses
 
             cnf_file_name = self.instance_name.replace(".cnf", "_temp"+self.obj_type+self.heur_type+".cnf")
             self.print_clauses( cnf_file_name, csp_clauses, self.n)
@@ -504,7 +512,7 @@ class WCNF:
                 return 100000
         score = 0
         if score_type == "half":
-            score = 0.5
+            score = 1
         elif score_type == "occratio":
             score = (1 + self.occurance(var, value)) / (2 + self.occurance(var, 0) + self.occurance(var, 1))
             # print("occratio", weight * score)

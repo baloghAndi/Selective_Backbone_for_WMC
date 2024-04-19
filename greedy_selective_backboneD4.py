@@ -28,91 +28,97 @@ def get_best_assignment(csp, obj_type):
     mc = -1
     size = -1
     node_count = -1
-    # temp_root.ref() # use this if minimizinf vtree
-    # csp.sdd_manager.auto_gc_and_minimize_on()
-    backbone_found = False
-    for v in csp.variables.keys():
-        if backbone_found:
-            break
-        if v not in csp.partial_assignment.assigned:
-            for value in csp.variables[v]:
-                lit = v
-                if value == 0:
-                    lit = -v
-                if [lit] in csp.cls: #found backbone
-                    backbone_found = True
-                if obj_type == "WMC" or obj_type == "MC" or obj_type == "SUB":
-                    if obj_type == "MC":
-                        nb_nodes, nb_edges, mc, comp_time = csp.check_mc_of(v, value)
+    best_weight = 0
+    best_tb = 0
+    backbone_assigned = False
+    if len(csp.trivial_backbone) > 0:
+        for tb in csp.trivial_backbone:
+            if abs(tb) in csp.partial_assignment.assigned:
+                print("Trivial backbone already assigned")
+                exit(6)
+            if tb < 0:
+                value = 0
+            else:
+                value = 1
+            variable = abs(tb)
+            weight = csp.literal_weights[value][variable - 1]
+            if  weight > best_weight:
+                best_weight = weight
+                best_variable = variable
+                best_value = value
+                best_cost = weight * 100000
+                best_tb = tb
+        backbone_assigned = True
+        csp.trivial_backbone.remove(best_tb)
+        print("backbone assigned")
+    else:
+        print("search best assigment...")
+        # temp_root.ref() # use this if minimizinf vtree
+        # csp.sdd_manager.auto_gc_and_minimize_on()
+        for v in csp.variables.keys():
+            if v not in csp.partial_assignment.assigned:
+                for value in csp.variables[v]:
+                    if obj_type == "WMC" or obj_type == "MC" or obj_type == "SUB":
+                        if obj_type == "MC":
+                            nb_nodes, nb_edges, mc, comp_time = csp.check_mc_of(v, value)
+                        else:
+                            nb_nodes, nb_edges,  wmc, comp_time = csp.check_wmc_of(v, value)
+                        size = nb_edges
+                        node_count = nb_nodes
+                        if obj_type == "WMC":
+                            score_of_assignment = wmc
+                            if wmc == csp.init_WMC and mc == csp.init_MC: # in case assignment is equal to inital compilation wmc and mc assign it, it cannot be larger then these values
+                                return v, value, score_of_assignment, size, node_count, mc, wmc
+                        elif obj_type == "MC":
+                            score_of_assignment = mc
+                        elif obj_type == "SUB":
+                            score_of_assignment = wmc - mc
+                    elif "score" in obj_type:
+                        if obj_type == "wscore_half":
+                            score_of_assignment = csp.calculate_score(v, value, "half", weighted=True)
+                        elif obj_type == "wscore_occratio":
+                            score_of_assignment = csp.calculate_score(v, value, "occratio", weighted=True)
+                        elif obj_type == "wscore_adjoccratio":
+                            score_of_assignment = csp.calculate_score(v, value, "adjoccratio", weighted=True)
+                        elif obj_type == "wscore_estimate":
+                            score_of_assignment = csp.calculate_score(v, value, "estimate", weighted=True)
+                        elif obj_type == "wscore_otherwg":
+                            score_of_assignment = csp.calculate_score(v, value, "otherwg", weighted=True)
+                        elif obj_type == "score_estimate":
+                            score_of_assignment = csp.calculate_score(v, value, "estimate", weighted=False)
+                        # node_count, size, wmc, mc, comp_time = csp.check_wmc_of(v, value)
+
+                    # elif obj_type == "count":
+                    #     opp_score = csp.opposite_occurance(v, value)
+                    #     score_of_assignment = opp_score  #because we want the minimal
+                    #     #print("score_of_assignment, ",v, value, score_of_assignment)
+                    #     size = -1
+                    #     node_count = -1
+                    # elif obj_type == "g2":
+                    #     score_of_assignment, size, node_count, temp_root  = csp.calculate_g2(v, value)
+                    # elif "ratio" in obj_type :
+                    #     score_of_assignment, size, node_count, temp_root = csp.check_wmc_ratio_of(v, value)
                     else:
-                        nb_nodes, nb_edges,  wmc, comp_time = csp.check_wmc_of(v, value)
-                    size = nb_edges
-                    node_count = nb_nodes
-                    if obj_type == "WMC":
-                        score_of_assignment = wmc
-                        if wmc == csp.init_WMC and mc == csp.init_MC: # in case assignment is equal to inital compilation wmc and mc assign it, it cannot be larger then these values
-                            return v, value, score_of_assignment, size, node_count, mc, wmc
-                    elif obj_type == "MC":
-                        score_of_assignment = mc
-                    elif obj_type == "SUB":
-                        score_of_assignment = wmc - mc
-                elif "score" in obj_type:
-                    if obj_type == "wscore_half":
-                        score_of_assignment = csp.calculate_score(v, value, "half", weighted=True)
-                    elif obj_type == "wscore_occratio":
-                        score_of_assignment = csp.calculate_score(v, value, "occratio", weighted=True)
-                    elif obj_type == "wscore_adjoccratio":
-                        score_of_assignment = csp.calculate_score(v, value, "adjoccratio", weighted=True)
-                    elif obj_type == "wscore_estimate":
-                        score_of_assignment = csp.calculate_score(v, value, "estimate", weighted=True)
-                    elif obj_type == "wscore_otherwg":
-                        score_of_assignment = csp.calculate_score(v, value, "otherwg", weighted=True)
-                    elif obj_type == "score_estimate":
-                        score_of_assignment = csp.calculate_score(v, value, "estimate", weighted=False)
-                    # node_count, size, wmc, mc, comp_time = csp.check_wmc_of(v, value)
-
-                # elif obj_type == "count":
-                #     opp_score = csp.opposite_occurance(v, value)
-                #     score_of_assignment = opp_score  #because we want the minimal
-                #     #print("score_of_assignment, ",v, value, score_of_assignment)
-                #     size = -1
-                #     node_count = -1
-                # elif obj_type == "g2":
-                #     score_of_assignment, size, node_count, temp_root  = csp.calculate_g2(v, value)
-                # elif "ratio" in obj_type :
-                #     score_of_assignment, size, node_count, temp_root = csp.check_wmc_ratio_of(v, value)
-                else:
-                    print("ERROR")
-                    exit(666)
-                if obj_type!="count" :
-                    if (score_of_assignment > best_cost) or ( score_of_assignment== best_cost and csp.literal_weights[value][v-1] >  csp.literal_weights[best_value][best_variable-1] ):
-                        best_variable=v
-                        best_value=value
-                        best_cost=score_of_assignment
-                        best_size = size
-                        best_node_count = node_count
-                        best_wmc = wmc
-                        best_mc = mc
-                else:
-                    if score_of_assignment <= best_cost:
-                        best_variable = v
-                        best_value = value
-                        best_cost = score_of_assignment
-                        best_size = size
-                        best_node_count = node_count
-                    #print("best: ", v, value)
-
-                if backbone_found:
-                    best_variable = v
-                    best_value = value
-                    best_cost = score_of_assignment
-                    best_size = size
-                    best_node_count = node_count
-                    best_wmc = wmc
-                    best_mc = mc
-                    break
-
-    if obj_type == "count" or "score" in obj_type:
+                        print("ERROR")
+                        exit(666)
+                    if obj_type!="count" :
+                        if (score_of_assignment > best_cost) or ( score_of_assignment == best_cost and csp.literal_weights[value][v-1] >  csp.literal_weights[best_value][best_variable-1] ):
+                            best_variable=v
+                            best_value=value
+                            best_cost=score_of_assignment
+                            best_size = size
+                            best_node_count = node_count
+                            best_wmc = wmc
+                            best_mc = mc
+                    else:
+                        if score_of_assignment <= best_cost:
+                            best_variable = v
+                            best_value = value
+                            best_cost = score_of_assignment
+                            best_size = size
+                            best_node_count = node_count
+                        #print("best: ", v, value)
+    if (obj_type == "count" or "score" in obj_type) or backbone_assigned:
         nb_nodes, nb_edges,  best_wmc, comp_time = csp.check_wmc_of(best_variable, best_value)
         best_size = nb_edges
         best_node_count = nb_nodes
@@ -151,38 +157,52 @@ def dynamic_greedy_pWSB(csp, max_p, obj_type,logger):
     # for i in result:
     #     print(','.join(map(str, i)))
 
+
 def dynamic_random(csp, max_p, obj_type, logger):
     print("DYNAMIC RANDOM")
     pa = csp.partial_assignment
     p = len(pa.assigned)
     print(p, max_p)
-    best_weight = 0
     while p < max_p:
+        best_weight = 0
         not_yet_assigned = []
-        backbone_assigned = False
         backbones = []
         # select the assignment that maximizes the score
         p += 1
         #check if there's a backbone
-        for variable in csp.variables.keys():
-            if backbone_assigned:
-                break
-            if variable not in csp.partial_assignment.assigned:
-                for value in csp.variables[variable]:
-                    lit = variable
-                    if value == 0:
-                        lit = -variable
-                    if [lit] in csp.cls:
-                        if csp.literal_weights[value][variable-1] > best_weight:
-                            best_weight = csp.literal_weights[value][variable-1]
-                            best_variable = variable
-                            best_value = value
-                            best_cost = 100000
-                            backbone_assigned = True
-                            break
-                    else:
-                        not_yet_assigned.append(lit)
-        if not backbone_assigned:
+        if len(csp.trivial_backbone) > 0:
+            for tb in csp.trivial_backbone:
+                if abs(tb) in csp.partial_assignment.assigned:
+                    print("Trivial backbone already assigned")
+                    exit(6)
+                if tb < 0:
+                    value = 0
+                else:
+                    value = 1
+                variable = abs(tb)
+                weight = csp.literal_weights[value][variable - 1]
+                if weight > best_weight:
+                    best_weight = weight
+                    best_variable = variable
+                    best_value = value
+                    best_cost = weight * 100000
+                    best_tb = tb
+
+            csp.trivial_backbone.remove(best_tb)
+            print("backbone assigned")
+        else:
+            print("search assignment...")
+            for variable in csp.variables.keys():
+                if variable not in csp.partial_assignment.assigned:
+                    for value in csp.variables[variable]:
+                        lit = variable
+                        if value == 0:
+                            lit = -variable
+                        if [lit] in csp.cls:
+                            print("should not be backbone")
+                            exit(6)
+                        else:
+                            not_yet_assigned.append(lit)
             best_lit = random.choice(not_yet_assigned)
             if best_lit < 0:
                 best_value = 0
@@ -190,6 +210,7 @@ def dynamic_random(csp, max_p, obj_type, logger):
                 best_value = 1
             best_variable = abs(best_lit)
             best_cost = 0
+
         nb_nodes, nb_edges, best_wmc, comp_time = csp.check_wmc_of(best_variable, best_value)
         _, _, best_mc, _ = csp.check_mc_of(best_variable, best_value)
         best_size = nb_edges
@@ -650,7 +671,7 @@ if __name__ == "__main__":
     out_folder = "./results/" + folder + "_local_" + inobj + "/"
 
 
-    print(alg_type, inobj, filename)
+    print(alg_type, inobj, filename, d, out_folder)
     # run(alg_type, d, filename,  seed)
 
     # out_folder = "./results/" + folder + "_" + inobj + "/"

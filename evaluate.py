@@ -3459,7 +3459,8 @@ if __name__ == "__main__":
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
     alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
     # alg_types = [  "dynamic" ]
-    expr_folders =  [ "./results/Dataset_preproc_WMC/",   "./results/Dataset_preproc_wscore_half/", "./results/Dataset_preproc_wscore_estimate/",  "./results/Dataset_preproc_rand_dynamic/"]
+    FOLDER = "Dataset_preproc_part2"
+    expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
     # expr_folders = [ "./results/Benchmark_preproc2_wscore_half/" ,"./results/Benchmark_preproc2_wscore_estimate/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
     # expr_folders = ["./results/Benchmark_preproc_WMC/"  , "./results/Benchmark_preproc_wscore_estimate/", "./results/Benchmark_preproc_wscore_half/" ,"./results/Benchmark_preproc_wscore_occratio/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
@@ -3468,9 +3469,9 @@ if __name__ == "__main__":
     #            "logWMC","obj"]  # for weighted sdd
 
     # what_more_to_run(expr_folders, alg_types, columns)
-    group_ecai23_data(expr_folders, alg_types, columns)
+    # group_ecai23_data(expr_folders, alg_types, columns)
     # check_benchmark_preproc2()
-    exit(6)
+    # exit(6)
     # best_ratio_per_alg(expr_folders, alg_types, columns)
 
     # plot_best_point_per_instance(expr_folders[0], alg_types, columns)
@@ -3506,12 +3507,12 @@ if __name__ == "__main__":
 
     # obj = "MC"
     obj = "WMC"
-    out_file = "./results/Dataset_preproc_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
+    out_file = "./results/"+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
     if obj == "MC":
         out_file = "./results/Dataset_preproc_avg_MC_"
     same_expr = True
     filter_timeout = True
-    filter_conflict = True
+    filter_conflict = False
     # out_file = "./results/Benchmark_preproc2_avg_weighted_"
     if not same_expr:
         out_file = out_file+"diff_exprs_"
