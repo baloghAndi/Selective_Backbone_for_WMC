@@ -28,12 +28,19 @@ def get_best_assignment(csp, obj_type):
     mc = -1
     size = -1
     node_count = -1
-
     # temp_root.ref() # use this if minimizinf vtree
     # csp.sdd_manager.auto_gc_and_minimize_on()
+    backbone_found = False
     for v in csp.variables.keys():
+        if backbone_found:
+            break
         if v not in csp.partial_assignment.assigned:
             for value in csp.variables[v]:
+                lit = v
+                if value == 0:
+                    lit = -v
+                if [lit] in csp.cls: #found backbone
+                    backbone_found = True
                 if obj_type == "WMC" or obj_type == "MC" or obj_type == "SUB":
                     if obj_type == "MC":
                         nb_nodes, nb_edges, mc, comp_time = csp.check_mc_of(v, value)
@@ -94,6 +101,17 @@ def get_best_assignment(csp, obj_type):
                         best_size = size
                         best_node_count = node_count
                     #print("best: ", v, value)
+
+                if backbone_found:
+                    best_variable = v
+                    best_value = value
+                    best_cost = score_of_assignment
+                    best_size = size
+                    best_node_count = node_count
+                    best_wmc = wmc
+                    best_mc = mc
+                    break
+
     if obj_type == "count" or "score" in obj_type:
         nb_nodes, nb_edges,  best_wmc, comp_time = csp.check_wmc_of(best_variable, best_value)
         best_size = nb_edges
@@ -147,6 +165,8 @@ def dynamic_random(csp, max_p, obj_type, logger):
         p += 1
         #check if there's a backbone
         for variable in csp.variables.keys():
+            if backbone_assigned:
+                break
             if variable not in csp.partial_assignment.assigned:
                 for value in csp.variables[variable]:
                     lit = variable
@@ -159,6 +179,7 @@ def dynamic_random(csp, max_p, obj_type, logger):
                             best_value = value
                             best_cost = 100000
                             backbone_assigned = True
+                            break
                     else:
                         not_yet_assigned.append(lit)
         if not backbone_assigned:
@@ -626,7 +647,7 @@ if __name__ == "__main__":
         exit(2)
 
     # run(alg_type, d, filename,  seed)
-    out_folder = "./results/" + folder + "_" + inobj + "/"
+    out_folder = "./results/" + folder + "_local_" + inobj + "/"
 
 
     print(alg_type, inobj, filename)

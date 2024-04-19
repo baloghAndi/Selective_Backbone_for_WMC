@@ -3468,9 +3468,9 @@ if __name__ == "__main__":
     #            "logWMC","obj"]  # for weighted sdd
 
     # what_more_to_run(expr_folders, alg_types, columns)
-    # group_ecai23_data(expr_folders, alg_types, columns)
+    group_ecai23_data(expr_folders, alg_types, columns)
     # check_benchmark_preproc2()
-    # exit(6)
+    exit(6)
     # best_ratio_per_alg(expr_folders, alg_types, columns)
 
     # plot_best_point_per_instance(expr_folders[0], alg_types, columns)
