@@ -8,7 +8,7 @@ seed=1234
       	    if [[  $i = *"temp"* ]] ; then
       	      continue
       	    fi
-            timeout 1800 python3 greedy_selective_backboneD4.py $d $i $alg_type $2
+            timeout 3600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2
      done
   done
 done

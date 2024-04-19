@@ -26,6 +26,6 @@ d='./input/Dataset_preproc/'
 for alg_type in $1 ; do
   for i in "${files[@]}" ; do
     echo $i
-    timeout 1800 python3 main_d4.py $d $d$i $alg_type $2
+    timeout 3600 python3 main_d4.py $d $d$i $alg_type $2
   done
 done
