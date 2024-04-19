@@ -3453,45 +3453,6 @@ def check_benchmark_preproc2():
             print(f,l,completed_exprs[f][l], " last expr: ", last_expr[f][l], last_expr_var_count[f][l] )
 
 
-def iscas_to_run():
-    files = [f for f in os.listdir("./input/Dataset_preproc/") if re.match('.*iscas.*.cnf', f) and "temp" not in f]
-    files.sort()
-    print(files)
-    print(len(files))
-    ecai23 = ['04_iscas89_s400_bench.cnf', '04_iscas89_s420_1_bench.cnf',
-              '04_iscas89_s444_bench.cnf',
-              '04_iscas89_s526_bench.cnf', '04_iscas89_s526n_bench.cnf', '05_iscas93_s344_bench.cnf',
-              '05_iscas93_s499_bench.cnf', '06_iscas99_b01.cnf', '06_iscas99_b02.cnf', '06_iscas99_b03.cnf',
-              '06_iscas99_b06.cnf',
-              '06_iscas99_b08.cnf', '06_iscas99_b09.cnf', '06_iscas99_b10.cnf']
-    to_run = []
-    for e in files:
-        if e not in ecai23:
-            to_run.append(e)
-        else:
-            print(e)
-    print(len(to_run), to_run)
-    nb_vars_per_expr = {e:0 for e in to_run}
-    for e in to_run:
-        filename = "./input/Dataset_preproc/"+e
-        with open(filename, "r") as f:
-            content = f.readlines()
-            # remove init comments
-            # nb_vars = 0
-            init_nb_lines = 1
-            for c in content:
-                if c.startswith("c"):
-                    init_nb_lines += 1
-                    continue
-                else:
-                    print(c)
-                    nb_vars = int(c.strip().split(" ")[2])
-                    break
-            print("NB VARS", nb_vars)
-            nb_vars_per_expr[e] = nb_vars
-    for e in nb_vars_per_expr:
-        pr
-
 
 if __name__ == "__main__":
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
@@ -3506,12 +3467,10 @@ if __name__ == "__main__":
     # columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "SDD size", 'node_count', 'time', 'WMC',
     #            "logWMC","obj"]  # for weighted sdd
 
-    iscas_to_run()
-
     # what_more_to_run(expr_folders, alg_types, columns)
     # group_ecai23_data(expr_folders, alg_types, columns)
     # check_benchmark_preproc2()
-    exit(6)
+    # exit(6)
     # best_ratio_per_alg(expr_folders, alg_types, columns)
 
     # plot_best_point_per_instance(expr_folders[0], alg_types, columns)
