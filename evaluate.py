@@ -2709,18 +2709,21 @@ def plot_percentage_of_assigned_backbones(folder, labels, columns,filter_timeout
     # file = folder + "percentage_of_completion_"+type+".png"
     file = folder + "percentage_of_backbone_all.png"
     plt.savefig(file)
-def best_ratio_per_alg(folders, labels, columns):
-    algs_stats = {f : {l: [] for l in labels} for f in folders }
-    algs_ratios = {f : {l: [] for l in labels} for f in folders }
-    best_alg_count = { f.split("_")[-1] + "_" + l: 0 for f in folders for l in labels}
+def best_ratio_per_alg(folders, labels, columns, subfolder=""):
+    algs_stats = {f : {l: [] for l in labels if not ('rand_dynamic' in f and l == 'static')} for f in folders }
+    algs_ratios = {f : {l: [] for l in labels if not ('rand_dynamic' in f and l == 'static')} for f in folders }
+    best_alg_count = { f.split("_")[-1] + "_" + l: 0 for f in folders for l in labels if not ('rand_dynamic' in f and l == 'static') }
     all_exprs = []
     all_exprs_count = {}
     nb_c = 0
 
-
     for folder in folders:
         for type in labels:
+            if 'rand_dynamic' in folder and type == 'static':
+                continue
             stats_file = folder + "dataset_stats_" + type + ".csv"
+            if subfolder != "":
+                stats_file = folder + "dataset_stats_"+subfolder+ "_" + type + ".csv"
             expr_data_per_file = ExprData(columns)
             expr_data_per_file.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False)
             stats, ratios = expr_data_per_file.best_ratio_per_instance()
@@ -2736,6 +2739,7 @@ def best_ratio_per_alg(folders, labels, columns):
 
     print(len(all_exprs))
     best_ratio_per_instance = {}
+    best_ratio_per_instance_location = {}
     for e in all_exprs:
         if all_exprs_count[e] != nb_c:
             continue
@@ -2744,8 +2748,11 @@ def best_ratio_per_alg(folders, labels, columns):
         best_stats = {}
         best_folder = ""
         best_label = ""
+        best_location = 0
         for f in folders:
             for l in labels:
+                if 'rand_dynamic' in f and l == 'static':
+                    continue
                 if e in algs_stats[f][l]:
                     ratio = algs_stats[f][l][e]["ratio"]
                     if ratio >= best_ratio:
@@ -2753,21 +2760,28 @@ def best_ratio_per_alg(folders, labels, columns):
                         best_stats = algs_stats[f][l][e].copy()
                         best_folder = f
                         best_label = l
-        best_ratio_per_instance[e] = {'ratio': best_ratio, 'stats':best_stats, "f":best_folder, "l":best_label}
+                        best_location = algs_stats[f][l][e]['index']
+        best_ratio_per_instance[e] = {'ratio': best_ratio, 'stats':best_stats, "f":[ best_folder] , "l":[ best_label], "location": [best_location] }
         best_alg_count[best_folder.split("_")[-1] + "_" + best_label] += 1
         #count if multiple best exist
         for f in folders:
             for l in labels:
+                if 'rand_dynamic' in f and l == 'static':
+                    continue
                 if e in algs_stats[f][l]:
                     ratio = algs_stats[f][l][e]["ratio"]
-                    if ratio == best_ratio_per_instance[e]['ratio'] and (f != best_ratio_per_instance[e]['f']  or l != best_ratio_per_instance[e]['l'] ):
-                        print("duplicate", e)
+                    if ratio == best_ratio_per_instance[e]['ratio'] and (f != best_ratio_per_instance[e]['f'][0]  or l != best_ratio_per_instance[e]['l'][0] ):
+                        print("duplicate", e, f, l)
                         best_alg_count[f.split("_")[-1] + "_" + l] += 1
+                        best_ratio_per_instance[e]['l'].append(l)
+                        best_ratio_per_instance[e]['f'].append(f)
+                        best_ratio_per_instance[e]['location'].append(algs_stats[f][l][e]["index"])
 
     for alg in best_alg_count:
         print(alg, best_alg_count[alg])
-    # for e in all_exprs:
-    #     print(e, best_ratio_per_instance[e]['f'], best_ratio_per_instance[e]['l'] ,  best_ratio_per_instance[e]['ratio'] ) #best_ratio_per_instance[e]['ratio'] , best_ratio_per_instance[e]['stats']['init_WMC'] /  best_ratio_per_instance[e]['stats']['init_size']  )
+
+    for e in all_exprs:
+        print(e, "FOLDER: ",  best_ratio_per_instance[e]['f'], "LABEL: ", best_ratio_per_instance[e]['l'] ,  best_ratio_per_instance[e]['ratio'] ,  best_ratio_per_instance[e]['location'] ) #best_ratio_per_instance[e]['ratio'] , best_ratio_per_instance[e]['stats']['init_WMC'] /  best_ratio_per_instance[e]['stats']['init_size']  )
     # stat_count = 0
     # for e in best_ratio_per_instance.keys():
     #     best_f = best_ratio_per_instance[e]['f']
@@ -3459,8 +3473,9 @@ if __name__ == "__main__":
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
     alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
     # alg_types = [  "dynamic" ]
-    FOLDER = "Dataset_preproc_part2"
+    FOLDER = "Dataset_preproc_final"
     expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
     # expr_folders = [ "./results/Benchmark_preproc2_wscore_half/" ,"./results/Benchmark_preproc2_wscore_estimate/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
     # expr_folders = ["./results/Benchmark_preproc_WMC/"  , "./results/Benchmark_preproc_wscore_estimate/", "./results/Benchmark_preproc_wscore_half/" ,"./results/Benchmark_preproc_wscore_occratio/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
@@ -3500,13 +3515,16 @@ if __name__ == "__main__":
     # eval_progress(expr_folders, out_file+"efficiency", "title", alg_types, 50, columns, "WMC", padding=True, same_length=same_length)
     # exit(4)
 
-    # subfolder = "iscas"
-    subfolder = ""
+    subfolder = "iscas"
+    # subfolder = ""
     # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
     # exit(9)
 
-    # obj = "MC"
-    obj = "WMC"
+    # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
+    # exit(5)
+
+    obj = "MC"
+    # obj = "WMC"
     out_file = "./results/"+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
     if obj == "MC":
         out_file = "./results/Dataset_preproc_avg_MC_"
