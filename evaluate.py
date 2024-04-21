@@ -3515,10 +3515,10 @@ if __name__ == "__main__":
     # eval_progress(expr_folders, out_file+"efficiency", "title", alg_types, 50, columns, "WMC", padding=True, same_length=same_length)
     # exit(4)
 
-    subfolder = "iscas"
+    subfolder = "planning"
     # subfolder = ""
-    # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
-    # exit(9)
+    count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
+    exit(9)
 
     # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
     # exit(5)
