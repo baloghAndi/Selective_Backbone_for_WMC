@@ -91,6 +91,9 @@ class ExprData:
                         save_expr_name = save_expr_name.replace(".", "_", save_expr_name.count(".")-1) #actually first . will always be ./input so should skipp that
                     # print("expr:",line)
                     if len(self.data) > 0: #next expr is starting, need to save current expr data
+                        if self.exprs[-1] in self.all_expr_data:
+                            print("duplicate expr: ",  self.exprs[-1])
+                            exit(8)
                         self.all_expr_data[self.exprs[-1]] = self.data.copy()
                         self.finish_time[self.exprs[-1]] = float(prev_line[-1]) - self.init_compilation_time[self.exprs[-1]]
                         self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
@@ -1186,7 +1189,9 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
         title = title + subfolder
     for folder in folders:
         for type in labels:
-            if 'rand_dynamic' in folder and type == 'static' :
+            # if 'rand_dynamic' in folder and type == 'static' :
+            if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
+
                 continue
             nb_exps +=1
             stats_file = folder + "dataset_stats_" + type + ".csv"
@@ -1243,7 +1248,8 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
 
     for f in folders:
         for l in labels:
-            if 'rand_dynamic' in f and l == 'static' :
+            if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
+            # if 'rand_dynamic' in f and l == 'static' :
                 continue
             wmc_to_average = []
             size_to_average = []
@@ -1293,7 +1299,8 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
     plt.close()
 
 
-def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, padding=False, same_expr=False,filter_timeout=False, filter_conflict=False, subfolder=""):
+def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, padding=False, same_expr=False,filter_timeout=False,
+                  filter_conflict=False, subfolder=""):
     "new func to plot avg"
     ratio_data_to_average = {f: {} for f in folders}
     all_expr_names = []
@@ -1305,7 +1312,8 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
         title = title + subfolder
     for folder in folders:
         for type in labels:
-            if 'rand_dynamic' in folder and type == 'static' :
+            if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
+            # if 'rand_dynamic' in folder and type == 'static' :
                 continue
             nb_exprs+=1
             stats_file = folder + "dataset_stats_" + type + ".csv"
@@ -1352,7 +1360,8 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
 
     for f in folders:
         for l in labels:
-            if 'rand_dynamic' in f and l == 'static' :
+            if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
+            # if 'rand_dynamic' in f and l == 'static' :
                 continue
             writer.writerow([f,l])
             ratio_to_average = []
@@ -1390,7 +1399,8 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
     plt.clf()
     plt.close()
 
-def average_column(folders, outputfile, title, labels, min_n, columns, obj, padding=False, plot_tye="WMC", same_expr=False,filter_timeout=False, filter_conflict=False):
+def average_column(folders, outputfile, title, labels, min_n, columns, obj, padding=False, plot_tye="WMC", same_expr=False,
+                   filter_timeout=False, filter_conflict=False, subfolder=""):
     "new func to plot avg"
     #if same_length : remove instances that have no results for all exprs
     col_data_to_average = {f: {l : [] for l in labels } for f in folders}
@@ -1398,12 +1408,17 @@ def average_column(folders, outputfile, title, labels, min_n, columns, obj, padd
     all_expr_names_count = {}
     nb_exps = 0
     smallest_n = 600
+    if subfolder != "":
+        outputfile = outputfile + subfolder
+        title = title + subfolder
     for folder in folders:
         for type in labels:
-            if 'rand_dynamic' in folder and type == 'static' :
+            if 'rand_dynamic' in folder and type == 'static':
                 continue
-            nb_exps +=1
+            nb_exps += 1
             stats_file = folder + "dataset_stats_" + type + ".csv"
+            if subfolder != "":
+                stats_file = folder + "dataset_stats_" + subfolder + "_" + type + ".csv"
             expr_data = ExprData(columns)
             expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=padding, filter_timeout=filter_timeout, filter_conflict=filter_conflict)
 
@@ -2521,7 +2536,7 @@ def plot_percentage_of_assigned_vars(folder, labels, columns,  filter_timeout=Fa
     ys = {l:[] for l in labels }
     colors = ["blue", "cyan", mcolors.CSS4_COLORS["gold"] ]
 
-    exit(9)
+    # exit(9)
     percentage_of_completion = {l:[] for l in labels}
     cumulative_percentage_of_completion = { l: [] for l in labels}
     for i, type in enumerate(labels):
@@ -2590,7 +2605,7 @@ def plot_percentage_of_assigned_vars(folder, labels, columns,  filter_timeout=Fa
     plt.ylabel("number of instances")
     plt.xlabel("Percentage of variable assignments")
     plt.xticks([i*10 for i in range(0,11)] )
-    plt.ylim(0,800)
+    plt.ylim(0,170)
         # plt.yscale("log")
         # plt.xticks(percentage_keylist)
         # plt.yticks(sorted_values)
@@ -2607,6 +2622,109 @@ def plot_percentage_of_assigned_vars(folder, labels, columns,  filter_timeout=Fa
     if filter_conflict:
         file = folder + "percentage_of_completion_all_conflict_filter.png"
     plt.savefig(file)
+
+
+def plot_time(folders, outputfile, title, labels, min_n, columns, obj, padding=False, same_expr=False,filter_timeout=False,
+                  filter_conflict=False, subfolder=""):
+    time_data = {f: {} for f in folders}
+    all_expr_names = []
+    all_expr_names_count = {}
+    nb_exprs = 0
+    smallest_n = 600
+    if subfolder != "":
+        outputfile = outputfile + subfolder
+        title = title + subfolder
+    for folder in folders:
+        for type in labels:
+            # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder) and type == 'static':
+            if 'rand_dynamic' in folder and type == 'static' :
+                continue
+            nb_exprs += 1
+            stats_file = folder + "dataset_stats_" + type + ".csv"
+            if subfolder != "":
+                stats_file = folder + "dataset_stats_" + subfolder + "_" + type + ".csv"
+            expr_data = ExprData(columns)
+            expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=padding,
+                                      filter_timeout=filter_timeout, filter_conflict=filter_conflict)
+            print("========", folder, type, len(expr_data.all_expr_data))
+            percentage_results_ratio, folder_smallest_n = expr_data.get_metric_wrt_initial_per_expr("weighted_ratio",
+                                                                                                    obj)
+            if folder_smallest_n < smallest_n:
+                smallest_n = folder_smallest_n
+            for expr in percentage_results_ratio.keys():
+                if expr not in all_expr_names:
+                    all_expr_names.append(expr)
+                    all_expr_names_count[expr] = 1
+                else:
+                    all_expr_names_count[expr] += 1
+
+            time_data[folder][type] = percentage_results_ratio
+
+    if min_n > smallest_n:
+        smallest_n = min_n
+    print("-----------------------SMALLEST N", smallest_n)
+
+    data_file_name = outputfile + "_pad" + str(padding) + ".csv"
+    data_file = open(data_file_name, "w")
+    # writer = csv.writer(data_file, delimiter=',')
+
+    fig = plt.figure(figsize=(10, 7))
+    ax1 = fig.add_subplot(111)
+    x = [(100 * i) / smallest_n for i in range(smallest_n + 1)]
+    colors = ["blue", "cyan", mcolors.CSS4_COLORS["gold"], "orange", "green", "olive", mcolors.CSS4_COLORS["plum"],
+              mcolors.CSS4_COLORS["darkorchid"], 'red', mcolors.CSS4_COLORS["darkred"], "grey"]
+    marks = ["s", "o", "p", "*", "x", "v", "^", "+", "1", "2", "3"]
+    # labels = [s.replace("_1234", "") for s in labels]
+    # labels[2] = "random_selection_ratio"
+    plt.xlabel("Percentage of selective backbone size")
+    if obj == "WCM":
+        plt.ylabel("Time")
+    else:
+        plt.ylabel("Average of MC/size ratio percentage wrt initial ratio")
+
+    index = 0
+
+    for f in folders:
+        for l in labels:
+            # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f) and l == 'static':
+            if 'rand_dynamic' in f and l == 'static' :
+                continue
+            # writer.writerow([f, l])
+            sampled_time = []
+            for e in all_expr_names:
+                if e in time_data[f][l]:
+                    if same_expr and all_expr_names_count[e] != nb_exprs:
+                        continue
+                    sampled_ratio_data, finished_expr = sample_data(time_data[f][l][e], smallest_n + 1)
+                    sampled_time.append(sampled_ratio_data.copy())
+                    # writer.writerow([e, l] + [100 * k for k in sampled_ratio_data])
+
+            # create average and plot
+            exprs_to_avg = len(sampled_time)
+            print("-------------- Expr to avg", f, l, exprs_to_avg)
+            avg_time = [sum([sampled_time[j][i] for j in range(len(sampled_time))]) / exprs_to_avg for i in
+                       range(len(sampled_time[0]))]
+
+            fname = f.split("_")[-1]
+            if "rand_dynamic" in f:
+                fname = "random"
+            ax1.scatter(x, avg_time, c=colors[index], label=fname + "-" + l, marker=marks[index])
+            ax1.plot(x, avg_time, c=colors[index])
+
+            index += 1
+
+    data_file.close()
+    plt.title(title)
+    handles, labels = ax1.get_legend_handles_labels()
+    ax1.legend(handles, labels)
+    fig.tight_layout()
+    plt.grid()
+
+    outputfile = outputfile + "_pad" + str(padding)
+    print(outputfile)
+    plt.savefig(outputfile)
+    plt.clf()
+    plt.close()
 
 def plot_percentage_of_assigned_backbones(folder, labels, columns,filter_timeout=False, filter_conflict=False):
     expr_datas = {}
@@ -2631,12 +2749,17 @@ def plot_percentage_of_assigned_backbones(folder, labels, columns,filter_timeout
         nb_vars_for_completed[type] = []
         nb_vars_col_index = expr_data_per_file.column_names.index("nb_vars")
         obj_col_index = expr_data_per_file.column_names.index("obj")
+        wmc_col_index = expr_data_per_file.column_names.index("WMC")
         for expr_name in expr_data_per_file.all_expr_data:
             expr_data = expr_data_per_file.all_expr_data[expr_name]
             expr_obj_count = 0
             for data_point in expr_data:
                 obj = data_point[obj_col_index]
-                if obj >= 100 : # value i scale backbone with
+                wmc =  data_point[wmc_col_index]
+                if "WMC" in folder:
+                    if obj != wmc:
+                        expr_obj_count += 1
+                elif obj >= 100 : # value i scale backbone with
                     expr_obj_count+=1
                     # print(expr_name, expr_obj_count)
 
@@ -2688,7 +2811,7 @@ def plot_percentage_of_assigned_backbones(folder, labels, columns,filter_timeout
             if e == 100.0:
                 c+=1
 
-        print(l, folder, " all vars assigned ", c, cumulative_percentage_of_backbone)
+        print(l, folder, " all vars assigned backbones ", c, cumulative_percentage_of_backbone)
 
         handles, plot_labels = axs.get_legend_handles_labels()
         axs.legend(handles, plot_labels)
@@ -2696,7 +2819,7 @@ def plot_percentage_of_assigned_backbones(folder, labels, columns,filter_timeout
     plt.ylabel("number of instances")
     plt.xlabel("Percentage of backbone assignments")
     plt.xticks([i*10 for i in range(0,11)] )
-    plt.ylim(0,800)
+    plt.ylim(0,200)
         # plt.yscale("log")
         # plt.xticks(percentage_keylist)
         # plt.yticks(sorted_values)
@@ -2709,18 +2832,21 @@ def plot_percentage_of_assigned_backbones(folder, labels, columns,filter_timeout
     # file = folder + "percentage_of_completion_"+type+".png"
     file = folder + "percentage_of_backbone_all.png"
     plt.savefig(file)
-def best_ratio_per_alg(folders, labels, columns):
-    algs_stats = {f : {l: [] for l in labels} for f in folders }
-    algs_ratios = {f : {l: [] for l in labels} for f in folders }
-    best_alg_count = { f.split("_")[-1] + "_" + l: 0 for f in folders for l in labels}
+def best_ratio_per_alg(folders, labels, columns, subfolder=""):
+    algs_stats = {f : {l: [] for l in labels if not ('rand_dynamic' in f and l == 'static')} for f in folders }
+    algs_ratios = {f : {l: [] for l in labels if not ('rand_dynamic' in f and l == 'static')} for f in folders }
+    best_alg_count = { f.split("_")[-1] + "_" + l: 0 for f in folders for l in labels if not ('rand_dynamic' in f and l == 'static') }
     all_exprs = []
     all_exprs_count = {}
     nb_c = 0
 
-
     for folder in folders:
         for type in labels:
+            if 'rand_dynamic' in folder and type == 'static':
+                continue
             stats_file = folder + "dataset_stats_" + type + ".csv"
+            if subfolder != "":
+                stats_file = folder + "dataset_stats_"+subfolder+ "_" + type + ".csv"
             expr_data_per_file = ExprData(columns)
             expr_data_per_file.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False)
             stats, ratios = expr_data_per_file.best_ratio_per_instance()
@@ -2736,6 +2862,7 @@ def best_ratio_per_alg(folders, labels, columns):
 
     print(len(all_exprs))
     best_ratio_per_instance = {}
+    best_ratio_per_instance_location = {}
     for e in all_exprs:
         if all_exprs_count[e] != nb_c:
             continue
@@ -2744,8 +2871,13 @@ def best_ratio_per_alg(folders, labels, columns):
         best_stats = {}
         best_folder = ""
         best_label = ""
+        best_location = 0
+        random_best = False
+        duplicate = False
         for f in folders:
             for l in labels:
+                if 'rand_dynamic' in f and l == 'static':
+                    continue
                 if e in algs_stats[f][l]:
                     ratio = algs_stats[f][l][e]["ratio"]
                     if ratio >= best_ratio:
@@ -2753,21 +2885,35 @@ def best_ratio_per_alg(folders, labels, columns):
                         best_stats = algs_stats[f][l][e].copy()
                         best_folder = f
                         best_label = l
-        best_ratio_per_instance[e] = {'ratio': best_ratio, 'stats':best_stats, "f":best_folder, "l":best_label}
+                        best_location = algs_stats[f][l][e]['index']
+        best_ratio_per_instance[e] = {'ratio': best_ratio, 'stats':best_stats, "f":[ best_folder] , "l":[ best_label], "location": [best_location] }
         best_alg_count[best_folder.split("_")[-1] + "_" + best_label] += 1
         #count if multiple best exist
+        if f == "rand_dynamic" and l == "dynamic":
+            print("random best")
+            random_best = True
         for f in folders:
             for l in labels:
+                if 'rand_dynamic' in f and l == 'static':
+                    continue
                 if e in algs_stats[f][l]:
                     ratio = algs_stats[f][l][e]["ratio"]
-                    if ratio == best_ratio_per_instance[e]['ratio'] and (f != best_ratio_per_instance[e]['f']  or l != best_ratio_per_instance[e]['l'] ):
-                        print("duplicate", e)
+                    if ratio == best_ratio_per_instance[e]['ratio'] and (f != best_ratio_per_instance[e]['f'][0]  or l != best_ratio_per_instance[e]['l'][0] ):
+                        print("duplicate", e, f, l)
                         best_alg_count[f.split("_")[-1] + "_" + l] += 1
+                        best_ratio_per_instance[e]['l'].append(l)
+                        best_ratio_per_instance[e]['f'].append(f)
+                        best_ratio_per_instance[e]['location'].append(algs_stats[f][l][e]["index"])
+                        duplicate =True
+        if random_best and not duplicate:
+            print("RANDOM IS THE OVERALL BEST: ", e)
+            exit(6)
 
     for alg in best_alg_count:
         print(alg, best_alg_count[alg])
-    # for e in all_exprs:
-    #     print(e, best_ratio_per_instance[e]['f'], best_ratio_per_instance[e]['l'] ,  best_ratio_per_instance[e]['ratio'] ) #best_ratio_per_instance[e]['ratio'] , best_ratio_per_instance[e]['stats']['init_WMC'] /  best_ratio_per_instance[e]['stats']['init_size']  )
+
+    for e in all_exprs:
+        print(e, "FOLDER: ",  best_ratio_per_instance[e]['f'], "LABEL: ", best_ratio_per_instance[e]['l'] ,  best_ratio_per_instance[e]['ratio'] ,  best_ratio_per_instance[e]['location'] ) #best_ratio_per_instance[e]['ratio'] , best_ratio_per_instance[e]['stats']['init_WMC'] /  best_ratio_per_instance[e]['stats']['init_size']  )
     # stat_count = 0
     # for e in best_ratio_per_instance.keys():
     #     best_f = best_ratio_per_instance[e]['f']
@@ -3076,6 +3222,7 @@ def count_conflicts_timeout(expr_folders, labels,columns, subfolder):
 
     for f in expr_folders:
         for l in labels:
+            # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
             if 'rand_dynamic' in f and l == 'static' :
                 continue
             total = 0
@@ -3097,19 +3244,25 @@ def count_conflicts_timeout(expr_folders, labels,columns, subfolder):
                     conflict_instances[f][l].append(expr)
                 if last_row[p_index] != last_row[nb_vars_index] and last_row[mc_index] != 0:  # timeout
                     timeout_instances[f][l].append(expr)
-            print(total)
+            print("nb expr: ",total)
 
+    print("conflict")
     for f in expr_folders:
         for l in labels:
             if 'rand_dynamic' in f and l == 'static' :
+            # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
+
                 continue
-            print(f.split("_")[-1], l, len(conflict_instances[f][l]))
+            # print(f.split("_")[-1], l, len(conflict_instances[f][l]))
+            print(len(conflict_instances[f][l]))
     print("timeout")
     for f in expr_folders:
         for l in labels:
             if 'rand_dynamic' in f and l == 'static' :
+            # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
                 continue
-            print(f.split("_")[-1], l, len(timeout_instances[f][l]))
+            # print(f.split("_")[-1], l, len(timeout_instances[f][l]))
+            print(len(timeout_instances[f][l]))
 
 
 def check_benchmark_preproc2():
@@ -3459,8 +3612,11 @@ if __name__ == "__main__":
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
     alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
     # alg_types = [  "dynamic" ]
-    FOLDER = "Dataset_preproc_part2"
+    FOLDER = "Dataset_preproc_final"
+    # FOLDER = "Dataset_preproc_part2"
+    # expr_folders =  [  "./results/"+FOLDER+"_rand_dynamic/"]
     expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
     # expr_folders = [ "./results/Benchmark_preproc2_wscore_half/" ,"./results/Benchmark_preproc2_wscore_estimate/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
     # expr_folders = ["./results/Benchmark_preproc_WMC/"  , "./results/Benchmark_preproc_wscore_estimate/", "./results/Benchmark_preproc_wscore_half/" ,"./results/Benchmark_preproc_wscore_occratio/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
@@ -3477,13 +3633,17 @@ if __name__ == "__main__":
     # plot_best_point_per_instance(expr_folders[0], alg_types, columns)
     # plot_best_point_per_instance(expr_folders[1], alg_types, columns)
 
-    # plot_percentage_of_assigned_vars(expr_folders[0], alg_types, columns, filter_timeout=False, filter_conflict=True)
+    # plot_percentage_of_assigned_vars(expr_folders[2], alg_types, columns, filter_timeout=False, filter_conflict=False)
     # plot_percentage_of_assigned_vars(expr_folders[1], alg_types, columns, filter_timeout=True, filter_conflict=False)
     # plot_percentage_of_assigned_vars(expr_folders[2], alg_types, columns, filter_timeout=True, filter_conflict=False)
+
+    # plot_time(expr_folders[2], alg_types, columns, filter_timeout=False, filter_conflict=False)
+
 
     # plot_percentage_of_assigned_backbones(expr_folders[0], alg_types, columns, filter_timeout=False, filter_conflict=False)
     # plot_percentage_of_assigned_backbones(expr_folders[1], alg_types, columns, filter_timeout=False, filter_conflict=False)
     # plot_percentage_of_assigned_backbones(expr_folders[2], alg_types, columns)
+    # exit(8)
 
     # histogram_of_best_points_per_instance(expr_folders, alg_types, columns, "manhattan")
     # histogram_of_best_points_per_instance(expr_folders, alg_types, columns, "euclidean")
@@ -3500,18 +3660,21 @@ if __name__ == "__main__":
     # eval_progress(expr_folders, out_file+"efficiency", "title", alg_types, 50, columns, "WMC", padding=True, same_length=same_length)
     # exit(4)
 
-    # subfolder = "iscas"
     subfolder = ""
+    # subfolder = ""
     # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
     # exit(9)
 
-    # obj = "MC"
-    obj = "WMC"
+    best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
+    exit(5)
+
+    obj = "MC"
+    # obj = "WMC"
     out_file = "./results/"+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
     if obj == "MC":
         out_file = "./results/Dataset_preproc_avg_MC_"
     same_expr = True
-    filter_timeout = True
+    filter_timeout = False
     filter_conflict = False
     # out_file = "./results/Benchmark_preproc2_avg_weighted_"
     if not same_expr:
@@ -3532,10 +3695,12 @@ if __name__ == "__main__":
                   filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     # col = "WMC"
     # title = "Average weighted " + col
-    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col, same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict)
+    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col,
+    #                same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     # col = "edge_count"
     # title = "Average weighted " + col
-    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col, same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict)
+    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col,
+    #                same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict , subfolder=subfolder)
 
     exit(11)
 

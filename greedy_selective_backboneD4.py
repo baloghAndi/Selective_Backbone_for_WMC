@@ -13,13 +13,13 @@ import sys
 import math
 import utils
 
-def get_best_assignment(csp, obj_type):
+def get_best_assignment(csp, obj_type, NO_COMPILE):
     "Assumption is that here we already have the bdd extended with the partial assignment"
-    best_variable = 0
-    best_value = 0
-    best_cost = 0
-    best_wmc = 0
-    best_mc = 0
+    best_variable = -1
+    best_value = -1
+    best_cost = -1
+    best_wmc = -1
+    best_mc = -1
     if obj_type == "count":
         best_cost = sys.maxsize
     best_size = -1
@@ -118,18 +118,19 @@ def get_best_assignment(csp, obj_type):
                             best_size = size
                             best_node_count = node_count
                         #print("best: ", v, value)
-    if (obj_type == "count" or "score" in obj_type) or backbone_assigned:
-        nb_nodes, nb_edges,  best_wmc, comp_time = csp.check_wmc_of(best_variable, best_value)
-        best_size = nb_edges
-        best_node_count = nb_nodes
-        _, _, best_mc, _ = csp.check_mc_of(best_variable, best_value)
-    if obj_type == "WMC":
-        _, _, best_mc, _ = csp.check_mc_of(best_variable, best_value)
+    if not NO_COMPILE:
+        if (obj_type == "count" or "score" in obj_type) or backbone_assigned:
+            nb_nodes, nb_edges,  best_wmc, comp_time = csp.check_wmc_of(best_variable, best_value)
+            best_size = nb_edges
+            best_node_count = nb_nodes
+            _, _, best_mc, _ = csp.check_mc_of(best_variable, best_value)
+        if obj_type == "WMC":
+            _, _, best_mc, _ = csp.check_mc_of(best_variable, best_value)
 
     return best_variable,best_value, best_cost, best_size, best_node_count, best_mc, best_wmc
 
 
-def dynamic_greedy_pWSB(csp, max_p, obj_type,logger):
+def dynamic_greedy_pWSB(csp, max_p, obj_type,logger, NO_COMPILE=False):
     print("DYNAMIC")
     pa = csp.partial_assignment
     p = len(pa.assigned)
@@ -137,7 +138,7 @@ def dynamic_greedy_pWSB(csp, max_p, obj_type,logger):
     while p < max_p:
         #select the assignment that maximizes the score
         p += 1
-        best_variable, best_value, best_cost, best_size, best_node_count, mc, wmc = get_best_assignment(csp,obj_type)
+        best_variable, best_value, best_cost, best_size, best_node_count, mc, wmc = get_best_assignment(csp,obj_type, NO_COMPILE)
         print("assign ",p , best_variable, best_value, best_cost, wmc, mc)
 
         elapsed = logger.get_time_elapsed()
@@ -146,7 +147,10 @@ def dynamic_greedy_pWSB(csp, max_p, obj_type,logger):
             logger.log([p, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, 0, 0, best_cost])
             return
         else:
-            logWMC = math.log10(wmc)
+            if wmc == -1:
+                logWMC = -1
+            else:
+                logWMC = math.log10(wmc)
             logger.log([p, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, wmc, logWMC, best_cost])
 
         csp.extend_assignment(best_variable,best_value, abs(best_cost), propagate=True )
@@ -158,11 +162,15 @@ def dynamic_greedy_pWSB(csp, max_p, obj_type,logger):
     #     print(','.join(map(str, i)))
 
 
-def dynamic_random(csp, max_p, obj_type, logger):
+def dynamic_random(csp, max_p, obj_type, logger, NO_COMPILE=False):
     print("DYNAMIC RANDOM")
     pa = csp.partial_assignment
     p = len(pa.assigned)
     print(p, max_p)
+    best_mc = -1
+    best_wmc = -1
+    best_size =-1
+    best_node_count =-1
     while p < max_p:
         best_weight = 0
         not_yet_assigned = []
@@ -210,11 +218,11 @@ def dynamic_random(csp, max_p, obj_type, logger):
                 best_value = 1
             best_variable = abs(best_lit)
             best_cost = 0
-
-        nb_nodes, nb_edges, best_wmc, comp_time = csp.check_wmc_of(best_variable, best_value)
-        _, _, best_mc, _ = csp.check_mc_of(best_variable, best_value)
-        best_size = nb_edges
-        best_node_count = nb_nodes
+        if not NO_COMPILE:
+            nb_nodes, nb_edges, best_wmc, comp_time = csp.check_wmc_of(best_variable, best_value)
+            _, _, best_mc, _ = csp.check_mc_of(best_variable, best_value)
+            best_size = nb_edges
+            best_node_count = nb_nodes
 
         elapsed = logger.get_time_elapsed()
 
@@ -224,7 +232,10 @@ def dynamic_random(csp, max_p, obj_type, logger):
                  best_cost])
             return
         else:
-            logWMC = math.log10(best_wmc)
+            if best_wmc == -1:
+                logWMC = -1
+            else:
+                logWMC = math.log10(best_wmc)
             logger.log([p, best_variable, best_value, csp.n, len(csp.cls), best_mc, best_size, best_node_count, elapsed, best_wmc, logWMC, best_cost])
 
         csp.extend_assignment(best_variable, best_value, abs(best_cost), propagate=True)
@@ -414,12 +425,16 @@ def random_selection_pWSB(csp, seed,logger, obj_type):#TODO
         print("extend", variable, value)
         csp.extend_assignment(variable, value, wmc, propagate=False)
 
-def static_greedy_pWSB(csp, obj_type,logger):
+def static_greedy_pWSB(csp, obj_type,logger,  NO_COMPILE=False):
     print("STATIC")
     assign_queue = order_var_assignments(csp, obj_type)
     p = 0
     seen_vars = set()
     while not assign_queue.empty():
+        mc = -1
+        size=-1
+        node_count=-1
+        wmc = -1
         item = assign_queue.get() # tuple of ( score_of_assignment,var, value, size, node_count )
         score_of_assignment = abs(item[0])
         literal_weight = abs(item[1])
@@ -432,46 +447,51 @@ def static_greedy_pWSB(csp, obj_type,logger):
             #need to recheck score, mc and bdd size with the partial assingment and the current extension - the initial calculations were only useful for ordering
             # logger.log([p, variable, value, score_of_assignment, len(bdd), stats['n_vars'], stats['n_nodes'],
             #             stats['n_reorderings'], stats['dag_size']])
-            if obj_type == "WMC" or obj_type == "MC" or obj_type == "SUB":
-                if obj_type == "MC":
-                    nb_nodes, nb_edges, mc, comp_time = csp.check_mc_of(variable, value)
-                else:
-                    node_count, nb_edges,wmc, comp_time = csp.check_wmc_of(variable, value)
-                    _, _, mc, _ = csp.check_mc_of(variable, value)
-                size = nb_edges
-                score_of_assignment = wmc
-                if obj_type == "MC":
-                    score_of_assignment = mc
-                elif obj_type  ==  "SUB":
-                    score_of_assignment = wmc -mc
-            elif obj_type == "count":
-                opp_count = csp.opposite_occurance(variable, value)
-                score_of_assignment = opp_count
-                node_count, nb_edges, wmc, comp_time = csp.check_wmc_of(variable, value)
-                size = nb_edges
-            elif "score" in obj_type:
-                if obj_type == "wscore_half":
-                    score_of_assignment = csp.calculate_score(variable, value, "half", weighted=True)
-                elif obj_type == "wscore_occratio":
-                    score_of_assignment = csp.calculate_score(variable, value, "occratio", weighted=True)
-                elif obj_type == "wscore_adjoccratio":
-                    score_of_assignment = csp.calculate_score(variable, value, "adjoccratio", weighted=True)
-                elif obj_type == "wscore_estimate":
-                    score_of_assignment = csp.calculate_score(variable, value, "estimate", weighted=True)
-                elif obj_type == "wscore_otherwg":
-                    score_of_assignment = csp.calculate_score(variable, value, "otherwg", weighted=True)
-                elif obj_type == "score_estimate":
-                    score_of_assignment = csp.calculate_score(variable, value, "estimate", weighted=False)
-                node_count, size,wmc, comp_time = csp.check_wmc_of(variable, value)
-                _, _,mc, _ = csp.check_mc_of(variable, value)
 
-            elif obj_type == "static_ratio":
-                score_of_assignment, size, node_count, temp_root = csp.check_wmc_ratio_of(variable, value)
-            elif obj_type == "g2":
-                score_of_assignment, size, node_count, temp_root = csp.calculate_g2(variable, value)
-            else:
-                print("ERROR")
-                exit(666)
+            if not NO_COMPILE:
+
+                if obj_type == "WMC" or obj_type == "MC" or obj_type == "SUB":
+                    if obj_type == "MC":
+                        nb_nodes, nb_edges, mc, comp_time = csp.check_mc_of(variable, value)
+                    else:
+                        node_count, nb_edges,wmc, comp_time = csp.check_wmc_of(variable, value)
+                        if not NO_COMPILE:
+                            _, _, mc, _ = csp.check_mc_of(variable, value)
+                    size = nb_edges
+                    score_of_assignment = wmc
+                    if obj_type == "MC":
+                        score_of_assignment = mc
+                    elif obj_type  ==  "SUB":
+                        score_of_assignment = wmc -mc
+                elif obj_type == "count":
+                    opp_count = csp.opposite_occurance(variable, value)
+                    score_of_assignment = opp_count
+                    node_count, nb_edges, wmc, comp_time = csp.check_wmc_of(variable, value)
+                    size = nb_edges
+                elif "score" in obj_type:
+                    if obj_type == "wscore_half":
+                        score_of_assignment = csp.calculate_score(variable, value, "half", weighted=True)
+                    elif obj_type == "wscore_occratio":
+                        score_of_assignment = csp.calculate_score(variable, value, "occratio", weighted=True)
+                    elif obj_type == "wscore_adjoccratio":
+                        score_of_assignment = csp.calculate_score(variable, value, "adjoccratio", weighted=True)
+                    elif obj_type == "wscore_estimate":
+                        score_of_assignment = csp.calculate_score(variable, value, "estimate", weighted=True)
+                    elif obj_type == "wscore_otherwg":
+                        score_of_assignment = csp.calculate_score(variable, value, "otherwg", weighted=True)
+                    elif obj_type == "score_estimate":
+                        score_of_assignment = csp.calculate_score(variable, value, "estimate", weighted=False)
+                    if not NO_COMPILE:
+                        node_count, size,wmc, comp_time = csp.check_wmc_of(variable, value)
+                        _, _,mc, _ = csp.check_mc_of(variable, value)
+
+                elif obj_type == "static_ratio":
+                    score_of_assignment, size, node_count, temp_root = csp.check_wmc_ratio_of(variable, value)
+                elif obj_type == "g2":
+                    score_of_assignment, size, node_count, temp_root = csp.calculate_g2(variable, value)
+                else:
+                    print("ERROR")
+                    exit(666)
 
             elapsed = logger.get_time_elapsed()
 
@@ -481,7 +501,10 @@ def static_greedy_pWSB(csp, obj_type,logger):
                 logger.log([p,  variable, value, csp.n, len(csp.cls), mc, size, node_count, elapsed, 0, 0, score_of_assignment])
                 return
             else:
-                logWMC = math.log10(wmc)
+                if wmc == -1:
+                    logWMC = -1
+                else:
+                    logWMC = math.log10(wmc)
                 logger.log([p,  variable, value, csp.n, len(csp.cls), mc, size, node_count, elapsed, wmc, logWMC, score_of_assignment])
 
             csp.extend_assignment(variable, value, score_of_assignment, propagate=False)
@@ -521,7 +544,7 @@ def inti_compilation(alg_type, d, filename, out_folder, obj_type):
     print(logger.get_time_elapsed())
 
 
-def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3):
+def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE=False):
     # obj_type: mc or g2
     # columns = ["p", "var", "value", "MC", "BDD len", 'n_vars', 'n_nodes', 'n_reorderings', 'dag_size', 'time']
     columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]
@@ -539,7 +562,7 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3):
     logger.log_expr(filename)
     start = time.perf_counter()
     logger.set_start_time(start)
-    cnf = _wcnfd4.WCNF(logger, scalar=scalar)
+    cnf = _wcnfd4.WCNF(logger, scalar=scalar,NO_COMPILE=NO_COMPILE)
     b = cnf.load_file(filename, obj_type, alg_type)
     print(logger.get_time_elapsed())
     # if not b:
@@ -549,16 +572,16 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3):
     # needt to save first line in log to add it to all consequtive stat files
     maxp = len(cnf.literals)
     if alg_type == "dynamic":
-        dynamic_greedy_pWSB(cnf, maxp, obj_type, logger)
+        dynamic_greedy_pWSB(cnf, maxp, obj_type, logger,NO_COMPILE)
     elif alg_type == "dynamic_ratio":
-        dynamic_greedy_pWSB(cnf, maxp, "dynamic_ratio",logger)
+        dynamic_greedy_pWSB(cnf, maxp, "dynamic_ratio",logger,NO_COMPILE)
     elif alg_type == "rand_dynamic":
         random.seed(seed)
-        dynamic_random(cnf, maxp, obj_type, logger)
+        dynamic_random(cnf, maxp, obj_type, logger, NO_COMPILE)
     elif alg_type == "static":
-        static_greedy_pWSB(cnf, obj_type, logger)
+        static_greedy_pWSB(cnf, obj_type, logger, NO_COMPILE)
     elif alg_type == "static_ratio":
-        static_greedy_pWSB(cnf, "static_ratio",logger)
+        static_greedy_pWSB(cnf, "static_ratio",logger, NO_COMPILE)
     elif "random" == alg_type:
         random_pWSB(cnf, seed,logger)
     elif "random_selection" in alg_type:
@@ -604,6 +627,7 @@ if __name__ == "__main__":
     filename = sys.argv[2]
     inobj = sys.argv[3]
     alg_type = sys.argv[4]
+    NO_COMPILE = True
 
     ecai23 = ['01_istance_K3_N15_M45_01.cnf', '01_istance_K3_N15_M45_02.cnf', '01_istance_K3_N15_M45_03.cnf',
               '01_istance_K3_N15_M45_04.cnf', '01_istance_K3_N15_M45_05.cnf', '01_istance_K3_N15_M45_06.cnf',
@@ -668,7 +692,7 @@ if __name__ == "__main__":
         exit(2)
 
     # run(alg_type, d, filename,  seed)
-    out_folder = "./results/" + folder + "_local_" + inobj + "/"
+    out_folder = "./results/" + folder + "_NO_COMPILE_" + inobj + "/"
 
 
     print(alg_type, inobj, filename, d, out_folder)
@@ -679,7 +703,7 @@ if __name__ == "__main__":
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    run_sdd(alg_type, filename, seed, out_folder, inobj)
+    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True)
 
     # inti_compilation("init300", d, filename, out_folder, inobj)
     exit(0)
