@@ -23037,3 +23037,6 @@ p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
 ./input/Dataset_preproc/09_coins_p04_p_t4.cnf
 p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
 0,-1,-1,619,1847,216149720357410972813535820065538048,2098755,1877826,10.263156,1.6855262561728528e+101,101.22673552210301,0
+./input/Dataset_preproc/05_iscas93_s1269.bench.cnf
+p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
+0,-1,-1,623,1616,18014398509481984,28867749,27303998,130.893352,3.474166479069229e+76,76.54085062562771,0
