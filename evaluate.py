@@ -3660,22 +3660,22 @@ if __name__ == "__main__":
     # eval_progress(expr_folders, out_file+"efficiency", "title", alg_types, 50, columns, "WMC", padding=True, same_length=same_length)
     # exit(4)
 
-    subfolder = ""
+    subfolder = "planning"
     # subfolder = ""
     # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
     # exit(9)
 
-    best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
-    exit(5)
+    # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
+    # exit(5)
 
-    obj = "MC"
-    # obj = "WMC"
+    # obj = "MC"
+    obj = "WMC"
     out_file = "./results/"+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
     if obj == "MC":
         out_file = "./results/Dataset_preproc_avg_MC_"
     same_expr = True
     filter_timeout = False
-    filter_conflict = False
+    filter_conflict = True
     # out_file = "./results/Benchmark_preproc2_avg_weighted_"
     if not same_expr:
         out_file = out_file+"diff_exprs_"
