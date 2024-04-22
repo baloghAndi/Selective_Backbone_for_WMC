@@ -91,6 +91,9 @@ class ExprData:
                         save_expr_name = save_expr_name.replace(".", "_", save_expr_name.count(".")-1) #actually first . will always be ./input so should skipp that
                     # print("expr:",line)
                     if len(self.data) > 0: #next expr is starting, need to save current expr data
+                        if self.exprs[-1] in self.all_expr_data:
+                            print("duplicate expr")
+                            exit(8)
                         self.all_expr_data[self.exprs[-1]] = self.data.copy()
                         self.finish_time[self.exprs[-1]] = float(prev_line[-1]) - self.init_compilation_time[self.exprs[-1]]
                         self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
@@ -1293,7 +1296,8 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
     plt.close()
 
 
-def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, padding=False, same_expr=False,filter_timeout=False, filter_conflict=False, subfolder=""):
+def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, padding=False, same_expr=False,filter_timeout=False,
+                  filter_conflict=False, subfolder=""):
     "new func to plot avg"
     ratio_data_to_average = {f: {} for f in folders}
     all_expr_names = []
@@ -1390,7 +1394,8 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
     plt.clf()
     plt.close()
 
-def average_column(folders, outputfile, title, labels, min_n, columns, obj, padding=False, plot_tye="WMC", same_expr=False,filter_timeout=False, filter_conflict=False):
+def average_column(folders, outputfile, title, labels, min_n, columns, obj, padding=False, plot_tye="WMC", same_expr=False,
+                   filter_timeout=False, filter_conflict=False, subfolder=""):
     "new func to plot avg"
     #if same_length : remove instances that have no results for all exprs
     col_data_to_average = {f: {l : [] for l in labels } for f in folders}
@@ -1398,12 +1403,17 @@ def average_column(folders, outputfile, title, labels, min_n, columns, obj, padd
     all_expr_names_count = {}
     nb_exps = 0
     smallest_n = 600
+    if subfolder != "":
+        outputfile = outputfile + subfolder
+        title = title + subfolder
     for folder in folders:
         for type in labels:
-            if 'rand_dynamic' in folder and type == 'static' :
+            if 'rand_dynamic' in folder and type == 'static':
                 continue
-            nb_exps +=1
+            nb_exps += 1
             stats_file = folder + "dataset_stats_" + type + ".csv"
+            if subfolder != "":
+                stats_file = folder + "dataset_stats_" + subfolder + "_" + type + ".csv"
             expr_data = ExprData(columns)
             expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=padding, filter_timeout=filter_timeout, filter_conflict=filter_conflict)
 
@@ -3113,17 +3123,20 @@ def count_conflicts_timeout(expr_folders, labels,columns, subfolder):
                     timeout_instances[f][l].append(expr)
             print(total)
 
+    print("stat")
     for f in expr_folders:
         for l in labels:
             if 'rand_dynamic' in f and l == 'static' :
                 continue
-            print(f.split("_")[-1], l, len(conflict_instances[f][l]))
+            # print(f.split("_")[-1], l, len(conflict_instances[f][l]))
+            print(len(conflict_instances[f][l]))
     print("timeout")
     for f in expr_folders:
         for l in labels:
             if 'rand_dynamic' in f and l == 'static' :
                 continue
-            print(f.split("_")[-1], l, len(timeout_instances[f][l]))
+            # print(f.split("_")[-1], l, len(timeout_instances[f][l]))
+            print(len(timeout_instances[f][l]))
 
 
 def check_benchmark_preproc2():
@@ -3474,6 +3487,7 @@ if __name__ == "__main__":
     alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
     # alg_types = [  "dynamic" ]
     FOLDER = "Dataset_preproc_final"
+    # FOLDER = "Dataset_preproc_part2"
     expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
@@ -3515,16 +3529,16 @@ if __name__ == "__main__":
     # eval_progress(expr_folders, out_file+"efficiency", "title", alg_types, 50, columns, "WMC", padding=True, same_length=same_length)
     # exit(4)
 
-    subfolder = "planning"
+    subfolder = ""
     # subfolder = ""
-    count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
-    exit(9)
+    # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
+    # exit(9)
 
     # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
     # exit(5)
 
-    obj = "MC"
-    # obj = "WMC"
+    # obj = "MC"
+    obj = "WMC"
     out_file = "./results/"+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
     if obj == "MC":
         out_file = "./results/Dataset_preproc_avg_MC_"
@@ -3550,10 +3564,12 @@ if __name__ == "__main__":
                   filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     # col = "WMC"
     # title = "Average weighted " + col
-    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col, same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict)
+    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col,
+    #                same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     # col = "edge_count"
     # title = "Average weighted " + col
-    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col, same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict)
+    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col,
+    #                same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict , subfolder=subfolder)
 
     exit(11)
 
