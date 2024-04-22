@@ -9,7 +9,7 @@ import subprocess
 import math
 
 class WCNF:
-    def __init__(self,logger=None, scalar=0):
+    def __init__(self,logger=None, scalar=0, NO_COMPILE=False):
         self.variables = {}  # name:domain
         self.literals = []
         self.cls = []
@@ -24,6 +24,7 @@ class WCNF:
         self.init_MC = -1
         self.init_WMC = -1
         self.trivial_backbone = []
+        self.NO_COMPILE = NO_COMPILE
 
     def load_file(self, filename, obj_type=None, heur_type=None):
         self.obj_type = obj_type
@@ -103,8 +104,11 @@ class WCNF:
             self.variables = {i: [0, 1] for i in self.literals}
             self.n = len(self.literals)
             # self.write_weights()
-
             if self.logger:
+                if self.NO_COMPILE:
+                    elapsed = self.logger.get_time_elapsed()
+                    self.logger.log([0, "-1", "-1", self.n, len(self.cls), '-1', '-1',  '-1', elapsed, '-1', "-1", "-1" ])
+                    return True
                 if self.logger.compile:
                     nb_nodes, nb_edges, wmc, comp_time = self.compile_d4_wmc(self.instance_name, self.weight_file)
                     _, _, mc, _ = self.compile_d4_mc(self.instance_name)
@@ -128,7 +132,7 @@ class WCNF:
                     self.logger.log( [0, "-1", "-1", self.n, len(self.cls),  '-1', '-1', '-1', '-1', '-1', "-1"])
 
         # print(self.literals)
-        self.n = len(self.literals)
+
         return True
 
     def load_wcnf_file(self, filename):
