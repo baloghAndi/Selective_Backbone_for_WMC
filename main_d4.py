@@ -9,13 +9,14 @@ if __name__ == "__main__":
     filename = sys.argv[2]
     inobj = sys.argv[3]
     alg_type = sys.argv[4]
-    out_folder = "./results/" + folder + "_part2_" + inobj + "/"
+    part = sys.argv[5]
+    out_folder = "./results/" + folder + "_NO_COMPILE" + part+ "_"+ inobj + "/"
 
     print(alg_type, inobj, filename)
 
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    greedy_selective_backboneD4.run_sdd(alg_type, filename, seed, out_folder, inobj)
+    greedy_selective_backboneD4.run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True)
 
     exit(0)
