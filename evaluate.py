@@ -95,7 +95,7 @@ class ExprData:
                             print("duplicate expr: ",  self.exprs[-1])
                             exit(8)
                         self.all_expr_data[self.exprs[-1]] = self.data.copy()
-                        self.finish_time[self.exprs[-1]] = float(prev_line[-1]) - self.init_compilation_time[self.exprs[-1]]
+                        self.finish_time[self.exprs[-1]] = float(prev_line[self.column_names.index("time")]) # - self.init_compilation_time[self.exprs[-1]]
                         self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
                     if len(self.data) == 0 and len(self.exprs) > 0: #last expr finished
                         self.exprs.pop()
@@ -134,6 +134,7 @@ class ExprData:
             if len(self.data) > 0:
                 self.all_expr_data[self.exprs[-1]] = self.data.copy()
                 self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
+                self.finish_time[self.exprs[-1]] = float(self.data[-1][self.column_names.index("time")])
             if len(self.data) == 0 and len(self.exprs) > 0:
                 self.exprs.pop()
                 self.full_expr_name.pop()
@@ -229,6 +230,8 @@ class ExprData:
 
                         self.all_expr_data[expr].append(add_row)
 
+    def get_finishing_times(self):
+        return self.finish_time
 
     def convert_to_columns(self, new_columns, new_exp_names): #TODO: PRINT THIS TO A FILE SO i DONT HAVE TO CHANGE IT EVERYWHERE
         # exp_names = []
@@ -1189,9 +1192,8 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
         title = title + subfolder
     for folder in folders:
         for type in labels:
-            # if 'rand_dynamic' in folder and type == 'static' :
-            if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
-
+            if 'rand_dynamic' in folder and type == 'static' :
+            # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
                 continue
             nb_exps +=1
             stats_file = folder + "dataset_stats_" + type + ".csv"
@@ -1233,7 +1235,8 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
     colors = ["blue", "cyan", mcolors.CSS4_COLORS["gold"], "orange", "green", "olive", mcolors.CSS4_COLORS["plum"],
               mcolors.CSS4_COLORS["darkorchid"], 'red', mcolors.CSS4_COLORS["darkred"], "grey"]
     marks = ["s", "o", "p", "*", "x", "v", "^", "+", "1", "2", "3"]
-    plt.xlabel("Average BDD size percentage")
+    # plt.xlabel("Average BDD size percentage")
+    plt.xlabel("Average representation size percentage")
     if obj == "WMC":
         plt.ylabel("Average Weighted Model Count percentage")
     else:
@@ -1248,8 +1251,8 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
 
     for f in folders:
         for l in labels:
-            if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
-            # if 'rand_dynamic' in f and l == 'static' :
+            # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
+            if 'rand_dynamic' in f and l == 'static' :
                 continue
             wmc_to_average = []
             size_to_average = []
@@ -1275,7 +1278,7 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
             fname = f.split("_")[-1]
             if "rand_dynamic" in f:
                 fname = "random"
-            ax1.scatter(avg_size, avg_wmc, c=colors[index], label=fname+"-"+l, marker=marks[index])
+            ax1.scatter(avg_size, avg_wmc, c=colors[index], label=HEUR_NAMES[fname]+" "+l, marker=marks[index])
             ax1.plot(avg_size, avg_wmc, c=colors[index], alpha=0.7, linewidth=1)
             index +=1
 
@@ -1287,7 +1290,7 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
     # print(smallest_n)
     # plt.xticks(x)
     # title = folders
-    plt.title(title)
+    # plt.title(title)
     handles, labels = ax1.get_legend_handles_labels()
     ax1.legend(handles, labels)
     fig.tight_layout()
@@ -1312,8 +1315,8 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
         title = title + subfolder
     for folder in folders:
         for type in labels:
-            if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
-            # if 'rand_dynamic' in folder and type == 'static' :
+            # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
+            if 'rand_dynamic' in folder and type == 'static' :
                 continue
             nb_exprs+=1
             stats_file = folder + "dataset_stats_" + type + ".csv"
@@ -1351,17 +1354,16 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
     # labels = [s.replace("_1234", "") for s in labels]
     # labels[2] = "random_selection_ratio"
     plt.xlabel("Percentage of selective backbone size")
-    if obj == "WCM":
+    if obj == "WMC":
         plt.ylabel("Average of WMC/size ratio percentage wrt initial ratio")
     else:
         plt.ylabel("Average of MC/size ratio percentage wrt initial ratio")
-
     index = 0
 
     for f in folders:
         for l in labels:
-            if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
-            # if 'rand_dynamic' in f and l == 'static' :
+            # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
+            if 'rand_dynamic' in f and l == 'static' :
                 continue
             writer.writerow([f,l])
             ratio_to_average = []
@@ -1381,13 +1383,14 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
             fname = f.split("_")[-1]
             if "rand_dynamic" in f:
                 fname = "random"
-            ax1.scatter(x, avg_wmc, c=colors[index], label=fname+"-"+l, marker=marks[index])
+
+            ax1.scatter(x, avg_wmc, c=colors[index], label=HEUR_NAMES[fname]+" "+l, marker=marks[index])
             ax1.plot(x, avg_wmc, c=colors[index])
 
             index +=1
 
     data_file.close()
-    plt.title(title)
+    # plt.title(title)
     handles, labels = ax1.get_legend_handles_labels()
     ax1.legend(handles, labels)
     fig.tight_layout()
@@ -1482,7 +1485,7 @@ def average_column(folders, outputfile, title, labels, min_n, columns, obj, padd
             fname = f.split("_")[-1]
             if "rand_dynamic" in f:
                 fname = "random"
-            ax1.scatter(x, avg_col, c=colors[index], label=fname+"-"+l, marker=marks[index])
+            ax1.scatter(x, avg_col, c=colors[index], label=HEUR_NAMES[fname]+" "+l, marker=marks[index])
             ax1.plot(x, avg_col, c=colors[index], alpha=0.7, linewidth=1)
             index +=1
 
@@ -3253,16 +3256,16 @@ def count_conflicts_timeout(expr_folders, labels,columns, subfolder):
             # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
 
                 continue
-            # print(f.split("_")[-1], l, len(conflict_instances[f][l]))
-            print(len(conflict_instances[f][l]))
+            print(f.split("_")[-1], l, len(conflict_instances[f][l]))
+            # print(len(conflict_instances[f][l]))
     print("timeout")
     for f in expr_folders:
         for l in labels:
             if 'rand_dynamic' in f and l == 'static' :
             # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
                 continue
-            # print(f.split("_")[-1], l, len(timeout_instances[f][l]))
-            print(len(timeout_instances[f][l]))
+            print(f.split("_")[-1], l, len(timeout_instances[f][l]))
+            # print(len(timeout_instances[f][l]))
 
 
 def check_benchmark_preproc2():
@@ -3605,6 +3608,32 @@ def check_benchmark_preproc2():
                 continue
             print(f,l,completed_exprs[f][l], " last expr: ", last_expr[f][l], last_expr_var_count[f][l] )
 
+def create_time_table_d4(folders, labels, columns):
+    f = open("./results/times_table.csv", "w")
+    writer = csv.writer(f, delimiter=',')
+    writer.writerow(["Expr" ]+[ f.split("_")[-1] + "_" + l  for f in folders for l in labels if not ('rand_dynamic' in f and l == 'static') ] )
+    time_data = {f: {} for f in folders}
+    all_expr_names = []
+    all_expr_names_count = {}
+    nb_exprs = 0
+    smallest_n = 600
+    all_exprs = []
+    for folder in folders:
+        for type in labels:
+            # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder) and type == 'static':
+            if 'rand_dynamic' in folder and type == 'static':
+                continue
+            nb_exprs += 1
+            stats_file = folder + "dataset_stats_" + type + ".csv"
+            expr_data = ExprData(columns)
+            expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False,
+                                      filter_timeout=False, filter_conflict=False)
+            print("========", folder, type, len(expr_data.all_expr_data))
+            time_data[folder][type] = expr_data.get_finishing_times()
+            print("times: ", folder, type, len(time_data[folder][type] ))
+    all_exprs = list(expr_data.all_expr_data.keys())
+    for e in all_exprs:
+        writer.writerow([e ]+ [ time_data[f][l][e] for f in folders for l in labels if not ('rand_dynamic' in f and l == 'static') ])
 
 
 if __name__ == "__main__":
@@ -3613,6 +3642,7 @@ if __name__ == "__main__":
     alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
     # alg_types = [  "dynamic" ]
     FOLDER = "Dataset_preproc_final"
+    HEUR_NAMES = {"WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random"}
     # FOLDER = "Dataset_preproc_part2"
     # expr_folders =  [  "./results/"+FOLDER+"_rand_dynamic/"]
     expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
@@ -3668,6 +3698,10 @@ if __name__ == "__main__":
     # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
     # exit(5)
 
+    # create_time_table_d4(expr_folders, alg_types, columns)
+    # exit(4)
+
+
     # obj = "MC"
     obj = "WMC"
     out_file = "./results/"+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
@@ -3675,7 +3709,7 @@ if __name__ == "__main__":
         out_file = "./results/Dataset_preproc_avg_MC_"
     same_expr = True
     filter_timeout = False
-    filter_conflict = True
+    filter_conflict = False
     # out_file = "./results/Benchmark_preproc2_avg_weighted_"
     if not same_expr:
         out_file = out_file+"diff_exprs_"
@@ -3683,9 +3717,9 @@ if __name__ == "__main__":
         out_file = out_file+"filterT_"
     if filter_conflict:
         out_file = out_file+"filterC_"
-    title = "Average weighted efficiency over instances"
+    title = "Average weighted efficiency over dataset "
     if obj == "MC":
-        title = "Average MC efficiency over instances"
+        title = "Average MC efficiency over instances "
     average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
                        filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     title = "Average weighted ratio over instances"
