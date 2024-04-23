@@ -67,6 +67,103 @@ class ExprData:
         self.finish_time = {}
         self.nb_completed_assignments = {}
 
+    def read_nocompile_stats_file(self, filename, full_expr_only=True, min_nb_expr=1, padding=True, filter_timeout=False, filter_conflict=False):
+        """
+        Remove exprs that only have 1 solution -as in iniial mc is 1
+        """
+        # print(filename)
+        self.data = []
+        self.all_expr_data = {}
+        self.exprs = []
+        self.full_expr_name = []
+        self.filename = filename
+        print(filename)
+        with (open(filename) as csvfile):
+            reader = csv.reader(csvfile, delimiter=',')
+            prev_line = []
+            line_index = 0
+            for line in reader:
+                # print(line)
+                if len(line) == 1 or ".cnf" in line[0]: #if first line or start of new expr
+                    line_index = 0
+                    save_expr_name = line[0]
+                    if save_expr_name.count(".")>1:
+                        save_expr_name = save_expr_name.replace(".", "_", save_expr_name.count(".")-1) #actually first . will always be ./input so should skipp that
+                    # print("expr:",line)
+                    if len(self.data) > 0: #next expr is starting, need to save current expr data
+                        if self.exprs[-1] in self.all_expr_data:
+                            print("duplicate expr: ",  self.exprs[-1])
+                            exit(8)
+                        self.all_expr_data[self.exprs[-1]] = self.data.copy()
+                        self.finish_time[self.exprs[-1]] = float(prev_line[self.column_names.index("time")]) # - self.init_compilation_time[self.exprs[-1]]
+                        self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
+                    if len(self.data) == 0 and len(self.exprs) > 0: #last expr finished
+                        self.exprs.pop()
+                        self.full_expr_name.pop()
+                    self.full_expr_name.append(save_expr_name)
+                    expr_short_name = save_expr_name.split("/")[-1]
+                    self.exprs.append(expr_short_name) #add expr name - should only add if it has data
+                    self.data = []
+                elif self.column_names[0] in line:
+                    continue
+                else:
+                    # print(line)
+                    typed_line = []
+                    # [int(x) if i != 1 else x for i,x in enumerate(line[:-1]) ]
+                    for i,x in enumerate(line[:-1]): #why do we ignore last column? it might be the empty value after the end line separator
+                        # print(x)
+                        if i!=1:
+                            if "[" in x:
+                                typed_line.append(x)
+                            # elif i ==3 or "." in x or i == self.column_names.index("MC") :
+                            #     typed_line.append(float(x)) #read mc as float
+                            else:
+                                # print(type(x), float(x))
+                                # typed_line.append(int(x))
+                                # print(x)
+                                typed_line.append(float(x))
+                        else:
+                            typed_line.append(x)
+                    typed_line.append(float(line[-1]))
+                    self.data.append(typed_line)
+                    prev_line = line
+                if line_index == 1:
+                    self.init_compilation_time[self.exprs[-1]] = float(line[-1])
+                    # print("init compilation ", self.exprs[-1])
+                line_index += 1
+            if len(self.data) > 0:
+                self.all_expr_data[self.exprs[-1]] = self.data.copy()
+                self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
+                self.finish_time[self.exprs[-1]] = float(self.data[-1][self.column_names.index("time")])
+            if len(self.data) == 0 and len(self.exprs) > 0:
+                self.exprs.pop()
+                self.full_expr_name.pop()
+
+        print("@@@@@@@@@@@@@@@@@@@@@@ read stat file:", self.filename, len(self.full_expr_name))
+
+        mc_index = self.column_names.index("MC")
+
+            # print(len(self.all_expr_data[expr]))
+
+
+        if padding:
+            for expr in self.all_expr_data.keys():  # in case mc got to 0 make it look like expr finished -- why is this needed?
+                last_row = self.all_expr_data[expr][-1]
+                nb_vars_index = self.column_names.index("nb_vars")
+                p_index = self.column_names.index("p")
+                if last_row[nb_vars_index] == -1 or last_row[nb_vars_index] == "-1":
+                    last_row[nb_vars_index] = self.get_nb_vars(expr)
+                if last_row[p_index] != last_row[nb_vars_index]:# and last_row[mc_index] == 0: extra condition to onlu change id conflict was encounter
+                    missing_rows = int(last_row[nb_vars_index] - last_row[p_index])
+                    print(expr,missing_rows, "missing rows")
+                    p = last_row[p_index]
+                    add_row = last_row.copy()
+                    for i in range(1, missing_rows + 1):
+                        add_row[p_index] = i + p
+                        add_row[mc_index:] = len(last_row[mc_index:]) * [0]
+
+                        self.all_expr_data[expr].append(add_row)
+
     def read_stats_file(self, filename, full_expr_only=True, min_nb_expr=1, padding=True, filter_timeout=False, filter_conflict=False):
         """
         Remove exprs that only have 1 solution -as in iniial mc is 1
@@ -3608,11 +3705,16 @@ def check_benchmark_preproc2():
                 continue
             print(f,l,completed_exprs[f][l], " last expr: ", last_expr[f][l], last_expr_var_count[f][l] )
 
-def create_time_table_d4(folders, labels, columns):
+def create_time_table_d4(folders, labels, columns, nocompile=False):
     f = open("./results/times_table.csv", "w")
+    if nocompile:
+        f = open("./results/times_table_NO_COMPILE.csv", "w")
     writer = csv.writer(f, delimiter=',')
     writer.writerow(["Expr" ]+[ f.split("_")[-1] + "_" + l  for f in folders for l in labels if not ('rand_dynamic' in f and l == 'static') ] )
     time_data = {f: {} for f in folders}
+    nb_assigned_vars_data = {f: {} for f in folders}
+    nb_vars_data = {}
+    nb_backbones_data = {f: {} for f in folders}
     all_expr_names = []
     all_expr_names_count = {}
     nb_exprs = 0
@@ -3626,14 +3728,53 @@ def create_time_table_d4(folders, labels, columns):
             nb_exprs += 1
             stats_file = folder + "dataset_stats_" + type + ".csv"
             expr_data = ExprData(columns)
-            expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False,
+            if nocompile:
+                expr_data.read_nocompile_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False,
+                                      filter_timeout=False, filter_conflict=False)
+            else:
+                expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False,
                                       filter_timeout=False, filter_conflict=False)
             print("========", folder, type, len(expr_data.all_expr_data))
             time_data[folder][type] = expr_data.get_finishing_times()
+            nb_assigned_vars_data[folder][type] = expr_data.nb_completed_assignments
+            nb_vars_col_index = expr_data.column_names.index("nb_vars")
+            if len(nb_vars_data) == 0:
+                nb_vars_data = { e : expr_data.all_expr_data[e][0][nb_vars_col_index] for e in expr_data.all_expr_data}
+            #count backbones - only for compiled version
+            if not nocompile:
+                nb_backbones_data[folder][type] = {}
+
+                obj_col_index = expr_data.column_names.index("obj")
+                wmc_col_index = expr_data.column_names.index("WMC")
+                for expr_name in expr_data.all_expr_data:
+                    edata = expr_data.all_expr_data[expr_name]
+                    expr_backbone_count = 0
+                    for data_point in edata[1:]:
+                        obj = data_point[obj_col_index]
+                        wmc = data_point[wmc_col_index]
+                        if "WMC" in folder:
+                            if obj != wmc:
+                                expr_backbone_count += 1
+                        elif obj >= 100:  # value I scale backbone with
+                            expr_backbone_count += 1
+                    nb_backbones_data[folder][type][expr_name] = expr_backbone_count
+
+
             print("times: ", folder, type, len(time_data[folder][type] ))
     all_exprs = list(expr_data.all_expr_data.keys())
     for e in all_exprs:
         writer.writerow([e ]+ [ time_data[f][l][e] for f in folders for l in labels if not ('rand_dynamic' in f and l == 'static') ])
+    writer.writerow(["Nb assigned vars"])
+    writer.writerow(["expr"]+[ f.split("_")[-1] + "_" + l  for f in folders for l in labels if not ('rand_dynamic' in f and l == 'static') ]+ ["number of variables"])
+    for e in all_exprs:
+        writer.writerow([e ]+ [ nb_assigned_vars_data[f][l][e] for f in folders for l in labels if not ('rand_dynamic' in f and l == 'static') ] + [nb_vars_data[e]]  )
+    if not nocompile:
+        writer.writerow(["Nb unit clauses assigned"])
+        writer.writerow(["expr"] + [f.split("_")[-1] + "_" + l for f in folders for l in labels if
+                                    not ('rand_dynamic' in f and l == 'static')] + ["number of variables"])
+        for e in all_exprs:
+            writer.writerow([e] + [nb_backbones_data[f][l][e] for f in folders for l in labels if
+                                   not ('rand_dynamic' in f and l == 'static')] + [nb_vars_data[e]])
 
 
 if __name__ == "__main__":
@@ -3642,6 +3783,7 @@ if __name__ == "__main__":
     alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
     # alg_types = [  "dynamic" ]
     FOLDER = "Dataset_preproc_final"
+    # FOLDER = "Dataset_preproc_NO_COMPILE"
     HEUR_NAMES = {"WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random"}
     # FOLDER = "Dataset_preproc_part2"
     # expr_folders =  [  "./results/"+FOLDER+"_rand_dynamic/"]
@@ -3690,7 +3832,7 @@ if __name__ == "__main__":
     # eval_progress(expr_folders, out_file+"efficiency", "title", alg_types, 50, columns, "WMC", padding=True, same_length=same_length)
     # exit(4)
 
-    subfolder = "planning"
+    # subfolder = "planning"
     # subfolder = ""
     # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
     # exit(9)
@@ -3698,8 +3840,8 @@ if __name__ == "__main__":
     # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
     # exit(5)
 
-    # create_time_table_d4(expr_folders, alg_types, columns)
-    # exit(4)
+    create_time_table_d4(expr_folders, alg_types, columns, nocompile=False)
+    exit(4)
 
 
     # obj = "MC"
