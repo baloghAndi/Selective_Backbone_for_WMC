@@ -692,7 +692,7 @@ if __name__ == "__main__":
         exit(2)
 
     # run(alg_type, d, filename,  seed)
-    out_folder = "./results/" + folder + "_NO_COMPILE_" + inobj + "/"
+    out_folder = "./results/" + folder + "_NO_COMPILE_2_" + inobj + "/"
 
 
     print(alg_type, inobj, filename, d, out_folder)

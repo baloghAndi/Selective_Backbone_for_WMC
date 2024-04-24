@@ -347,9 +347,12 @@ class WCNF:
                         self.trivial_backbone.append(updated_c[0])
                 # if var in c we should just eliminate it so not adding to new clauses
 
-            cnf_file_name = self.instance_name.replace(".cnf", "_temp"+self.obj_type+self.heur_type+".cnf")
-            self.print_clauses( cnf_file_name, csp_clauses, self.n)
-            self.cls = csp_clauses
+            self.cls = csp_clauses.copy()
+            if self.obj_type == "WMC":
+                cnf_file_name = self.instance_name.replace(".cnf", "_temp"+self.obj_type+self.heur_type+".cnf")
+                self.print_clauses( cnf_file_name, csp_clauses, self.n)
+
+
 
     def print_clauses(self, cnf_file, cls, n):
         """

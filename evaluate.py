@@ -3706,6 +3706,7 @@ def check_benchmark_preproc2():
             print(f,l,completed_exprs[f][l], " last expr: ", last_expr[f][l], last_expr_var_count[f][l] )
 
 def create_time_table_d4(folders, labels, columns, nocompile=False):
+    import statistics
     f = open("./results/times_table.csv", "w")
     if nocompile:
         f = open("./results/times_table_NO_COMPILE.csv", "w")
@@ -3775,6 +3776,26 @@ def create_time_table_d4(folders, labels, columns, nocompile=False):
         for e in all_exprs:
             writer.writerow([e] + [nb_backbones_data[f][l][e] for f in folders for l in labels if
                                    not ('rand_dynamic' in f and l == 'static')] + [nb_vars_data[e]])
+
+    mins = []
+    maxs =[]
+    avgs =[]
+    medians = []
+    for f in folders:
+        for l in labels:
+            if 'rand_dynamic' in f and l == 'static':
+                continue
+            all = [ time_data[f][l][e] for e in all_exprs]
+            mins.append( round( min(all), 3) )
+            maxs.append(round(  max(all), 3) )
+            avgs.append( round( sum(all)/len(all), 3) )
+            medians.append( round(  statistics.median(all), 3) )
+    writer.writerow(["min: "]+mins )
+    writer.writerow(["max: "]+maxs )
+    writer.writerow(["avg: "]+ avgs )
+    writer.writerow(["median: "]+ medians)
+
+
 
 
 if __name__ == "__main__":
