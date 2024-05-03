@@ -67,7 +67,7 @@ class ExprData:
         self.finish_time = {}
         self.nb_completed_assignments = {}
 
-    def read_nocompile_stats_file(self, filename, full_expr_only=True, min_nb_expr=1, padding=True, filter_timeout=False, filter_conflict=False):
+    def read_nocompile_stats_file(self, filename, full_expr_only=True, min_nb_expr=1, padding=True, filter_timeout=False, filter_conflict=False, cutoff={}):
         """
         Remove exprs that only have 1 solution -as in iniial mc is 1
         """
@@ -94,9 +94,15 @@ class ExprData:
                         if self.exprs[-1] in self.all_expr_data:
                             print("duplicate expr: ",  self.exprs[-1])
                             exit(8)
-                        self.all_expr_data[self.exprs[-1]] = self.data.copy()
-                        self.finish_time[self.exprs[-1]] = float(prev_line[self.column_names.index("time")]) # - self.init_compilation_time[self.exprs[-1]]
-                        self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
+                        if len(cutoff) > 0:
+                            self.all_expr_data[self.exprs[-1]] = self.data.copy()[:int(cutoff[self.exprs[-1]])+1]
+                            prev_line = self.all_expr_data[self.exprs[-1]][-1]
+                            self.finish_time[self.exprs[-1]] = float(prev_line[self.column_names.index("time")])  # - self.init_compilation_time[self.exprs[-1]]
+                            self.nb_completed_assignments[self.exprs[-1]] = prev_line[self.column_names.index("p")]
+                        else:
+                            self.all_expr_data[self.exprs[-1]] = self.data.copy()
+                            self.finish_time[self.exprs[-1]] = float(prev_line[self.column_names.index("time")]) # - self.init_compilation_time[self.exprs[-1]]
+                            self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
                     if len(self.data) == 0 and len(self.exprs) > 0: #last expr finished
                         self.exprs.pop()
                         self.full_expr_name.pop()
@@ -132,9 +138,15 @@ class ExprData:
                     # print("init compilation ", self.exprs[-1])
                 line_index += 1
             if len(self.data) > 0:
-                self.all_expr_data[self.exprs[-1]] = self.data.copy()
-                self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
-                self.finish_time[self.exprs[-1]] = float(self.data[-1][self.column_names.index("time")])
+                if len(cutoff) > 0:
+                    self.all_expr_data[self.exprs[-1]] = self.data.copy()[:int(cutoff[self.exprs[-1]])+1]
+                    prev_line = self.all_expr_data[self.exprs[-1]][-1]
+                    self.finish_time[self.exprs[-1]] = float(prev_line[self.column_names.index("time")])  # - self.init_compilation_time[self.exprs[-1]]
+                    self.nb_completed_assignments[self.exprs[-1]] = prev_line[self.column_names.index("p")]
+                else:
+                    self.all_expr_data[self.exprs[-1]] = self.data.copy()
+                    self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
+                    self.finish_time[self.exprs[-1]] = float(self.data[-1][self.column_names.index("time")])
             if len(self.data) == 0 and len(self.exprs) > 0:
                 self.exprs.pop()
                 self.full_expr_name.pop()
@@ -1345,7 +1357,6 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
     writer = csv.writer(data_file, delimiter=',')
 
 
-
     for f in folders:
         for l in labels:
             # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
@@ -1380,6 +1391,142 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
             index +=1
 
     data_file.close()
+    plt.ylim(0, 1)
+    plt.xlim(1, 0)
+
+    ax1.axline([1, 1], [0, 0], color="grey")
+    # print(smallest_n)
+    # plt.xticks(x)
+    # title = folders
+    # plt.title(title)
+    handles, labels = ax1.get_legend_handles_labels()
+    ax1.legend(handles, labels)
+    fig.tight_layout()
+    plt.grid()
+    outputfile = outputfile + "_pad" + str(padding)
+    # print(outputfile)
+    plt.savefig(outputfile)
+    plt.clf()
+    plt.close()
+
+
+
+def average_efficiency_WMC_MC(folders, outputfile, title, labels, min_n, columns, obj, padding=False, same_expr=False,filter_timeout=False, filter_conflict=False, subfolder=""):
+    "new func to plot avg"
+    #if same_length : remove instances that have no results for all exprs
+    wmc_data_to_average = {f: {} for f in folders}
+    size_data_to_average = {f:{} for f in folders}
+    mc_data_to_average = {f:{} for f in folders}
+    all_expr_names = []
+    all_expr_names_count = {}
+    nb_exps = 0
+    smallest_n = 600
+    if subfolder != "":
+        outputfile = outputfile + subfolder
+        title = title + subfolder
+    for folder in folders:
+        for type in labels:
+            if 'rand_dynamic' in folder and type == 'static' :
+                # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
+                continue
+            nb_exps +=1
+            stats_file = folder + "dataset_stats_" + type + ".csv"
+            if subfolder != "":
+                stats_file = folder + "dataset_stats_"+subfolder+ "_" + type + ".csv"
+            expr_data = ExprData(columns)
+            expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=padding, filter_timeout=filter_timeout, filter_conflict=filter_conflict)
+
+            percentage_results_wmc, folder_smallest_n = expr_data.get_metric_wrt_initial_per_expr( "WMC", "WMC")
+            if folder_smallest_n < smallest_n:
+                smallest_n = folder_smallest_n
+            percentage_results_size, folder_smallest_n = expr_data.get_metric_wrt_initial_per_expr("edge_count", obj)
+            if folder_smallest_n < smallest_n:
+                smallest_n = folder_smallest_n
+            #----MC
+            percentage_results_mc, folder_smallest_n = expr_data.get_metric_wrt_initial_per_expr("MC", "MC")
+            if folder_smallest_n < smallest_n:
+                smallest_n = folder_smallest_n
+
+
+            for expr in percentage_results_wmc.keys():
+                if expr not in all_expr_names:
+                    all_expr_names.append(expr)
+                    all_expr_names_count[expr] = 1
+                else:
+                    all_expr_names_count[expr] += 1
+            for expr in percentage_results_size.keys():
+                if expr not in all_expr_names:
+                    print("something missing")
+                    exit(9)
+            wmc_data_to_average[folder][type] = percentage_results_wmc
+            size_data_to_average[folder][type] = percentage_results_size
+            #MC
+            mc_data_to_average[folder][type] = percentage_results_mc
+
+
+    if min_n > smallest_n:
+        smallest_n = min_n
+    print("-----------------------SMALLEST N", smallest_n)
+    # print(nb_exps)
+    # for e in all_expr_names_count:
+    #     print(e, all_expr_names_count[e])
+
+    fig = plt.figure(figsize=(7, 7))
+    ax1 = fig.add_subplot(111)
+    # colors = ["blue", "cyan", mcolors.CSS4_COLORS["steelblue"],"orange", "red", "green", "olive"]
+    colors = ["blue", "cyan", mcolors.CSS4_COLORS["gold"], "orange", "green", "olive", mcolors.CSS4_COLORS["plum"],
+              mcolors.CSS4_COLORS["darkorchid"], 'red', mcolors.CSS4_COLORS["darkred"], "grey"]
+    marks = ["s", "o", "p", "*", "x", "v", "^", "+", "1", "2", "3"]
+    # plt.xlabel("Average BDD size percentage")
+    plt.xlabel("Average representation size percentage")
+    plt.ylabel("Average Model count and weighted model count percentage")
+
+    index = 0
+
+
+    for f in folders:
+        for l in labels:
+            # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
+            if 'rand_dynamic' in f and l == 'static' :
+                continue
+            wmc_to_average = []
+            size_to_average = []
+            #MC
+            mc_to_average = []
+            for e in all_expr_names:
+                if e in wmc_data_to_average[f][l] and e in size_data_to_average[f][l]:
+                    if same_expr and all_expr_names_count[e] != nb_exps:
+                        continue
+                    sampled_wmc_data, finished_expr = sample_data(wmc_data_to_average[f][l][e], smallest_n + 1)
+                    sampled_size_data, finished_expr = sample_data(size_data_to_average[f][l][e], smallest_n + 1)
+                    #MC
+                    sampled_mc_data, finished_expr = sample_data(mc_data_to_average[f][l][e], smallest_n + 1)
+
+                    wmc_to_average.append(sampled_wmc_data.copy())
+                    size_to_average.append(sampled_size_data.copy())
+                    #MC
+                    mc_to_average.append(sampled_mc_data.copy())
+
+
+            #create average and plot
+            exprs_to_avg = len(wmc_to_average)
+            print("-------------- Expr to avg", f, l, exprs_to_avg)
+            avg_wmc = [ sum([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ]) / exprs_to_avg for i in range(len(wmc_to_average[0]))]
+            avg_size = [ sum([ size_to_average[j][i] for j in range(len(size_to_average)) ]) / exprs_to_avg for i in range(len(size_to_average[0]))]
+
+            avg_mc = [ sum([ mc_to_average[j][i] for j in range(len(mc_to_average)) ]) / exprs_to_avg for i in range(len(mc_to_average[0]))]
+
+            fname = f.split("_")[-1]
+            if "rand_dynamic" in f:
+                fname = "random"
+            ax1.scatter(avg_size, avg_wmc, c=colors[index], label=HEUR_NAMES[fname]+" "+l+" WMC", marker=marks[index])
+            ax1.plot(avg_size, avg_wmc, c=colors[index], alpha=0.7, linewidth=1)
+            index +=1
+
+            ax1.scatter(avg_size, avg_mc, c=colors[index], label=HEUR_NAMES[fname] + " " + l + " MC" , marker=marks[index])
+            ax1.plot(avg_size, avg_mc, c=colors[index], alpha=0.7, linewidth=1)
+            index +=1
+
     plt.ylim(0, 1)
     plt.xlim(1, 0)
 
@@ -1487,6 +1634,112 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
             index +=1
 
     data_file.close()
+    # plt.title(title)
+    handles, labels = ax1.get_legend_handles_labels()
+    ax1.legend(handles, labels)
+    fig.tight_layout()
+    plt.grid()
+
+    outputfile = outputfile + "_pad" + str(padding)
+    print(outputfile)
+    plt.savefig(outputfile)
+    plt.clf()
+    plt.close()
+
+def average_ratio_MC_WMC(folders, outputfile, title, labels, min_n, columns, obj, padding=False, same_expr=False,filter_timeout=False,
+                  filter_conflict=False, subfolder=""):
+    "new func to plot avg"
+    ratio_data_to_average = {f: {} for f in folders}
+    mc_ratio_data_to_average = {f: {} for f in folders}
+    all_expr_names = []
+    all_expr_names_count = {}
+    nb_exprs = 0
+    smallest_n = 600
+    if subfolder != "":
+        outputfile = outputfile + subfolder
+        title = title + subfolder
+    for folder in folders:
+        for type in labels:
+            # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
+            if 'rand_dynamic' in folder and type == 'static' :
+                continue
+            nb_exprs+=1
+            stats_file = folder + "dataset_stats_" + type + ".csv"
+            if subfolder != "":
+                stats_file = folder + "dataset_stats_"+subfolder+ "_" + type + ".csv"
+            expr_data = ExprData(columns)
+            expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=padding,filter_timeout=filter_timeout, filter_conflict=filter_conflict)
+            print("========",folder,type, len(expr_data.all_expr_data))
+            percentage_results_ratio, folder_smallest_n = expr_data.get_metric_wrt_initial_per_expr("weighted_ratio", "WMC")
+            mc_percentage_results_ratio, folder_smallest_n = expr_data.get_metric_wrt_initial_per_expr("weighted_ratio", "MC")
+            if folder_smallest_n < smallest_n:
+                smallest_n = folder_smallest_n
+            for expr in percentage_results_ratio.keys():
+                if expr not in all_expr_names:
+                    all_expr_names.append(expr)
+                    all_expr_names_count[expr] =1
+                else:
+                    all_expr_names_count[expr] +=1
+
+            ratio_data_to_average[folder][type] = percentage_results_ratio
+            mc_ratio_data_to_average[folder][type] = mc_percentage_results_ratio
+
+    if min_n > smallest_n:
+        smallest_n = min_n
+    print("-----------------------SMALLEST N", smallest_n)
+
+    # data_file_name = outputfile + "_pad" + str(padding) + ".csv"
+    # data_file = open(data_file_name, "w")
+    # writer = csv.writer(data_file, delimiter=',')
+
+    fig = plt.figure(figsize=(10, 7))
+    ax1 = fig.add_subplot(111)
+    x = [(100 * i) / smallest_n for i in range(smallest_n + 1)]
+    colors = ["blue", "cyan", mcolors.CSS4_COLORS["gold"], "orange", "green", "olive", mcolors.CSS4_COLORS["plum"],
+              mcolors.CSS4_COLORS["darkorchid"], 'red', mcolors.CSS4_COLORS["darkred"], "grey"]
+    marks = ["s", "o", "p", "*", "x", "v", "^", "+", "1", "2", "3"]
+    # labels = [s.replace("_1234", "") for s in labels]
+    # labels[2] = "random_selection_ratio"
+    plt.xlabel("Percentage of selective backbone size")
+    plt.ylabel("Average of MC/size and WMC/size ratio percentage wrt initial ratio")
+    index = 0
+
+    for f in folders:
+        for l in labels:
+            # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
+            if 'rand_dynamic' in f and l == 'static' :
+                continue
+            ratio_to_average = []
+            mc_ratio_to_average = []
+            for e in all_expr_names:
+                if e in ratio_data_to_average[f][l]:
+                    if same_expr and all_expr_names_count[e] != nb_exprs:
+                        continue
+                    sampled_ratio_data, finished_expr = sample_data(ratio_data_to_average[f][l][e], smallest_n + 1)
+                    ratio_to_average.append(sampled_ratio_data.copy())
+
+                    mc_sampled_ratio_data, finished_expr = sample_data(mc_ratio_data_to_average[f][l][e], smallest_n + 1)
+                    mc_ratio_to_average.append(mc_sampled_ratio_data.copy())
+
+            #create average and plot
+            exprs_to_avg = len(ratio_to_average)
+            print("-------------- Expr to avg", f, l, exprs_to_avg)
+            avg_wmc = [ sum([ ratio_to_average[j][i] for j in range(len(ratio_to_average)) ]) / exprs_to_avg for i in range(len(ratio_to_average[0]))]
+            avg_mc = [ sum([ mc_ratio_to_average[j][i] for j in range(len(mc_ratio_to_average)) ]) / exprs_to_avg for i in range(len(mc_ratio_to_average[0]))]
+
+            fname = f.split("_")[-1]
+            if "rand_dynamic" in f:
+                fname = "random"
+
+            ax1.scatter(x, avg_wmc, c=colors[index], label=HEUR_NAMES[fname]+" "+l+" WMC", marker=marks[index])
+            ax1.plot(x, avg_wmc, c=colors[index])
+            index +=1
+
+            ax1.scatter(x, avg_mc, c=colors[index], label=HEUR_NAMES[fname] + " " + l+" MC", marker=marks[index])
+            ax1.plot(x, avg_mc, c=colors[index])
+            index += 1
+
+    # data_file.close()
     # plt.title(title)
     handles, labels = ax1.get_legend_handles_labels()
     ax1.legend(handles, labels)
@@ -3705,11 +3958,12 @@ def check_benchmark_preproc2():
                 continue
             print(f,l,completed_exprs[f][l], " last expr: ", last_expr[f][l], last_expr_var_count[f][l] )
 
-def create_time_table_d4(folders, labels, columns, nocompile=False):
+def create_time_table_d4(folders, labels, columns, nocompile=False, cutoff={}):
+    #cutoff is used for the no compiled setting to only count time for when we actually have looked results for
     import statistics
     f = open("./results/times_table.csv", "w")
     if nocompile:
-        f = open("./results/times_table_NO_COMPILE.csv", "w")
+        f = open("./results/times_table_NO_COMPILE_2.csv", "w")
     writer = csv.writer(f, delimiter=',')
     writer.writerow(["Expr" ]+[ f.split("_")[-1] + "_" + l  for f in folders for l in labels if not ('rand_dynamic' in f and l == 'static') ] )
     time_data = {f: {} for f in folders}
@@ -3729,9 +3983,10 @@ def create_time_table_d4(folders, labels, columns, nocompile=False):
             nb_exprs += 1
             stats_file = folder + "dataset_stats_" + type + ".csv"
             expr_data = ExprData(columns)
+            expr_cutoff = cutoff[folder.split("_")[-1]][type]
             if nocompile:
                 expr_data.read_nocompile_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False,
-                                      filter_timeout=False, filter_conflict=False)
+                                      filter_timeout=False, filter_conflict=False,cutoff=expr_cutoff)
             else:
                 expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False,
                                       filter_timeout=False, filter_conflict=False)
@@ -3795,16 +4050,19 @@ def create_time_table_d4(folders, labels, columns, nocompile=False):
     writer.writerow(["avg: "]+ avgs )
     writer.writerow(["median: "]+ medians)
 
+    print(nb_assigned_vars_data)
+
 
 
 
 if __name__ == "__main__":
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
-    alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
-    # alg_types = [  "dynamic" ]
+    # alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
+    # alg_types = [  "static" ]
+    alg_types = [  "dynamic" ]
     FOLDER = "Dataset_preproc_final"
-    # FOLDER = "Dataset_preproc_NO_COMPILE"
+    # FOLDER = "Dataset_preproc_NO_COMPILE_2"
     HEUR_NAMES = {"WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random"}
     # FOLDER = "Dataset_preproc_part2"
     # expr_folders =  [  "./results/"+FOLDER+"_rand_dynamic/"]
@@ -3860,19 +4118,379 @@ if __name__ == "__main__":
 
     # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
     # exit(5)
+    cutoff = {'half/': {
+        'static': {'01_istance_K3_N15_M45_01.cnf': 6.0, '01_istance_K3_N15_M45_02.cnf': 3.0,
+                   '01_istance_K3_N15_M45_03.cnf': 10.0, '01_istance_K3_N15_M45_04.cnf': 2.0,
+                   '01_istance_K3_N15_M45_05.cnf': 5.0, '01_istance_K3_N15_M45_06.cnf': 6.0,
+                   '01_istance_K3_N15_M45_07.cnf': 7.0, '01_istance_K3_N15_M45_08.cnf': 7.0,
+                   '01_istance_K3_N15_M45_09.cnf': 9.0, '01_istance_K3_N15_M45_10.cnf': 5.0,
+                   '02_instance_K3_N30_M90_01.cnf': 10.0, '02_instance_K3_N30_M90_02.cnf': 5.0,
+                   '02_instance_K3_N30_M90_03.cnf': 8.0, '02_instance_K3_N30_M90_04.cnf': 8.0,
+                   '02_instance_K3_N30_M90_05.cnf': 12.0, '02_instance_K3_N30_M90_06.cnf': 13.0,
+                   '02_instance_K3_N30_M90_07.cnf': 8.0, '02_instance_K3_N30_M90_08.cnf': 6.0,
+                   '02_instance_K3_N30_M90_09.cnf': 12.0, '02_instance_K3_N30_M90_10.cnf': 4.0,
+                   '04_iscas89_s400_bench.cnf': 6.0, '04_iscas89_s420_1_bench.cnf': 8.0,
+                   '04_iscas89_s444_bench.cnf': 12.0, '04_iscas89_s526_bench.cnf': 12.0,
+                   '04_iscas89_s526n_bench.cnf': 4.0, '05_iscas93_s344_bench.cnf': 7.0,
+                   '05_iscas93_s499_bench.cnf': 3.0, '06_iscas99_b01.cnf': 4.0, '06_iscas99_b02.cnf': 5.0,
+                   '06_iscas99_b03.cnf': 9.0, '06_iscas99_b06.cnf': 6.0, '06_iscas99_b08.cnf': 9.0,
+                   '06_iscas99_b09.cnf': 8.0, '06_iscas99_b10.cnf': 3.0, '07_blocks_right_2_p_t1.cnf': 3.0,
+                   '07_blocks_right_2_p_t2.cnf': 6.0, '07_blocks_right_2_p_t3.cnf': 2.0,
+                   '07_blocks_right_2_p_t4.cnf': 7.0, '07_blocks_right_2_p_t5.cnf': 9.0,
+                   '07_blocks_right_3_p_t1.cnf': 3.0, '07_blocks_right_3_p_t2.cnf': 3.0,
+                   '07_blocks_right_4_p_t1.cnf': 2.0, '08_bomb_b10_t5_p_t1.cnf': 18.0, '08_bomb_b5_t1_p_t1.cnf': 16.0,
+                   '08_bomb_b5_t1_p_t2.cnf': 6.0, '08_bomb_b5_t1_p_t3.cnf': 12.0, '08_bomb_b5_t1_p_t4.cnf': 8.0,
+                   '08_bomb_b5_t1_p_t5.cnf': 10.0, '08_bomb_b5_t5_p_t1.cnf': 13.0, '08_bomb_b5_t5_p_t2.cnf': 10.0,
+                   '09_coins_p01_p_t1.cnf': 13.0, '09_coins_p02_p_t1.cnf': 13.0, '09_coins_p03_p_t1.cnf': 13.0,
+                   '09_coins_p04_p_t1.cnf': 13.0, '09_coins_p05_p_t1.cnf': 13.0, '09_coins_p05_p_t2.cnf': 16.0,
+                   '09_coins_p10_p_t1.cnf': 13.0, '10_comm_p01_p_t1.cnf': 9.0, '10_comm_p01_p_t2.cnf': 8.0,
+                   '10_comm_p02_p_t1.cnf': 12.0, '10_comm_p03_p_t1.cnf': 13.0, '11_emptyroom_d12_g6_p_t1.cnf': 4.0,
+                   '11_emptyroom_d12_g6_p_t2.cnf': 3.0, '11_emptyroom_d16_g8_p_t1.cnf': 4.0,
+                   '11_emptyroom_d16_g8_p_t2.cnf': 7.0, '11_emptyroom_d20_g10_corners_p_t1.cnf': 7.0,
+                   '11_emptyroom_d24_g12_p_t1.cnf': 6.0, '11_emptyroom_d28_g14_corners_p_t1.cnf': 7.0,
+                   '11_emptyroom_d4_g2_p_t10.cnf': 10.0, '11_emptyroom_d4_g2_p_t1.cnf': 5.0,
+                   '11_emptyroom_d4_g2_p_t2.cnf': 4.0, '11_emptyroom_d4_g2_p_t3.cnf': 6.0,
+                   '11_emptyroom_d4_g2_p_t4.cnf': 3.0, '11_emptyroom_d4_g2_p_t5.cnf': 4.0,
+                   '11_emptyroom_d4_g2_p_t6.cnf': 10.0, '11_emptyroom_d4_g2_p_t7.cnf': 7.0,
+                   '11_emptyroom_d4_g2_p_t8.cnf': 6.0, '11_emptyroom_d4_g2_p_t9.cnf': 5.0,
+                   '11_emptyroom_d8_g4_p_t1.cnf': 2.0, '11_emptyroom_d8_g4_p_t2.cnf': 4.0,
+                   '11_emptyroom_d8_g4_p_t3.cnf': 7.0, '11_emptyroom_d8_g4_p_t4.cnf': 9.0, '12_flip_1_p_t10.cnf': 11.0,
+                   '12_flip_1_p_t1.cnf': 3.0, '12_flip_1_p_t2.cnf': 3.0, '12_flip_1_p_t3.cnf': 4.0,
+                   '12_flip_1_p_t4.cnf': 6.0, '12_flip_1_p_t5.cnf': 8.0, '12_flip_1_p_t6.cnf': 10.0,
+                   '12_flip_1_p_t7.cnf': 12.0, '12_flip_1_p_t8.cnf': 10.0, '12_flip_1_p_t9.cnf': 10.0,
+                   '12_flip_no_action_1_p_t10.cnf': 7.0, '12_flip_no_action_1_p_t1.cnf': 3.0,
+                   '12_flip_no_action_1_p_t2.cnf': 5.0, '12_flip_no_action_1_p_t3.cnf': 4.0,
+                   '12_flip_no_action_1_p_t4.cnf': 8.0, '12_flip_no_action_1_p_t5.cnf': 4.0,
+                   '12_flip_no_action_1_p_t6.cnf': 2.0, '12_flip_no_action_1_p_t7.cnf': 4.0,
+                   '12_flip_no_action_1_p_t8.cnf': 5.0, '12_flip_no_action_1_p_t9.cnf': 6.0,
+                   '13_ring2_r6_p_t1.cnf': 3.0, '13_ring2_r6_p_t2.cnf': 4.0, '13_ring2_r6_p_t3.cnf': 4.0,
+                   '13_ring2_r8_p_t1.cnf': 4.0, '13_ring2_r8_p_t2.cnf': 3.0, '13_ring2_r8_p_t3.cnf': 6.0,
+                   '13_ring_3_p_t1.cnf': 2.0, '13_ring_3_p_t2.cnf': 7.0, '13_ring_3_p_t3.cnf': 8.0,
+                   '13_ring_3_p_t4.cnf': 16.0, '13_ring_4_p_t1.cnf': 18.0, '13_ring_4_p_t2.cnf': 7.0,
+                   '13_ring_4_p_t3.cnf': 8.0, '13_ring_5_p_t1.cnf': 7.0, '13_ring_5_p_t2.cnf': 13.0,
+                   '13_ring_5_p_t3.cnf': 3.0, '14_safe_safe_10_p_t10.cnf': 4.0, '14_safe_safe_10_p_t1.cnf': 7.0,
+                   '14_safe_safe_10_p_t2.cnf': 2.0, '14_safe_safe_10_p_t3.cnf': 4.0, '14_safe_safe_10_p_t4.cnf': 4.0,
+                   '14_safe_safe_10_p_t5.cnf': 4.0, '14_safe_safe_10_p_t6.cnf': 4.0, '14_safe_safe_10_p_t7.cnf': 7.0,
+                   '14_safe_safe_10_p_t8.cnf': 7.0, '14_safe_safe_10_p_t9.cnf': 11.0, '14_safe_safe_30_p_t1.cnf': 6.0,
+                   '14_safe_safe_30_p_t2.cnf': 5.0, '14_safe_safe_30_p_t3.cnf': 3.0, '14_safe_safe_30_p_t4.cnf': 4.0,
+                   '14_safe_safe_30_p_t5.cnf': 5.0, '14_safe_safe_30_p_t6.cnf': 6.0, '14_safe_safe_5_p_t10.cnf': 8.0,
+                   '14_safe_safe_5_p_t1.cnf': 4.0, '14_safe_safe_5_p_t2.cnf': 9.0, '14_safe_safe_5_p_t3.cnf': 4.0,
+                   '14_safe_safe_5_p_t4.cnf': 2.0, '14_safe_safe_5_p_t5.cnf': 3.0, '14_safe_safe_5_p_t6.cnf': 6.0,
+                   '14_safe_safe_5_p_t7.cnf': 6.0, '14_safe_safe_5_p_t8.cnf': 4.0, '14_safe_safe_5_p_t9.cnf': 8.0,
+                   '15_sort_num_s_3_p_t10.cnf': 6.0, '15_sort_num_s_3_p_t1.cnf': 3.0, '15_sort_num_s_3_p_t2.cnf': 2.0,
+                   '15_sort_num_s_3_p_t3.cnf': 2.0, '15_sort_num_s_3_p_t4.cnf': 9.0, '15_sort_num_s_3_p_t5.cnf': 4.0,
+                   '15_sort_num_s_3_p_t6.cnf': 4.0, '15_sort_num_s_3_p_t7.cnf': 6.0, '15_sort_num_s_3_p_t8.cnf': 7.0,
+                   '15_sort_num_s_3_p_t9.cnf': 8.0, '15_sort_num_s_4_p_t1.cnf': 4.0, '16_uts_k1_p_t10.cnf': 3.0,
+                   '16_uts_k1_p_t1.cnf': 4.0, '16_uts_k1_p_t2.cnf': 1.0, '16_uts_k1_p_t3.cnf': 4.0,
+                   '16_uts_k1_p_t4.cnf': 4.0, '16_uts_k1_p_t5.cnf': 4.0, '16_uts_k1_p_t6.cnf': 3.0,
+                   '16_uts_k1_p_t7.cnf': 3.0, '16_uts_k1_p_t8.cnf': 9.0, '16_uts_k1_p_t9.cnf': 8.0,
+                   '16_uts_k2_p_t1.cnf': 6.0, '16_uts_k2_p_t2.cnf': 7.0, '16_uts_k3_p_t1.cnf': 4.0},
+        'dynamic': {'01_istance_K3_N15_M45_01.cnf': 15.0, '01_istance_K3_N15_M45_02.cnf': 5.0,
+                    '01_istance_K3_N15_M45_03.cnf': 15.0, '01_istance_K3_N15_M45_04.cnf': 2.0,
+                    '01_istance_K3_N15_M45_05.cnf': 15.0, '01_istance_K3_N15_M45_06.cnf': 15.0,
+                    '01_istance_K3_N15_M45_07.cnf': 13.0, '01_istance_K3_N15_M45_08.cnf': 9.0,
+                    '01_istance_K3_N15_M45_09.cnf': 15.0, '01_istance_K3_N15_M45_10.cnf': 7.0,
+                    '02_instance_K3_N30_M90_01.cnf': 30.0, '02_instance_K3_N30_M90_02.cnf': 7.0,
+                    '02_instance_K3_N30_M90_03.cnf': 30.0, '02_instance_K3_N30_M90_04.cnf': 24.0,
+                    '02_instance_K3_N30_M90_05.cnf': 30.0, '02_instance_K3_N30_M90_06.cnf': 30.0,
+                    '02_instance_K3_N30_M90_07.cnf': 30.0, '02_instance_K3_N30_M90_08.cnf': 15.0,
+                    '02_instance_K3_N30_M90_09.cnf': 30.0, '02_instance_K3_N30_M90_10.cnf': 5.0,
+                    '04_iscas89_s400_bench.cnf': 44.0, '04_iscas89_s420_1_bench.cnf': 252.0,
+                    '04_iscas89_s444_bench.cnf': 205.0, '04_iscas89_s526_bench.cnf': 217.0,
+                    '04_iscas89_s526n_bench.cnf': 218.0, '05_iscas93_s344_bench.cnf': 184.0,
+                    '05_iscas93_s499_bench.cnf': 175.0, '06_iscas99_b01.cnf': 45.0, '06_iscas99_b02.cnf': 26.0,
+                    '06_iscas99_b03.cnf': 156.0, '06_iscas99_b06.cnf': 44.0, '06_iscas99_b08.cnf': 46.0,
+                    '06_iscas99_b09.cnf': 169.0, '06_iscas99_b10.cnf': 201.0, '07_blocks_right_2_p_t1.cnf': 90.0,
+                    '07_blocks_right_2_p_t2.cnf': 169.0, '07_blocks_right_2_p_t3.cnf': 2.0,
+                    '07_blocks_right_2_p_t4.cnf': 170.0, '07_blocks_right_2_p_t5.cnf': 221.0,
+                    '07_blocks_right_3_p_t1.cnf': 176.0, '07_blocks_right_3_p_t2.cnf': 8.0,
+                    '07_blocks_right_4_p_t1.cnf': 2.0, '08_bomb_b10_t5_p_t1.cnf': 268.0,
+                    '08_bomb_b5_t1_p_t1.cnf': 120.0, '08_bomb_b5_t1_p_t2.cnf': 23.0, '08_bomb_b5_t1_p_t3.cnf': 254.0,
+                    '08_bomb_b5_t1_p_t4.cnf': 241.0, '08_bomb_b5_t1_p_t5.cnf': 103.0, '08_bomb_b5_t5_p_t1.cnf': 280.0,
+                    '08_bomb_b5_t5_p_t2.cnf': 51.0, '09_coins_p01_p_t1.cnf': 175.0, '09_coins_p02_p_t1.cnf': 175.0,
+                    '09_coins_p03_p_t1.cnf': 175.0, '09_coins_p04_p_t1.cnf': 175.0, '09_coins_p05_p_t1.cnf': 175.0,
+                    '09_coins_p05_p_t2.cnf': 194.0, '09_coins_p10_p_t1.cnf': 101.0, '10_comm_p01_p_t1.cnf': 170.0,
+                    '10_comm_p01_p_t2.cnf': 145.0, '10_comm_p02_p_t1.cnf': 282.0, '10_comm_p03_p_t1.cnf': 270.0,
+                    '11_emptyroom_d12_g6_p_t1.cnf': 73.0, '11_emptyroom_d12_g6_p_t2.cnf': 37.0,
+                    '11_emptyroom_d16_g8_p_t1.cnf': 188.0, '11_emptyroom_d16_g8_p_t2.cnf': 173.0,
+                    '11_emptyroom_d20_g10_corners_p_t1.cnf': 108.0, '11_emptyroom_d24_g12_p_t1.cnf': 284.0,
+                    '11_emptyroom_d28_g14_corners_p_t1.cnf': 298.0, '11_emptyroom_d4_g2_p_t10.cnf': 228.0,
+                    '11_emptyroom_d4_g2_p_t1.cnf': 25.0, '11_emptyroom_d4_g2_p_t2.cnf': 53.0,
+                    '11_emptyroom_d4_g2_p_t3.cnf': 84.0, '11_emptyroom_d4_g2_p_t4.cnf': 18.0,
+                    '11_emptyroom_d4_g2_p_t5.cnf': 31.0, '11_emptyroom_d4_g2_p_t6.cnf': 83.0,
+                    '11_emptyroom_d4_g2_p_t7.cnf': 94.0, '11_emptyroom_d4_g2_p_t8.cnf': 45.0,
+                    '11_emptyroom_d4_g2_p_t9.cnf': 105.0, '11_emptyroom_d8_g4_p_t1.cnf': 92.0,
+                    '11_emptyroom_d8_g4_p_t2.cnf': 46.0, '11_emptyroom_d8_g4_p_t3.cnf': 65.0,
+                    '11_emptyroom_d8_g4_p_t4.cnf': 47.0, '12_flip_1_p_t10.cnf': 29.0, '12_flip_1_p_t1.cnf': 5.0,
+                    '12_flip_1_p_t2.cnf': 3.0, '12_flip_1_p_t3.cnf': 13.0, '12_flip_1_p_t4.cnf': 13.0,
+                    '12_flip_1_p_t5.cnf': 21.0, '12_flip_1_p_t6.cnf': 19.0, '12_flip_1_p_t7.cnf': 29.0,
+                    '12_flip_1_p_t8.cnf': 22.0, '12_flip_1_p_t9.cnf': 26.0, '12_flip_no_action_1_p_t10.cnf': 71.0,
+                    '12_flip_no_action_1_p_t1.cnf': 8.0, '12_flip_no_action_1_p_t2.cnf': 15.0,
+                    '12_flip_no_action_1_p_t3.cnf': 22.0, '12_flip_no_action_1_p_t4.cnf': 29.0,
+                    '12_flip_no_action_1_p_t5.cnf': 36.0, '12_flip_no_action_1_p_t6.cnf': 43.0,
+                    '12_flip_no_action_1_p_t7.cnf': 28.0, '12_flip_no_action_1_p_t8.cnf': 57.0,
+                    '12_flip_no_action_1_p_t9.cnf': 64.0, '13_ring2_r6_p_t1.cnf': 76.0, '13_ring2_r6_p_t2.cnf': 8.0,
+                    '13_ring2_r6_p_t3.cnf': 44.0, '13_ring2_r8_p_t1.cnf': 100.0, '13_ring2_r8_p_t2.cnf': 34.0,
+                    '13_ring2_r8_p_t3.cnf': 58.0, '13_ring_3_p_t1.cnf': 2.0, '13_ring_3_p_t2.cnf': 116.0,
+                    '13_ring_3_p_t3.cnf': 36.0, '13_ring_3_p_t4.cnf': 208.0, '13_ring_4_p_t1.cnf': 92.0,
+                    '13_ring_4_p_t2.cnf': 13.0, '13_ring_4_p_t3.cnf': 212.0, '13_ring_5_p_t1.cnf': 114.0,
+                    '13_ring_5_p_t2.cnf': 188.0, '13_ring_5_p_t3.cnf': 14.0, '14_safe_safe_10_p_t10.cnf': 321.0,
+                    '14_safe_safe_10_p_t1.cnf': 42.0, '14_safe_safe_10_p_t2.cnf': 73.0,
+                    '14_safe_safe_10_p_t3.cnf': 104.0, '14_safe_safe_10_p_t4.cnf': 135.0,
+                    '14_safe_safe_10_p_t5.cnf': 166.0, '14_safe_safe_10_p_t6.cnf': 197.0,
+                    '14_safe_safe_10_p_t7.cnf': 228.0, '14_safe_safe_10_p_t8.cnf': 259.0,
+                    '14_safe_safe_10_p_t9.cnf': 290.0, '14_safe_safe_30_p_t1.cnf': 122.0,
+                    '14_safe_safe_30_p_t2.cnf': 213.0, '14_safe_safe_30_p_t3.cnf': 304.0,
+                    '14_safe_safe_30_p_t4.cnf': 395.0, '14_safe_safe_30_p_t5.cnf': 486.0,
+                    '14_safe_safe_30_p_t6.cnf': 577.0, '14_safe_safe_5_p_t10.cnf': 166.0,
+                    '14_safe_safe_5_p_t1.cnf': 22.0, '14_safe_safe_5_p_t2.cnf': 38.0, '14_safe_safe_5_p_t3.cnf': 54.0,
+                    '14_safe_safe_5_p_t4.cnf': 70.0, '14_safe_safe_5_p_t5.cnf': 86.0, '14_safe_safe_5_p_t6.cnf': 102.0,
+                    '14_safe_safe_5_p_t7.cnf': 118.0, '14_safe_safe_5_p_t8.cnf': 134.0,
+                    '14_safe_safe_5_p_t9.cnf': 150.0, '15_sort_num_s_3_p_t10.cnf': 177.0,
+                    '15_sort_num_s_3_p_t1.cnf': 39.0, '15_sort_num_s_3_p_t2.cnf': 18.0,
+                    '15_sort_num_s_3_p_t3.cnf': 99.0, '15_sort_num_s_3_p_t4.cnf': 129.0,
+                    '15_sort_num_s_3_p_t5.cnf': 100.0, '15_sort_num_s_3_p_t6.cnf': 189.0,
+                    '15_sort_num_s_3_p_t7.cnf': 94.0, '15_sort_num_s_3_p_t8.cnf': 149.0,
+                    '15_sort_num_s_3_p_t9.cnf': 93.0, '15_sort_num_s_4_p_t1.cnf': 110.0, '16_uts_k1_p_t10.cnf': 3.0,
+                    '16_uts_k1_p_t1.cnf': 36.0, '16_uts_k1_p_t2.cnf': 1.0, '16_uts_k1_p_t3.cnf': 42.0,
+                    '16_uts_k1_p_t4.cnf': 24.0, '16_uts_k1_p_t5.cnf': 49.0, '16_uts_k1_p_t6.cnf': 31.0,
+                    '16_uts_k1_p_t7.cnf': 50.0, '16_uts_k1_p_t8.cnf': 176.0, '16_uts_k1_p_t9.cnf': 56.0,
+                    '16_uts_k2_p_t1.cnf': 102.0, '16_uts_k2_p_t2.cnf': 191.0, '16_uts_k3_p_t1.cnf': 200.0}},
+     'estimate/': {
+         'static': {'01_istance_K3_N15_M45_01.cnf': 15.0, '01_istance_K3_N15_M45_02.cnf': 13.0,
+                    '01_istance_K3_N15_M45_03.cnf': 15.0, '01_istance_K3_N15_M45_04.cnf': 9.0,
+                    '01_istance_K3_N15_M45_05.cnf': 14.0, '01_istance_K3_N15_M45_06.cnf': 15.0,
+                    '01_istance_K3_N15_M45_07.cnf': 14.0, '01_istance_K3_N15_M45_08.cnf': 12.0,
+                    '01_istance_K3_N15_M45_09.cnf': 15.0, '01_istance_K3_N15_M45_10.cnf': 10.0,
+                    '02_instance_K3_N30_M90_01.cnf': 22.0, '02_instance_K3_N30_M90_02.cnf': 15.0,
+                    '02_instance_K3_N30_M90_03.cnf': 24.0, '02_instance_K3_N30_M90_04.cnf': 27.0,
+                    '02_instance_K3_N30_M90_05.cnf': 17.0, '02_instance_K3_N30_M90_06.cnf': 17.0,
+                    '02_instance_K3_N30_M90_07.cnf': 21.0, '02_instance_K3_N30_M90_08.cnf': 24.0,
+                    '02_instance_K3_N30_M90_09.cnf': 18.0, '02_instance_K3_N30_M90_10.cnf': 8.0,
+                    '04_iscas89_s400_bench.cnf': 36.0, '04_iscas89_s420_1_bench.cnf': 19.0,
+                    '04_iscas89_s444_bench.cnf': 19.0, '04_iscas89_s526_bench.cnf': 31.0,
+                    '04_iscas89_s526n_bench.cnf': 45.0, '05_iscas93_s344_bench.cnf': 9.0,
+                    '05_iscas93_s499_bench.cnf': 7.0, '06_iscas99_b01.cnf': 9.0, '06_iscas99_b02.cnf': 7.0,
+                    '06_iscas99_b03.cnf': 5.0, '06_iscas99_b06.cnf': 6.0, '06_iscas99_b08.cnf': 8.0,
+                    '06_iscas99_b09.cnf': 8.0, '06_iscas99_b10.cnf': 18.0, '07_blocks_right_2_p_t1.cnf': 30.0,
+                    '07_blocks_right_2_p_t2.cnf': 38.0, '07_blocks_right_2_p_t3.cnf': 14.0,
+                    '07_blocks_right_2_p_t4.cnf': 26.0, '07_blocks_right_2_p_t5.cnf': 10.0,
+                    '07_blocks_right_3_p_t1.cnf': 31.0, '07_blocks_right_3_p_t2.cnf': 26.0,
+                    '07_blocks_right_4_p_t1.cnf': 68.0, '08_bomb_b10_t5_p_t1.cnf': 99.0, '08_bomb_b5_t1_p_t1.cnf': 52.0,
+                    '08_bomb_b5_t1_p_t2.cnf': 52.0, '08_bomb_b5_t1_p_t3.cnf': 55.0, '08_bomb_b5_t1_p_t4.cnf': 79.0,
+                    '08_bomb_b5_t1_p_t5.cnf': 158.0, '08_bomb_b5_t5_p_t1.cnf': 52.0, '08_bomb_b5_t5_p_t2.cnf': 52.0,
+                    '09_coins_p01_p_t1.cnf': 22.0, '09_coins_p02_p_t1.cnf': 22.0, '09_coins_p03_p_t1.cnf': 22.0,
+                    '09_coins_p04_p_t1.cnf': 22.0, '09_coins_p05_p_t1.cnf': 22.0, '09_coins_p05_p_t2.cnf': 51.0,
+                    '09_coins_p10_p_t1.cnf': 117.0, '10_comm_p01_p_t1.cnf': 54.0, '10_comm_p01_p_t2.cnf': 88.0,
+                    '10_comm_p02_p_t1.cnf': 52.0, '10_comm_p03_p_t1.cnf': 83.0, '11_emptyroom_d12_g6_p_t1.cnf': 39.0,
+                    '11_emptyroom_d12_g6_p_t2.cnf': 37.0, '11_emptyroom_d16_g8_p_t1.cnf': 62.0,
+                    '11_emptyroom_d16_g8_p_t2.cnf': 56.0, '11_emptyroom_d20_g10_corners_p_t1.cnf': 27.0,
+                    '11_emptyroom_d24_g12_p_t1.cnf': 82.0, '11_emptyroom_d28_g14_corners_p_t1.cnf': 11.0,
+                    '11_emptyroom_d4_g2_p_t10.cnf': 67.0, '11_emptyroom_d4_g2_p_t1.cnf': 13.0,
+                    '11_emptyroom_d4_g2_p_t2.cnf': 28.0, '11_emptyroom_d4_g2_p_t3.cnf': 20.0,
+                    '11_emptyroom_d4_g2_p_t4.cnf': 25.0, '11_emptyroom_d4_g2_p_t5.cnf': 25.0,
+                    '11_emptyroom_d4_g2_p_t6.cnf': 29.0, '11_emptyroom_d4_g2_p_t7.cnf': 31.0,
+                    '11_emptyroom_d4_g2_p_t8.cnf': 43.0, '11_emptyroom_d4_g2_p_t9.cnf': 53.0,
+                    '11_emptyroom_d8_g4_p_t1.cnf': 16.0, '11_emptyroom_d8_g4_p_t2.cnf': 19.0,
+                    '11_emptyroom_d8_g4_p_t3.cnf': 21.0, '11_emptyroom_d8_g4_p_t4.cnf': 44.0,
+                    '12_flip_1_p_t10.cnf': 18.0, '12_flip_1_p_t1.cnf': 3.0, '12_flip_1_p_t2.cnf': 5.0,
+                    '12_flip_1_p_t3.cnf': 5.0, '12_flip_1_p_t4.cnf': 15.0, '12_flip_1_p_t5.cnf': 12.0,
+                    '12_flip_1_p_t6.cnf': 11.0, '12_flip_1_p_t7.cnf': 10.0, '12_flip_1_p_t8.cnf': 15.0,
+                    '12_flip_1_p_t9.cnf': 16.0, '12_flip_no_action_1_p_t10.cnf': 30.0,
+                    '12_flip_no_action_1_p_t1.cnf': 4.0, '12_flip_no_action_1_p_t2.cnf': 9.0,
+                    '12_flip_no_action_1_p_t3.cnf': 12.0, '12_flip_no_action_1_p_t4.cnf': 18.0,
+                    '12_flip_no_action_1_p_t5.cnf': 22.0, '12_flip_no_action_1_p_t6.cnf': 17.0,
+                    '12_flip_no_action_1_p_t7.cnf': 21.0, '12_flip_no_action_1_p_t8.cnf': 25.0,
+                    '12_flip_no_action_1_p_t9.cnf': 26.0, '13_ring2_r6_p_t1.cnf': 21.0, '13_ring2_r6_p_t2.cnf': 22.0,
+                    '13_ring2_r6_p_t3.cnf': 45.0, '13_ring2_r8_p_t1.cnf': 31.0, '13_ring2_r8_p_t2.cnf': 18.0,
+                    '13_ring2_r8_p_t3.cnf': 34.0, '13_ring_3_p_t1.cnf': 7.0, '13_ring_3_p_t2.cnf': 17.0,
+                    '13_ring_3_p_t3.cnf': 19.0, '13_ring_3_p_t4.cnf': 23.0, '13_ring_4_p_t1.cnf': 28.0,
+                    '13_ring_4_p_t2.cnf': 19.0, '13_ring_4_p_t3.cnf': 16.0, '13_ring_5_p_t1.cnf': 21.0,
+                    '13_ring_5_p_t2.cnf': 21.0, '13_ring_5_p_t3.cnf': 16.0, '14_safe_safe_10_p_t10.cnf': 41.0,
+                    '14_safe_safe_10_p_t1.cnf': 20.0, '14_safe_safe_10_p_t2.cnf': 13.0,
+                    '14_safe_safe_10_p_t3.cnf': 19.0, '14_safe_safe_10_p_t4.cnf': 20.0,
+                    '14_safe_safe_10_p_t5.cnf': 22.0, '14_safe_safe_10_p_t6.cnf': 34.0,
+                    '14_safe_safe_10_p_t7.cnf': 36.0, '14_safe_safe_10_p_t8.cnf': 37.0,
+                    '14_safe_safe_10_p_t9.cnf': 45.0, '14_safe_safe_30_p_t1.cnf': 32.0,
+                    '14_safe_safe_30_p_t2.cnf': 30.0, '14_safe_safe_30_p_t3.cnf': 37.0,
+                    '14_safe_safe_30_p_t4.cnf': 54.0, '14_safe_safe_30_p_t5.cnf': 59.0,
+                    '14_safe_safe_30_p_t6.cnf': 66.0, '14_safe_safe_5_p_t10.cnf': 26.0, '14_safe_safe_5_p_t1.cnf': 11.0,
+                    '14_safe_safe_5_p_t2.cnf': 13.0, '14_safe_safe_5_p_t3.cnf': 18.0, '14_safe_safe_5_p_t4.cnf': 13.0,
+                    '14_safe_safe_5_p_t5.cnf': 14.0, '14_safe_safe_5_p_t6.cnf': 21.0, '14_safe_safe_5_p_t7.cnf': 22.0,
+                    '14_safe_safe_5_p_t8.cnf': 21.0, '14_safe_safe_5_p_t9.cnf': 18.0, '15_sort_num_s_3_p_t10.cnf': 37.0,
+                    '15_sort_num_s_3_p_t1.cnf': 11.0, '15_sort_num_s_3_p_t2.cnf': 25.0,
+                    '15_sort_num_s_3_p_t3.cnf': 19.0, '15_sort_num_s_3_p_t4.cnf': 31.0,
+                    '15_sort_num_s_3_p_t5.cnf': 31.0, '15_sort_num_s_3_p_t6.cnf': 31.0,
+                    '15_sort_num_s_3_p_t7.cnf': 38.0, '15_sort_num_s_3_p_t8.cnf': 46.0,
+                    '15_sort_num_s_3_p_t9.cnf': 68.0, '15_sort_num_s_4_p_t1.cnf': 19.0, '16_uts_k1_p_t10.cnf': 10.0,
+                    '16_uts_k1_p_t1.cnf': 20.0, '16_uts_k1_p_t2.cnf': 10.0, '16_uts_k1_p_t3.cnf': 5.0,
+                    '16_uts_k1_p_t4.cnf': 19.0, '16_uts_k1_p_t5.cnf': 28.0, '16_uts_k1_p_t6.cnf': 43.0,
+                    '16_uts_k1_p_t7.cnf': 61.0, '16_uts_k1_p_t8.cnf': 54.0, '16_uts_k1_p_t9.cnf': 19.0,
+                    '16_uts_k2_p_t1.cnf': 46.0, '16_uts_k2_p_t2.cnf': 31.0, '16_uts_k3_p_t1.cnf': 95.0},
+         'dynamic': {'01_istance_K3_N15_M45_01.cnf': 15.0, '01_istance_K3_N15_M45_02.cnf': 15.0,
+                     '01_istance_K3_N15_M45_03.cnf': 15.0, '01_istance_K3_N15_M45_04.cnf': 15.0,
+                     '01_istance_K3_N15_M45_05.cnf': 11.0, '01_istance_K3_N15_M45_06.cnf': 15.0,
+                     '01_istance_K3_N15_M45_07.cnf': 15.0, '01_istance_K3_N15_M45_08.cnf': 15.0,
+                     '01_istance_K3_N15_M45_09.cnf': 15.0, '01_istance_K3_N15_M45_10.cnf': 15.0,
+                     '02_instance_K3_N30_M90_01.cnf': 30.0, '02_instance_K3_N30_M90_02.cnf': 15.0,
+                     '02_instance_K3_N30_M90_03.cnf': 30.0, '02_instance_K3_N30_M90_04.cnf': 30.0,
+                     '02_instance_K3_N30_M90_05.cnf': 30.0, '02_instance_K3_N30_M90_06.cnf': 30.0,
+                     '02_instance_K3_N30_M90_07.cnf': 30.0, '02_instance_K3_N30_M90_08.cnf': 30.0,
+                     '02_instance_K3_N30_M90_09.cnf': 30.0, '02_instance_K3_N30_M90_10.cnf': 30.0,
+                     '04_iscas89_s400_bench.cnf': 189.0, '04_iscas89_s420_1_bench.cnf': 252.0,
+                     '04_iscas89_s444_bench.cnf': 57.0, '04_iscas89_s526_bench.cnf': 99.0,
+                     '04_iscas89_s526n_bench.cnf': 218.0, '05_iscas93_s344_bench.cnf': 184.0,
+                     '05_iscas93_s499_bench.cnf': 18.0, '06_iscas99_b01.cnf': 45.0, '06_iscas99_b02.cnf': 26.0,
+                     '06_iscas99_b03.cnf': 156.0, '06_iscas99_b06.cnf': 44.0, '06_iscas99_b08.cnf': 180.0,
+                     '06_iscas99_b09.cnf': 169.0, '06_iscas99_b10.cnf': 18.0, '07_blocks_right_2_p_t1.cnf': 90.0,
+                     '07_blocks_right_2_p_t2.cnf': 169.0, '07_blocks_right_2_p_t3.cnf': 102.0,
+                     '07_blocks_right_2_p_t4.cnf': 52.0, '07_blocks_right_2_p_t5.cnf': 20.0,
+                     '07_blocks_right_3_p_t1.cnf': 176.0, '07_blocks_right_3_p_t2.cnf': 240.0,
+                     '07_blocks_right_4_p_t1.cnf': 290.0, '08_bomb_b10_t5_p_t1.cnf': 570.0,
+                     '08_bomb_b5_t1_p_t1.cnf': 120.0, '08_bomb_b5_t1_p_t2.cnf': 222.0, '08_bomb_b5_t1_p_t3.cnf': 150.0,
+                     '08_bomb_b5_t1_p_t4.cnf': 426.0, '08_bomb_b5_t1_p_t5.cnf': 528.0, '08_bomb_b5_t5_p_t1.cnf': 280.0,
+                     '08_bomb_b5_t5_p_t2.cnf': 530.0, '09_coins_p01_p_t1.cnf': 175.0, '09_coins_p02_p_t1.cnf': 175.0,
+                     '09_coins_p03_p_t1.cnf': 175.0, '09_coins_p04_p_t1.cnf': 175.0, '09_coins_p05_p_t1.cnf': 175.0,
+                     '09_coins_p05_p_t2.cnf': 178.0, '09_coins_p10_p_t1.cnf': 349.0, '10_comm_p01_p_t1.cnf': 170.0,
+                     '10_comm_p01_p_t2.cnf': 299.0, '10_comm_p02_p_t1.cnf': 282.0, '10_comm_p03_p_t1.cnf': 418.0,
+                     '11_emptyroom_d12_g6_p_t1.cnf': 140.0, '11_emptyroom_d12_g6_p_t2.cnf': 256.0,
+                     '11_emptyroom_d16_g8_p_t1.cnf': 188.0, '11_emptyroom_d16_g8_p_t2.cnf': 344.0,
+                     '11_emptyroom_d20_g10_corners_p_t1.cnf': 236.0, '11_emptyroom_d24_g12_p_t1.cnf': 214.0,
+                     '11_emptyroom_d28_g14_corners_p_t1.cnf': 332.0, '11_emptyroom_d4_g2_p_t10.cnf': 78.0,
+                     '11_emptyroom_d4_g2_p_t1.cnf': 44.0, '11_emptyroom_d4_g2_p_t2.cnf': 80.0,
+                     '11_emptyroom_d4_g2_p_t3.cnf': 116.0, '11_emptyroom_d4_g2_p_t4.cnf': 118.0,
+                     '11_emptyroom_d4_g2_p_t5.cnf': 54.0, '11_emptyroom_d4_g2_p_t6.cnf': 65.0,
+                     '11_emptyroom_d4_g2_p_t7.cnf': 67.0, '11_emptyroom_d4_g2_p_t8.cnf': 253.0,
+                     '11_emptyroom_d4_g2_p_t9.cnf': 78.0, '11_emptyroom_d8_g4_p_t1.cnf': 92.0,
+                     '11_emptyroom_d8_g4_p_t2.cnf': 168.0, '11_emptyroom_d8_g4_p_t3.cnf': 244.0,
+                     '11_emptyroom_d8_g4_p_t4.cnf': 206.0, '12_flip_1_p_t10.cnf': 41.0, '12_flip_1_p_t1.cnf': 5.0,
+                     '12_flip_1_p_t2.cnf': 9.0, '12_flip_1_p_t3.cnf': 13.0, '12_flip_1_p_t4.cnf': 17.0,
+                     '12_flip_1_p_t5.cnf': 21.0, '12_flip_1_p_t6.cnf': 25.0, '12_flip_1_p_t7.cnf': 29.0,
+                     '12_flip_1_p_t8.cnf': 33.0, '12_flip_1_p_t9.cnf': 37.0, '12_flip_no_action_1_p_t10.cnf': 71.0,
+                     '12_flip_no_action_1_p_t1.cnf': 8.0, '12_flip_no_action_1_p_t2.cnf': 15.0,
+                     '12_flip_no_action_1_p_t3.cnf': 22.0, '12_flip_no_action_1_p_t4.cnf': 29.0,
+                     '12_flip_no_action_1_p_t5.cnf': 36.0, '12_flip_no_action_1_p_t6.cnf': 30.0,
+                     '12_flip_no_action_1_p_t7.cnf': 50.0, '12_flip_no_action_1_p_t8.cnf': 52.0,
+                     '12_flip_no_action_1_p_t9.cnf': 55.0, '13_ring2_r6_p_t1.cnf': 76.0, '13_ring2_r6_p_t2.cnf': 134.0,
+                     '13_ring2_r6_p_t3.cnf': 192.0, '13_ring2_r8_p_t1.cnf': 100.0, '13_ring2_r8_p_t2.cnf': 63.0,
+                     '13_ring2_r8_p_t3.cnf': 136.0, '13_ring_3_p_t1.cnf': 70.0, '13_ring_3_p_t2.cnf': 58.0,
+                     '13_ring_3_p_t3.cnf': 162.0, '13_ring_3_p_t4.cnf': 208.0, '13_ring_4_p_t1.cnf': 92.0,
+                     '13_ring_4_p_t2.cnf': 85.0, '13_ring_4_p_t3.cnf': 26.0, '13_ring_5_p_t1.cnf': 114.0,
+                     '13_ring_5_p_t2.cnf': 188.0, '13_ring_5_p_t3.cnf': 45.0, '14_safe_safe_10_p_t10.cnf': 321.0,
+                     '14_safe_safe_10_p_t1.cnf': 42.0, '14_safe_safe_10_p_t2.cnf': 73.0,
+                     '14_safe_safe_10_p_t3.cnf': 104.0, '14_safe_safe_10_p_t4.cnf': 135.0,
+                     '14_safe_safe_10_p_t5.cnf': 166.0, '14_safe_safe_10_p_t6.cnf': 197.0,
+                     '14_safe_safe_10_p_t7.cnf': 228.0, '14_safe_safe_10_p_t8.cnf': 259.0,
+                     '14_safe_safe_10_p_t9.cnf': 290.0, '14_safe_safe_30_p_t1.cnf': 122.0,
+                     '14_safe_safe_30_p_t2.cnf': 213.0, '14_safe_safe_30_p_t3.cnf': 304.0,
+                     '14_safe_safe_30_p_t4.cnf': 395.0, '14_safe_safe_30_p_t5.cnf': 486.0,
+                     '14_safe_safe_30_p_t6.cnf': 577.0, '14_safe_safe_5_p_t10.cnf': 166.0,
+                     '14_safe_safe_5_p_t1.cnf': 22.0, '14_safe_safe_5_p_t2.cnf': 38.0, '14_safe_safe_5_p_t3.cnf': 54.0,
+                     '14_safe_safe_5_p_t4.cnf': 70.0, '14_safe_safe_5_p_t5.cnf': 86.0, '14_safe_safe_5_p_t6.cnf': 102.0,
+                     '14_safe_safe_5_p_t7.cnf': 118.0, '14_safe_safe_5_p_t8.cnf': 134.0,
+                     '14_safe_safe_5_p_t9.cnf': 150.0, '15_sort_num_s_3_p_t10.cnf': 309.0,
+                     '15_sort_num_s_3_p_t1.cnf': 39.0, '15_sort_num_s_3_p_t2.cnf': 69.0,
+                     '15_sort_num_s_3_p_t3.cnf': 99.0, '15_sort_num_s_3_p_t4.cnf': 129.0,
+                     '15_sort_num_s_3_p_t5.cnf': 159.0, '15_sort_num_s_3_p_t6.cnf': 189.0,
+                     '15_sort_num_s_3_p_t7.cnf': 219.0, '15_sort_num_s_3_p_t8.cnf': 249.0,
+                     '15_sort_num_s_3_p_t9.cnf': 190.0, '15_sort_num_s_4_p_t1.cnf': 110.0, '16_uts_k1_p_t10.cnf': 26.0,
+                     '16_uts_k1_p_t1.cnf': 36.0, '16_uts_k1_p_t2.cnf': 65.0, '16_uts_k1_p_t3.cnf': 8.0,
+                     '16_uts_k1_p_t4.cnf': 123.0, '16_uts_k1_p_t5.cnf': 62.0, '16_uts_k1_p_t6.cnf': 153.0,
+                     '16_uts_k1_p_t7.cnf': 152.0, '16_uts_k1_p_t8.cnf': 167.0, '16_uts_k1_p_t9.cnf': 67.0,
+                     '16_uts_k2_p_t1.cnf': 102.0, '16_uts_k2_p_t2.cnf': 54.0, '16_uts_k3_p_t1.cnf': 168.0}},
+     'dynamic/': {
+         'dynamic': {'01_istance_K3_N15_M45_01.cnf': 3.0, '01_istance_K3_N15_M45_02.cnf': 15.0,
+                     '01_istance_K3_N15_M45_03.cnf': 15.0, '01_istance_K3_N15_M45_04.cnf': 15.0,
+                     '01_istance_K3_N15_M45_05.cnf': 15.0, '01_istance_K3_N15_M45_06.cnf': 15.0,
+                     '01_istance_K3_N15_M45_07.cnf': 5.0, '01_istance_K3_N15_M45_08.cnf': 15.0,
+                     '01_istance_K3_N15_M45_09.cnf': 6.0, '01_istance_K3_N15_M45_10.cnf': 15.0,
+                     '02_instance_K3_N30_M90_01.cnf': 30.0, '02_instance_K3_N30_M90_02.cnf': 30.0,
+                     '02_instance_K3_N30_M90_03.cnf': 30.0, '02_instance_K3_N30_M90_04.cnf': 30.0,
+                     '02_instance_K3_N30_M90_05.cnf': 23.0, '02_instance_K3_N30_M90_06.cnf': 30.0,
+                     '02_instance_K3_N30_M90_07.cnf': 19.0, '02_instance_K3_N30_M90_08.cnf': 30.0,
+                     '02_instance_K3_N30_M90_09.cnf': 25.0, '02_instance_K3_N30_M90_10.cnf': 10.0,
+                     '04_iscas89_s400_bench.cnf': 157.0, '04_iscas89_s420_1_bench.cnf': 5.0,
+                     '04_iscas89_s444_bench.cnf': 205.0, '04_iscas89_s526_bench.cnf': 217.0,
+                     '04_iscas89_s526n_bench.cnf': 218.0, '05_iscas93_s344_bench.cnf': 184.0,
+                     '05_iscas93_s499_bench.cnf': 175.0, '06_iscas99_b01.cnf': 45.0, '06_iscas99_b02.cnf': 8.0,
+                     '06_iscas99_b03.cnf': 40.0, '06_iscas99_b06.cnf': 44.0, '06_iscas99_b08.cnf': 180.0,
+                     '06_iscas99_b09.cnf': 169.0, '06_iscas99_b10.cnf': 201.0, '07_blocks_right_2_p_t1.cnf': 90.0,
+                     '07_blocks_right_2_p_t2.cnf': 169.0, '07_blocks_right_2_p_t3.cnf': 8.0,
+                     '07_blocks_right_2_p_t4.cnf': 231.0, '07_blocks_right_2_p_t5.cnf': 7.0,
+                     '07_blocks_right_3_p_t1.cnf': 1.0, '07_blocks_right_3_p_t2.cnf': 333.0,
+                     '07_blocks_right_4_p_t1.cnf': 290.0, '08_bomb_b10_t5_p_t1.cnf': 570.0,
+                     '08_bomb_b5_t1_p_t1.cnf': 120.0, '08_bomb_b5_t1_p_t2.cnf': 142.0, '08_bomb_b5_t1_p_t3.cnf': 238.0,
+                     '08_bomb_b5_t1_p_t4.cnf': 161.0, '08_bomb_b5_t1_p_t5.cnf': 209.0, '08_bomb_b5_t5_p_t1.cnf': 280.0,
+                     '08_bomb_b5_t5_p_t2.cnf': 303.0, '09_coins_p01_p_t1.cnf': 143.0, '09_coins_p02_p_t1.cnf': 143.0,
+                     '09_coins_p03_p_t1.cnf': 158.0, '09_coins_p04_p_t1.cnf': 143.0, '09_coins_p05_p_t1.cnf': 124.0,
+                     '09_coins_p05_p_t2.cnf': 323.0, '09_coins_p10_p_t1.cnf': 75.0, '10_comm_p01_p_t1.cnf': 104.0,
+                     '10_comm_p01_p_t2.cnf': 299.0, '10_comm_p02_p_t1.cnf': 57.0, '10_comm_p03_p_t1.cnf': 121.0,
+                     '11_emptyroom_d12_g6_p_t1.cnf': 2.0, '11_emptyroom_d12_g6_p_t2.cnf': 121.0,
+                     '11_emptyroom_d16_g8_p_t1.cnf': 188.0, '11_emptyroom_d16_g8_p_t2.cnf': 44.0,
+                     '11_emptyroom_d20_g10_corners_p_t1.cnf': 53.0, '11_emptyroom_d24_g12_p_t1.cnf': 284.0,
+                     '11_emptyroom_d28_g14_corners_p_t1.cnf': 332.0, '11_emptyroom_d4_g2_p_t10.cnf': 217.0,
+                     '11_emptyroom_d4_g2_p_t1.cnf': 26.0, '11_emptyroom_d4_g2_p_t2.cnf': 80.0,
+                     '11_emptyroom_d4_g2_p_t3.cnf': 92.0, '11_emptyroom_d4_g2_p_t4.cnf': 63.0,
+                     '11_emptyroom_d4_g2_p_t5.cnf': 80.0, '11_emptyroom_d4_g2_p_t6.cnf': 71.0,
+                     '11_emptyroom_d4_g2_p_t7.cnf': 92.0, '11_emptyroom_d4_g2_p_t8.cnf': 88.0,
+                     '11_emptyroom_d4_g2_p_t9.cnf': 146.0, '11_emptyroom_d8_g4_p_t1.cnf': 92.0,
+                     '11_emptyroom_d8_g4_p_t2.cnf': 90.0, '11_emptyroom_d8_g4_p_t3.cnf': 102.0,
+                     '11_emptyroom_d8_g4_p_t4.cnf': 60.0, '12_flip_1_p_t10.cnf': 41.0, '12_flip_1_p_t1.cnf': 5.0,
+                     '12_flip_1_p_t2.cnf': 9.0, '12_flip_1_p_t3.cnf': 13.0, '12_flip_1_p_t4.cnf': 17.0,
+                     '12_flip_1_p_t5.cnf': 21.0, '12_flip_1_p_t6.cnf': 25.0, '12_flip_1_p_t7.cnf': 29.0,
+                     '12_flip_1_p_t8.cnf': 33.0, '12_flip_1_p_t9.cnf': 37.0, '12_flip_no_action_1_p_t10.cnf': 51.0,
+                     '12_flip_no_action_1_p_t1.cnf': 8.0, '12_flip_no_action_1_p_t2.cnf': 15.0,
+                     '12_flip_no_action_1_p_t3.cnf': 22.0, '12_flip_no_action_1_p_t4.cnf': 29.0,
+                     '12_flip_no_action_1_p_t5.cnf': 36.0, '12_flip_no_action_1_p_t6.cnf': 43.0,
+                     '12_flip_no_action_1_p_t7.cnf': 50.0, '12_flip_no_action_1_p_t8.cnf': 57.0,
+                     '12_flip_no_action_1_p_t9.cnf': 64.0, '13_ring2_r6_p_t1.cnf': 2.0, '13_ring2_r6_p_t2.cnf': 7.0,
+                     '13_ring2_r6_p_t3.cnf': 36.0, '13_ring2_r8_p_t1.cnf': 100.0, '13_ring2_r8_p_t2.cnf': 34.0,
+                     '13_ring2_r8_p_t3.cnf': 47.0, '13_ring_3_p_t1.cnf': 70.0, '13_ring_3_p_t2.cnf': 116.0,
+                     '13_ring_3_p_t3.cnf': 74.0, '13_ring_3_p_t4.cnf': 208.0, '13_ring_4_p_t1.cnf': 92.0,
+                     '13_ring_4_p_t2.cnf': 152.0, '13_ring_4_p_t3.cnf': 10.0, '13_ring_5_p_t1.cnf': 114.0,
+                     '13_ring_5_p_t2.cnf': 188.0, '13_ring_5_p_t3.cnf': 262.0, '14_safe_safe_10_p_t10.cnf': 321.0,
+                     '14_safe_safe_10_p_t1.cnf': 42.0, '14_safe_safe_10_p_t2.cnf': 73.0,
+                     '14_safe_safe_10_p_t3.cnf': 104.0, '14_safe_safe_10_p_t4.cnf': 135.0,
+                     '14_safe_safe_10_p_t5.cnf': 166.0, '14_safe_safe_10_p_t6.cnf': 197.0,
+                     '14_safe_safe_10_p_t7.cnf': 228.0, '14_safe_safe_10_p_t8.cnf': 259.0,
+                     '14_safe_safe_10_p_t9.cnf': 290.0, '14_safe_safe_30_p_t1.cnf': 122.0,
+                     '14_safe_safe_30_p_t2.cnf': 213.0, '14_safe_safe_30_p_t3.cnf': 304.0,
+                     '14_safe_safe_30_p_t4.cnf': 395.0, '14_safe_safe_30_p_t5.cnf': 486.0,
+                     '14_safe_safe_30_p_t6.cnf': 577.0, '14_safe_safe_5_p_t10.cnf': 166.0,
+                     '14_safe_safe_5_p_t1.cnf': 22.0, '14_safe_safe_5_p_t2.cnf': 38.0, '14_safe_safe_5_p_t3.cnf': 54.0,
+                     '14_safe_safe_5_p_t4.cnf': 70.0, '14_safe_safe_5_p_t5.cnf': 86.0, '14_safe_safe_5_p_t6.cnf': 102.0,
+                     '14_safe_safe_5_p_t7.cnf': 118.0, '14_safe_safe_5_p_t8.cnf': 134.0,
+                     '14_safe_safe_5_p_t9.cnf': 150.0, '15_sort_num_s_3_p_t10.cnf': 309.0,
+                     '15_sort_num_s_3_p_t1.cnf': 39.0, '15_sort_num_s_3_p_t2.cnf': 5.0,
+                     '15_sort_num_s_3_p_t3.cnf': 99.0, '15_sort_num_s_3_p_t4.cnf': 103.0,
+                     '15_sort_num_s_3_p_t5.cnf': 159.0, '15_sort_num_s_3_p_t6.cnf': 110.0,
+                     '15_sort_num_s_3_p_t7.cnf': 35.0, '15_sort_num_s_3_p_t8.cnf': 166.0,
+                     '15_sort_num_s_3_p_t9.cnf': 133.0, '15_sort_num_s_4_p_t1.cnf': 16.0, '16_uts_k1_p_t10.cnf': 73.0,
+                     '16_uts_k1_p_t1.cnf': 4.0, '16_uts_k1_p_t2.cnf': 65.0, '16_uts_k1_p_t3.cnf': 55.0,
+                     '16_uts_k1_p_t4.cnf': 48.0, '16_uts_k1_p_t5.cnf': 5.0, '16_uts_k1_p_t6.cnf': 1.0,
+                     '16_uts_k1_p_t7.cnf': 25.0, '16_uts_k1_p_t8.cnf': 102.0, '16_uts_k1_p_t9.cnf': 2.0,
+                     '16_uts_k2_p_t1.cnf': 102.0, '16_uts_k2_p_t2.cnf': 37.0, '16_uts_k3_p_t1.cnf': 200.0}}}
 
-    create_time_table_d4(expr_folders, alg_types, columns, nocompile=False)
-    exit(4)
+    # create_time_table_d4(expr_folders, alg_types, columns, nocompile=True, cutoff=cutoff)
+    # exit(4)
 
-
-    # obj = "MC"
-    obj = "WMC"
+    subfolder = ""
+    obj = "MC"
+    # obj = "WMC"
     out_file = "./results/"+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
     if obj == "MC":
         out_file = "./results/Dataset_preproc_avg_MC_"
     same_expr = True
     filter_timeout = False
     filter_conflict = False
+
+    out_file = "./results/Dataset_preproc_avg_MC_and_WMC"
+    average_efficiency_WMC_MC(expr_folders, out_file +"efficiency", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+                       filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
+    average_ratio_MC_WMC(expr_folders, out_file +"ratio", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+                  filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
+    exit(8)
+
     # out_file = "./results/Benchmark_preproc2_avg_weighted_"
     if not same_expr:
         out_file = out_file+"diff_exprs_"
