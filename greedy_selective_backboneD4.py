@@ -102,7 +102,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE):
                         print("ERROR")
                         exit(666)
                     if obj_type!="count" :
-                        if (score_of_assignment > best_cost) or ( score_of_assignment == best_cost and csp.literal_weights[value][v-1] >  csp.literal_weights[best_value][best_variable-1] ):
+                        if (score_of_assignment > best_cost) or ( obj_type=="WMC" and score_of_assignment == best_cost and csp.literal_weights[value][v-1] >  csp.literal_weights[best_value][best_variable-1] ):
                             best_variable=v
                             best_value=value
                             best_cost=score_of_assignment
@@ -131,6 +131,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE):
 
 
 def dynamic_greedy_pWSB(csp, max_p, obj_type,logger, NO_COMPILE=False):
+    #obj_type = MC or WMC
     print("DYNAMIC")
     pa = csp.partial_assignment
     p = len(pa.assigned)
@@ -298,7 +299,10 @@ def order_var_assignments(csp, obj_type):
                 # csp.sdd_manager.minimize()
                 # size = temp_root.size()
                 # node_count = temp_root.count()
-                weight = csp.literal_weights[value][v-1]
+                if obj_type == "WMC":
+                    weight = csp.literal_weights[value][v-1]
+                else:
+                    weight = 1
                 assign_queue.put(tuple([-1*score_of_assignment,-1*weight, v, value, size, node_count]))
 
     # csp.root_node.deref() #not sure if this is needed
@@ -627,7 +631,7 @@ if __name__ == "__main__":
     filename = sys.argv[2]
     inobj = sys.argv[3]
     alg_type = sys.argv[4]
-    NO_COMPILE = True
+    NO_COMPILE = False
 
     ecai23 = ['01_istance_K3_N15_M45_01.cnf', '01_istance_K3_N15_M45_02.cnf', '01_istance_K3_N15_M45_03.cnf',
               '01_istance_K3_N15_M45_04.cnf', '01_istance_K3_N15_M45_05.cnf', '01_istance_K3_N15_M45_06.cnf',
@@ -685,14 +689,15 @@ if __name__ == "__main__":
               "16_uts_k1_p_t7.cnf", "16_uts_k1_p_t8.cnf", "16_uts_k1_p_t9.cnf", "16_uts_k2_p_t1.cnf",
               "16_uts_k2_p_t2.cnf", "16_uts_k3_p_t1.cnf"]
 
-    filename_only  = filename.split("/")[-1]
-    if filename_only.count(".") > 1:
-        filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    if filename_only not in ecai23:
-        exit(2)
+    # filename_only  = filename.split("/")[-1]
+    # if filename_only.count(".") > 1:
+    #     filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
+    # if filename_only not in ecai23:
+    #     exit(2)
 
     # run(alg_type, d, filename,  seed)
-    out_folder = "./results/" + folder + "_NO_COMPILE_2_" + inobj + "/"
+    out_folder = "./results/" + folder + "_" + inobj + "/"
+    # out_folder = "./results/" + folder + "_NO_COMPILE_2_" + inobj + "/"
 
 
     print(alg_type, inobj, filename, d, out_folder)
@@ -703,7 +708,7 @@ if __name__ == "__main__":
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True)
+    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE)
 
     # inti_compilation("init300", d, filename, out_folder, inobj)
     exit(0)
