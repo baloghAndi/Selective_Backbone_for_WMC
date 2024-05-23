@@ -254,7 +254,7 @@ def order_var_assignments(csp, obj_type):
                 # print("var , val ", v, value)
                 if obj_type == "WMC" or obj_type == "MC" or obj_type == "SUB":
                     if obj_type == "MC":
-                        nb_nodes, nb_edges, mc, comp_time = csp.check_mc_of(v, value)
+                        node_count, nb_edges, mc, comp_time = csp.check_mc_of(v, value)
                     else:
                         node_count, nb_edges, wmc, comp_time = csp.check_wmc_of(v, value)
                     score_of_assignment = wmc
