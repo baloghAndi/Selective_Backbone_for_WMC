@@ -689,14 +689,14 @@ if __name__ == "__main__":
               "16_uts_k1_p_t7.cnf", "16_uts_k1_p_t8.cnf", "16_uts_k1_p_t9.cnf", "16_uts_k2_p_t1.cnf",
               "16_uts_k2_p_t2.cnf", "16_uts_k3_p_t1.cnf"]
 
-    # filename_only  = filename.split("/")[-1]
-    # if filename_only.count(".") > 1:
-    #     filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    # if filename_only not in ecai23:
-    #     exit(2)
+    filename_only  = filename.split("/")[-1]
+    if filename_only.count(".") > 1:
+        filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
+    if filename_only in ecai23:
+        exit(2)
 
     # run(alg_type, d, filename,  seed)
-    out_folder = "./results/" + folder + "_" + inobj + "/"
+    out_folder = "./results2/" + folder + "_" + inobj + "/"
     # out_folder = "./results/" + folder + "_NO_COMPILE_2_" + inobj + "/"
 
 
