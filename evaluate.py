@@ -17,7 +17,7 @@ import pylatex as px
 from sklearn.metrics.pairwise import euclidean_distances,manhattan_distances
 from shapely.geometry import Polygon
 from shapely.ops import polygonize, unary_union
-
+import statistics
 class Logger:
 
     def __init__(self, filename, column_names, expr_data, out_folder, compile=False):
@@ -1421,6 +1421,9 @@ def average_efficiency_WMC_MC(folders, outputfile, title, labels, min_n, columns
     all_expr_names_count = {}
     nb_exps = 0
     smallest_n = 600
+
+    best_x = 0
+    best_y = 0
     if subfolder != "":
         outputfile = outputfile + subfolder
         title = title + subfolder
@@ -1467,6 +1470,9 @@ def average_efficiency_WMC_MC(folders, outputfile, title, labels, min_n, columns
     if min_n > smallest_n:
         smallest_n = min_n
     print("-----------------------SMALLEST N", smallest_n)
+    best_ratio_x = [0] * (smallest_n+1)
+    best_ratio_y = [0] * (smallest_n+1)
+    best_dist = [100000] * (smallest_n+1)
     # print(nb_exps)
     # for e in all_expr_names_count:
     #     print(e, all_expr_names_count[e])
@@ -1508,6 +1514,30 @@ def average_efficiency_WMC_MC(folders, outputfile, title, labels, min_n, columns
                     mc_to_average.append(sampled_mc_data.copy())
 
 
+            print("-------------------------------------",f,"-------------------------------------------------")
+            min_wmc = [ min([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ])  for i in range(len(wmc_to_average[0])) ]
+            max_wmc = [ max([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ])  for i in range(len(wmc_to_average[0])) ]
+            variance_wmc = [ statistics.variance([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ])  for i in range(len(wmc_to_average[0])) ]
+
+            min_size = [min([size_to_average[j][i] for j in range(len(size_to_average))]) for i in
+                        range(len(size_to_average[0]))]
+            max_size = [max([size_to_average[j][i] for j in range(len(size_to_average))]) for i in
+                        range(len(size_to_average[0]))]
+            variance_size = [statistics.variance([size_to_average[j][i] for j in range(len(size_to_average))]) for i in
+                             range(len(size_to_average[0]))]
+
+            # print("wmc min", "wmc max", "wmc variance", "size min", "size max", "size variance" )
+            print( f)
+            # print(min_wmc)
+            # print(max_wmc)
+            # print(variance_wmc)
+            # print(min_size)
+            # print(max_size)
+            # print(variance_size)
+            print("min, max, average variance")
+            print(min(variance_wmc), max(variance_wmc), sum(variance_wmc)/len(variance_wmc))
+            print(min(variance_size), max(variance_size), sum(variance_size)/len(variance_size))
+            print("-------------------------------------",f,"-------------------------------------------------")
             #create average and plot
             exprs_to_avg = len(wmc_to_average)
             print("-------------- Expr to avg", f, l, exprs_to_avg)
@@ -1516,16 +1546,41 @@ def average_efficiency_WMC_MC(folders, outputfile, title, labels, min_n, columns
 
             avg_mc = [ sum([ mc_to_average[j][i] for j in range(len(mc_to_average)) ]) / exprs_to_avg for i in range(len(mc_to_average[0]))]
 
+
+
             fname = f.split("_")[-1]
             if "rand_dynamic" in f:
                 fname = "random"
+            print(fname)
+            exit(12)
+            if "WMC" not in fname:
+                dist_index = 0
+                for i in range(len(size_to_average[0])):
+                    for j in range(len(mc_to_average)):
+                        ex = size_to_average[j][i]
+                        ey = wmc_to_average[j][i]
+                        dist = get_distance([[0, 1]], [[ex, ey ]], 'euclidean')
+                        print(dist)
+                        if dist <= best_dist[dist_index]:
+                            best_ratio_x[dist_index] = ex
+                            best_ratio_y[dist_index] =ey
+                            best_dist[dist_index] = dist
+
+                    dist_index+=1
+
             ax1.scatter(avg_size, avg_wmc, c=colors[index], label=HEUR_NAMES[fname]+" "+l+" WMC", marker=marks[index])
             ax1.plot(avg_size, avg_wmc, c=colors[index], alpha=0.7, linewidth=1)
             index +=1
 
-            ax1.scatter(avg_size, avg_mc, c=colors[index], label=HEUR_NAMES[fname] + " " + l + " MC" , marker=marks[index])
-            ax1.plot(avg_size, avg_mc, c=colors[index], alpha=0.7, linewidth=1)
-            index +=1
+            # ax1.scatter(avg_size, avg_mc, c=colors[index], label=HEUR_NAMES[fname] + " " + l + " MC" , marker=marks[index])
+            # ax1.plot(avg_size, avg_mc, c=colors[index], alpha=0.7, linewidth=1)
+            # index +=1
+
+    #for each heuristic get virtual best
+    print(min(best_ratio_x[1:]), max(best_ratio_x[1:]), best_ratio_x)
+    print(min(best_ratio_y[1:]), max(best_ratio_y[1:]), best_ratio_y)
+    ax1.scatter(best_ratio_x, best_ratio_y, c="black", label="virtual best ", marker=marks[index])
+    ax1.plot(best_ratio_x, best_ratio_y,  c="black", alpha=0.7, linewidth=1)
 
     plt.ylim(0, 1)
     plt.xlim(1, 0)
@@ -3276,6 +3331,7 @@ def best_ratio_per_alg(folders, labels, columns, subfolder=""):
     #                 stat_count+=1
     #                 print(e, best_ratio_per_instance[e]['ratio'], algs_stats[best_f]["dynamic"][e]['ratio'] )
     # print(stat_count)
+    
 
 
 def histogram_of_best_points_per_instance(folders, labels, columns, distance="euclidean"):
@@ -4054,7 +4110,6 @@ def create_time_table_d4(folders, labels, columns, nocompile=False, cutoff={}):
 
 
 
-
 if __name__ == "__main__":
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
@@ -4485,10 +4540,10 @@ if __name__ == "__main__":
     filter_conflict = False
 
     out_file = "./results/Dataset_preproc_avg_MC_and_WMC"
-    average_efficiency_WMC_MC(expr_folders, out_file +"efficiency", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+    average_efficiency_WMC_MC(expr_folders, out_file +"_VIRTUAL_BEST_efficiency", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
                        filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
-    average_ratio_MC_WMC(expr_folders, out_file +"ratio", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
-                  filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
+    # average_ratio_MC_WMC(expr_folders, out_file +"ratio", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+    #               filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     exit(8)
 
     # out_file = "./results/Benchmark_preproc2_avg_weighted_"
