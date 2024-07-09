@@ -1470,9 +1470,11 @@ def average_efficiency_WMC_MC(folders, outputfile, title, labels, min_n, columns
     if min_n > smallest_n:
         smallest_n = min_n
     print("-----------------------SMALLEST N", smallest_n)
+    #----------------------- VIRTUAL BEST
     best_ratio_x = [0] * (smallest_n+1)
     best_ratio_y = [0] * (smallest_n+1)
     best_dist = [100000] * (smallest_n+1)
+    # ----------------------- VIRTUAL BEST
     # print(nb_exps)
     # for e in all_expr_names_count:
     #     print(e, all_expr_names_count[e])
@@ -1513,31 +1515,27 @@ def average_efficiency_WMC_MC(folders, outputfile, title, labels, min_n, columns
                     #MC
                     mc_to_average.append(sampled_mc_data.copy())
 
-
-            print("-------------------------------------",f,"-------------------------------------------------")
-            min_wmc = [ min([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ])  for i in range(len(wmc_to_average[0])) ]
-            max_wmc = [ max([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ])  for i in range(len(wmc_to_average[0])) ]
-            variance_wmc = [ statistics.variance([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ])  for i in range(len(wmc_to_average[0])) ]
-
-            min_size = [min([size_to_average[j][i] for j in range(len(size_to_average))]) for i in
-                        range(len(size_to_average[0]))]
-            max_size = [max([size_to_average[j][i] for j in range(len(size_to_average))]) for i in
-                        range(len(size_to_average[0]))]
-            variance_size = [statistics.variance([size_to_average[j][i] for j in range(len(size_to_average))]) for i in
-                             range(len(size_to_average[0]))]
-
-            # print("wmc min", "wmc max", "wmc variance", "size min", "size max", "size variance" )
-            print( f)
-            # print(min_wmc)
-            # print(max_wmc)
-            # print(variance_wmc)
-            # print(min_size)
-            # print(max_size)
-            # print(variance_size)
-            print("min, max, average variance")
-            print(min(variance_wmc), max(variance_wmc), sum(variance_wmc)/len(variance_wmc))
-            print(min(variance_size), max(variance_size), sum(variance_size)/len(variance_size))
-            print("-------------------------------------",f,"-------------------------------------------------")
+            # ----------------------- VIRTUAL BEST
+            # print("-------------------------------------",f,"-------------------------------------------------")
+            # min_wmc = [ min([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ])  for i in range(len(wmc_to_average[0])) ]
+            # max_wmc = [ max([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ])  for i in range(len(wmc_to_average[0])) ]
+            # variance_wmc = [ statistics.variance([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ])  for i in range(len(wmc_to_average[0])) ]
+            #
+            # min_size = [min([size_to_average[j][i] for j in range(len(size_to_average))]) for i in
+            #             range(len(size_to_average[0]))]
+            # max_size = [max([size_to_average[j][i] for j in range(len(size_to_average))]) for i in
+            #             range(len(size_to_average[0]))]
+            # variance_size = [statistics.variance([size_to_average[j][i] for j in range(len(size_to_average))]) for i in
+            #                  range(len(size_to_average[0]))]
+            #
+            # # print("wmc min", "wmc max", "wmc variance", "size min", "size max", "size variance" )
+            # print( f)
+            # # print(min_wmc)
+            # print("min, max, average variance")
+            # print(min(variance_wmc), max(variance_wmc), sum(variance_wmc)/len(variance_wmc))
+            # print(min(variance_size), max(variance_size), sum(variance_size)/len(variance_size))
+            # print("-------------------------------------",f,"-------------------------------------------------")
+            # ----------------------- VIRTUAL BEST
             #create average and plot
             exprs_to_avg = len(wmc_to_average)
             print("-------------- Expr to avg", f, l, exprs_to_avg)
@@ -1552,7 +1550,6 @@ def average_efficiency_WMC_MC(folders, outputfile, title, labels, min_n, columns
             if "rand_dynamic" in f:
                 fname = "random"
             print(fname)
-            exit(12)
             if "WMC" not in fname:
                 dist_index = 0
                 for i in range(len(size_to_average[0])):
@@ -1576,11 +1573,13 @@ def average_efficiency_WMC_MC(folders, outputfile, title, labels, min_n, columns
             # ax1.plot(avg_size, avg_mc, c=colors[index], alpha=0.7, linewidth=1)
             # index +=1
 
+    # ----------------------- VIRTUAL BEST
     #for each heuristic get virtual best
-    print(min(best_ratio_x[1:]), max(best_ratio_x[1:]), best_ratio_x)
-    print(min(best_ratio_y[1:]), max(best_ratio_y[1:]), best_ratio_y)
-    ax1.scatter(best_ratio_x, best_ratio_y, c="black", label="virtual best ", marker=marks[index])
-    ax1.plot(best_ratio_x, best_ratio_y,  c="black", alpha=0.7, linewidth=1)
+    # print(min(best_ratio_x[1:]), max(best_ratio_x[1:]), best_ratio_x)
+    # print(min(best_ratio_y[1:]), max(best_ratio_y[1:]), best_ratio_y)
+    # ax1.scatter(best_ratio_x, best_ratio_y, c="black", label="virtual best ", marker=marks[index])
+    # ax1.plot(best_ratio_x, best_ratio_y,  c="black", alpha=0.7, linewidth=1)
+    # ----------------------- VIRTUAL BEST
 
     plt.ylim(0, 1)
     plt.xlim(1, 0)
@@ -4115,13 +4114,15 @@ if __name__ == "__main__":
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
     # alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
     # alg_types = [  "static" ]
-    alg_types = [  "dynamic" ]
-    FOLDER = "Dataset_preproc_final"
+    alg_types = [  "dynamic" , "static"]
+    FOLDER = "Dataset_preproc"
+    # FOLDER = "Dataset_preproc_final"
     # FOLDER = "Dataset_preproc_NO_COMPILE_2"
-    HEUR_NAMES = {"WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random"}
+    HEUR_NAMES = {"MC/": "actual_MC", "WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random"}
     # FOLDER = "Dataset_preproc_part2"
     # expr_folders =  [  "./results/"+FOLDER+"_rand_dynamic/"]
-    expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    # expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    expr_folders =  [ "./results/"+FOLDER+"_MC/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
     # expr_folders = [ "./results/Benchmark_preproc2_wscore_half/" ,"./results/Benchmark_preproc2_wscore_estimate/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
@@ -4529,7 +4530,7 @@ if __name__ == "__main__":
     # create_time_table_d4(expr_folders, alg_types, columns, nocompile=True, cutoff=cutoff)
     # exit(4)
 
-    subfolder = ""
+    subfolder = "planning"
     obj = "MC"
     # obj = "WMC"
     out_file = "./results/"+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
@@ -4539,12 +4540,14 @@ if __name__ == "__main__":
     filter_timeout = False
     filter_conflict = False
 
-    out_file = "./results/Dataset_preproc_avg_MC_and_WMC"
-    average_efficiency_WMC_MC(expr_folders, out_file +"_VIRTUAL_BEST_efficiency", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
-                       filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
+    out_file = "./results/Dataset_preproc_avg_MC"
+    # out_file = "./results/Dataset_preproc_avg_MC_and_WMC"
+    # average_efficiency_WMC_MC(expr_folders, out_file +"_efficiency", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+    # average_efficiency_WMC_MC(expr_folders, out_file +"_VIRTUAL_BEST_efficiency", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+    #                    filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     # average_ratio_MC_WMC(expr_folders, out_file +"ratio", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
     #               filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
-    exit(8)
+    # exit(8)
 
     # out_file = "./results/Benchmark_preproc2_avg_weighted_"
     if not same_expr:
