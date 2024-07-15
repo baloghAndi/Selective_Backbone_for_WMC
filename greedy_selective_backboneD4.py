@@ -13,7 +13,7 @@ import sys
 import math
 import utils
 
-def get_best_assignment(csp, obj_type, NO_COMPILE):
+def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
     "Assumption is that here we already have the bdd extended with the partial assignment"
     best_variable = -1
     best_value = -1
@@ -31,6 +31,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE):
     best_weight = 0
     best_tb = 0
     backbone_assigned = False
+    assign_queue = _queue.PriorityQueue()
     if len(csp.trivial_backbone) > 0:
         for tb in csp.trivial_backbone:
             if abs(tb) in csp.partial_assignment.assigned:
@@ -87,6 +88,8 @@ def get_best_assignment(csp, obj_type, NO_COMPILE):
                         elif obj_type == "score_estimate":
                             score_of_assignment = csp.calculate_score(v, value, "estimate", weighted=False)
                         # node_count, size, wmc, mc, comp_time = csp.check_wmc_of(v, value)
+                    elif obj_type == "hybrid_wmc":
+                        score_of_assignment = csp.calculate_score(v, value, "estimate", weighted=True)
 
                     # elif obj_type == "count":
                     #     opp_score = csp.opposite_occurance(v, value)
@@ -101,6 +104,9 @@ def get_best_assignment(csp, obj_type, NO_COMPILE):
                     else:
                         print("ERROR")
                         exit(666)
+                    weight = csp.literal_weights[value][v - 1]
+                    assign_queue.put(tuple([-1 * score_of_assignment, -1 * weight, v, value]))
+
                     if obj_type!="count" :
                         if (score_of_assignment > best_cost) or ( obj_type=="WMC" and score_of_assignment == best_cost and csp.literal_weights[value][v-1] >  csp.literal_weights[best_value][best_variable-1] ):
                             best_variable=v
@@ -118,8 +124,46 @@ def get_best_assignment(csp, obj_type, NO_COMPILE):
                             best_size = size
                             best_node_count = node_count
                         #print("best: ", v, value)
+    if obj_type == "hybrid_wmc" and not backbone_assigned:
+        logger.progress_log.write("E:"+ str([best_variable, best_value, best_cost])+"\n")
+        logger.progress_log.flush()
+        actual_wmc_queue = _queue.PriorityQueue()
+        while not assign_queue.empty():
+            top_tuple = assign_queue.get()
+            # print(top_tuple)
+            score = abs(top_tuple[0])
+            if score/abs(best_cost) >= 0.9:
+                var = top_tuple[2]
+                val = top_tuple[3]
+                nb_nodes, nb_edges,  wmc, comp_time = csp.check_wmc_of(var,val, compile=False)
+                weight = csp.literal_weights[val][var - 1]
+                actual_wmc_queue.put(tuple([-1 * wmc, -1 * weight, var, val]))
+                # logger.progress_log.write(str(top_tuple)+"\n")
+                # logger.progress_log.flush()
+            else:
+                break
+        best = actual_wmc_queue.queue[0]
+        best_variable = best[2]
+        best_value =  best[3]
+        best_cost =  best[0]
+        best_size = -1
+        best_node_count = -1
+        # logger.progress_log.write("order after actual wmc calculation: \n")
+        # logger.progress_log.flush()
+        logger.progress_log.write("A:"+ str([best_variable, best_value, best_cost]) + "\n")
+        logger.progress_log.write("----- \n")
+        logger.progress_log.flush()
+        # while not actual_wmc_queue.empty():
+        #     top_tuple = actual_wmc_queue.get()
+        #     logger.progress_log.write(str(top_tuple)+"\n")
+            # logger.progress_log.flush()
+    elif backbone_assigned:
+        logger.progress_log.write("backbone" + "\n")
+        logger.progress_log.write(str([best_variable, best_value, best_cost]) + "\n")
+        logger.progress_log.write("----- \n")
+
     if not NO_COMPILE:
-        if (obj_type == "count" or "score" in obj_type) or backbone_assigned:
+        if (obj_type == "count" or "score" in obj_type) or backbone_assigned or obj_type == "hybrid_wmc":
             nb_nodes, nb_edges,  best_wmc, comp_time = csp.check_wmc_of(best_variable, best_value)
             best_size = nb_edges
             best_node_count = nb_nodes
@@ -139,7 +183,7 @@ def dynamic_greedy_pWSB(csp, max_p, obj_type,logger, NO_COMPILE=False):
     while p < max_p:
         #select the assignment that maximizes the score
         p += 1
-        best_variable, best_value, best_cost, best_size, best_node_count, mc, wmc = get_best_assignment(csp,obj_type, NO_COMPILE)
+        best_variable, best_value, best_cost, best_size, best_node_count, mc, wmc = get_best_assignment(csp,obj_type, NO_COMPILE,logger)
         print("assign ",p , best_variable, best_value, best_cost, wmc, mc)
 
         elapsed = logger.get_time_elapsed()
@@ -289,6 +333,7 @@ def order_var_assignments(csp, obj_type):
                     score_of_assignment, size, node_count, temp_root  = csp.calculate_g2(v, value)
                 elif "ratio" in obj_type:
                     score_of_assignment, size, node_count, temp_root = csp.check_wmc_ratio_of(v, value)
+
                 else:
                     print("Something went wrong")
                     exit(6)
@@ -305,7 +350,7 @@ def order_var_assignments(csp, obj_type):
                     weight = 1
                 assign_queue.put(tuple([-1*score_of_assignment,-1*weight, v, value, size, node_count]))
 
-    # csp.root_node.deref() #not sure if this is needed
+
     return assign_queue
 
 def random_var_assignments(csp,seed): #TODO
@@ -492,8 +537,7 @@ def static_greedy_pWSB(csp, obj_type,logger,  NO_COMPILE=False):
                     score_of_assignment, size, node_count, temp_root = csp.check_wmc_ratio_of(variable, value)
                 elif obj_type == "g2":
                     score_of_assignment, size, node_count, temp_root = csp.calculate_g2(variable, value)
-                elif obj_type == "hybrid_wmc":
-                    pass
+
                 else:
                     print("ERROR")
                     exit(666)
@@ -577,6 +621,8 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE
     # needt to save first line in log to add it to all consequtive stat files
     maxp = len(cnf.literals)
     if alg_type == "dynamic":
+        logger.progress_log.write(filename + "\n")
+        logger.progress_log.flush()
         dynamic_greedy_pWSB(cnf, maxp, obj_type, logger,NO_COMPILE)
     elif alg_type == "dynamic_ratio":
         dynamic_greedy_pWSB(cnf, maxp, "dynamic_ratio",logger,NO_COMPILE)
@@ -633,6 +679,13 @@ if __name__ == "__main__":
     inobj = sys.argv[3] #hybrid_wmc
     alg_type = sys.argv[4]
     NO_COMPILE = False
+
+    # d = "./input/Dataset_preproc/"
+    # folder = d.split("/")[-2]
+    # filename = d+"01_istance_K3_N15_M45_01.cnf"
+    # inobj = "hybrid_wmc"
+    # alg_type = "dynamic"
+    # NO_COMPILE = False
 
     ecai23 = ['01_istance_K3_N15_M45_01.cnf', '01_istance_K3_N15_M45_02.cnf', '01_istance_K3_N15_M45_03.cnf',
               '01_istance_K3_N15_M45_04.cnf', '01_istance_K3_N15_M45_05.cnf', '01_istance_K3_N15_M45_06.cnf',
@@ -693,11 +746,12 @@ if __name__ == "__main__":
     filename_only  = filename.split("/")[-1]
     if filename_only.count(".") > 1:
         filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    if filename_only in ecai23:
+    if filename_only not in ecai23:
         exit(2)
 
     # run(alg_type, d, filename,  seed)
-    out_folder = "./results2/" + folder + "_" + inobj + "/"
+    out_folder = "./results_aaai/" + folder + "_" + inobj + "/"
+    # out_folder = "./results2/" + folder + "_" + inobj + "/"
     # out_folder = "./results/" + folder + "_NO_COMPILE_2_" + inobj + "/"
 
 

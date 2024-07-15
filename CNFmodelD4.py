@@ -212,6 +212,32 @@ class WCNF:
                 comp_time = float(line.split(" ")[-1].strip())
         return nb_nodes, nb_edges, mc, comp_time
 
+    def get_d4_wmc(self, cnf_file, weights_file):
+        """
+        Call d4 on command line and return relevant statistics
+        """
+        #( timeout 1m  time ../../../d4/d4-main/d4 -dDNNF $i -out="./d4/"$outfile.nnf ) 2>&1 | tee  "./d4/"$outfile"_stats".txt`
+        # stats_file = weights_file.replace(".w", "_stats.txt")
+        # f = open(stats_file, "w")
+        # res = subprocess.run(["./d4", "-dDNNF", cnf_file, "-wFile="+weights_file ], stdout=f, text=True, timeout=600)
+        res = subprocess.run(["./d4", "-no-dDNNF", cnf_file, "-wFile="+weights_file, "-mc"], stdout=subprocess.PIPE, text=True)
+        output = res.stdout
+        output = output.split("\n")
+        solve_time = -1
+        for line in output:
+            if line.startswith("s "):
+                scaled_wmc = float(line.split(" ")[-1].strip())
+                if math.isinf(scaled_wmc):
+                    scaled_wmc = int(line.split(" ")[-1].strip().split(".")[0])
+                wmc = scaled_wmc
+                # print("WMC", wmc)
+                # if self.scaled_weights:
+                #     wmc = scaled_wmc / math.pow(2, self.n)
+            elif "Final time:" in line:
+                solve_time = float(line.split(" ")[-1].strip())
+
+        return  wmc, solve_time
+
     def compile_d4_wmc(self, cnf_file, weights_file):
         """
         Call d4 on command line and return relevant statistics
@@ -254,7 +280,7 @@ class WCNF:
         # print("nb_nodes, nb_edges, wmc, mc", nb_nodes, nb_edges, wmc, mc)
         return nb_nodes, nb_edges, wmc, comp_time
 
-    def check_wmc_of(self, var, value):
+    def check_wmc_of(self, var, value, compile=True):
         #LOOK OUT : sdd removes node if its values are interchangeable, looking at global to include both solutions, conditioning doesn't work
         # this way of conjoining  adds another node
         #overwtite cnf file with added clause
@@ -264,7 +290,12 @@ class WCNF:
         #     cnf_f = self.instance_name.replace("_final", "")
         cnf_file_name = self.instance_name.replace(".cnf","_temp"+self.obj_type+self.heur_type+".cnf")
         self.write_cnf_extend(cnf_file_name, [[var]])
-        nb_nodes, nb_edges, wmc, comp_time = self.compile_d4_wmc(cnf_file_name, self.weight_file)
+        if compile:
+            nb_nodes, nb_edges, wmc, comp_time = self.compile_d4_wmc(cnf_file_name, self.weight_file)
+        else:
+            wmc, comp_time = self.get_d4_wmc(cnf_file_name, self.weight_file)
+            nb_nodes = -1
+            nb_edges = -1
         # self.write_cnf()
         return nb_nodes, nb_edges,  wmc,  comp_time
 
@@ -549,6 +580,7 @@ class WCNF:
             return weight * score
         else:
             return score
+
 
     def count_irrelevant_lits(self):
         lit_count = {}

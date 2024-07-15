@@ -24,6 +24,7 @@ class Logger:
         print(os.getcwd())
         self.f = open(filename,"a+")
         self.writer = csv.writer(self.f, delimiter=',')
+        self.progress_log =  open(filename.replace(".csv", ".txt"),"a+")
         self.column_names = column_names
         self.expr_data = expr_data
         self.out_folder = out_folder
