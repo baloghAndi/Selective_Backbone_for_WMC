@@ -518,6 +518,7 @@ class WCNF:
             else:
                 return 100000
         score = 0
+        #TODO: create prerosessing that calculated the counts so we don't run throught the clauses more then once
         if score_type == "half":
             score = 1
         elif score_type == "occratio":

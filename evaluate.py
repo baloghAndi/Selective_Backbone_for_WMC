@@ -198,7 +198,7 @@ class ExprData:
                     save_expr_name = line[0]
                     if save_expr_name.count(".")>1:
                         save_expr_name = save_expr_name.replace(".", "_", save_expr_name.count(".")-1) #actually first . will always be ./input so should skipp that
-                    # print("expr:",line)
+                    print("expr:",line)
                     if len(self.data) > 0: #next expr is starting, need to save current expr data
                         if self.exprs[-1] in self.all_expr_data:
                             print("duplicate expr: ",  self.exprs[-1])
@@ -227,7 +227,7 @@ class ExprData:
                             # elif i ==3 or "." in x or i == self.column_names.index("MC") :
                             #     typed_line.append(float(x)) #read mc as float
                             else:
-                                # print(type(x), float(x))
+                                # print(type(x), x ,i)
                                 # typed_line.append(int(x))
                                 # print(x)
                                 typed_line.append(float(x))
@@ -248,7 +248,7 @@ class ExprData:
                 self.exprs.pop()
                 self.full_expr_name.pop()
 
-        print("@@@@@@@@@@@@@@@@@@@@@@ read stat file:", self.filename, len(self.full_expr_name))
+        print("@@@@@@@@@@@@@@@@@@@@@@ read stat file:", self.filename, len(self.full_expr_name), len(self.all_expr_data))
 
         mc_index = self.column_names.index("MC")
 
@@ -1310,6 +1310,7 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
                 stats_file = folder + "dataset_stats_"+subfolder+ "_" + type + ".csv"
             expr_data = ExprData(columns)
             expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=padding, filter_timeout=filter_timeout, filter_conflict=filter_conflict)
+            print("nb expr: ", len(expr_data.all_expr_data), expr_data.nb_completed_assignments)
 
             percentage_results_wmc, folder_smallest_n = expr_data.get_metric_wrt_initial_per_expr(obj, obj)
             if folder_smallest_n < smallest_n:
@@ -1333,7 +1334,8 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
 
     if min_n > smallest_n:
         smallest_n = min_n
-    print("-----------------------SMALLEST N", smallest_n)
+    print("-----------------------SMALLEST N ")
+    # exit(9)
     # print(nb_exps)
     # for e in all_expr_names_count:
     #     print(e, all_expr_names_count[e])
@@ -4116,13 +4118,15 @@ if __name__ == "__main__":
     # alg_types = [  "static" ]
     alg_types = [  "dynamic" , "static"]
     FOLDER = "Dataset_preproc"
+    result_folder = "./results_aaai/"
     # FOLDER = "Dataset_preproc_final"
     # FOLDER = "Dataset_preproc_NO_COMPILE_2"
     HEUR_NAMES = {"MC/": "actual_MC", "WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random"}
     # FOLDER = "Dataset_preproc_part2"
     # expr_folders =  [  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
-    expr_folders =  [ "./results/"+FOLDER+"_MC/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    # expr_folders =  [ "./results/"+FOLDER+"_MC/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
     # expr_folders = [ "./results/Benchmark_preproc2_wscore_half/" ,"./results/Benchmark_preproc2_wscore_estimate/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
@@ -4174,8 +4178,301 @@ if __name__ == "__main__":
 
     # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
     # exit(5)
+
+    # create_time_table_d4(expr_folders, alg_types, columns, nocompile=True, cutoff=cutoff)
+    # exit(4)
+
+    subfolder = "planning"
+    # obj = "MC"
+    obj = "WMC"
+    out_file = result_folder+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
+    if obj == "MC":
+        out_file = result_folder+"Dataset_preproc_avg_MC_"
+    same_expr = True
+    filter_timeout = False
+    filter_conflict = False
+
+    # out_file = "./results2/Dataset_preproc_avg_MC"
+    # out_file = "./results/Dataset_preproc_avg_MC_and_WMC"
+    # average_efficiency_WMC_MC(expr_folders, out_file +"_efficiency", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+    # average_efficiency_WMC_MC(expr_folders, out_file +"_VIRTUAL_BEST_efficiency", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+    #                    filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
+    # average_ratio_MC_WMC(expr_folders, out_file +"ratio", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+    #               filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
+    # exit(8)
+
+    # out_file = "./results/Benchmark_preproc2_avg_weighted_"
+    if not same_expr:
+        out_file = out_file+"diff_exprs_"
+    if filter_timeout:
+        out_file = out_file+"filterT_"
+    if filter_conflict:
+        out_file = out_file+"filterC_"
+    title = "Average weighted efficiency over dataset "
+    if obj == "MC":
+        title = "Average MC efficiency over instances "
+    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 100, columns, obj, padding=True, same_expr=same_expr,
+                       filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
+    title = "Average weighted ratio over instances"
+    if obj == "MC":
+        title = "Average MC efficiency over instances"
+    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 100, columns, obj, padding=True, same_expr=same_expr,
+                  filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
+    # col = "WMC"
+    # title = "Average weighted " + col
+    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col,
+    #                same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
+    # col = "edge_count"
+    # title = "Average weighted " + col
+    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col,
+    #                same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict , subfolder=subfolder)
+
+    exit(11)
+
+    # read_ratio("paper_data/ratio_table.csv")
+    # plot_init()
+    # count_all_backbones()
+    # exit(666)
+
+    folder = "./aaai_data/DatasetA/"
+    # compile_folder_with_stats(folder)
+    # exit(9)
+
+
+    labels = ["random_1234",  "random_selection_1234",  "random_ratio_selection_1234", "static", "static_ratio", "dynamic", "dynamic_ratio"]
+
+
+    ################ paper results ###################
+
+    # plt.rcParams.update({'font.size': 16})
+    ################### avg dataset A and B
+    # exprs = ["./paper_data/DatasetA/", "./paper_data/DatasetB/"]
+    # outfile = "./paper_data/AB_avg_"
+    # title = "Average efficiency over Dataset A and B"
+    # create_average_efficiency_plot( exprs , outfile+"efficiency.png", title,  labels, 1)
+    # title = "Average ratio over Dataset A and B"
+    # create_average_ratio_plot(  exprs ,  outfile+"ratio.png", title, labels, 1)
+
+    ################### avg iscas
+    # exprs = ["./paper_data/iscas/iscas89/", "./paper_data/iscas/iscas89/" , "./paper_data/iscas/iscas93/","./paper_data/iscas/iscas99/"]
+    # outfile = "./paper_data/iscas_avg50_"
+    # title = "Average efficiency over iscas instances"
+    # create_average_efficiency_plot(exprs, outfile + "efficiency.png", title, labels, 50)
+    # title = "Average ratio over iscas instances"
+    # create_average_ratio_plot(exprs, outfile + "ratio.png", title, labels, 50)
+
+    ################### avg planning
+    # exprs = ["./paper_data/Planning/blocks/", "./paper_data/Planning/bomb/", "./paper_data/Planning/coins/",
+    #          "./paper_data/Planning/comm/",
+    #          "./paper_data/Planning/emptyroom/", "./paper_data/Planning/flip/", "./paper_data/Planning/ring/",
+    #          "./paper_data/Planning/safe/", "./paper_data/Planning/sort/", "./paper_data/Planning/uts/"]
+    # outfile = "./paper_data/planning_avg50_"
+    # title = "Average efficiency over planning instances"
+    # create_average_efficiency_plot(exprs, outfile + "efficiency.png", title, labels, 50)
+    # title = "Average ratio over planning instances"
+    # create_average_ratio_plot(exprs, outfile + "ratio.png", title, labels, 50)
+
+    ################### evaluate folders and average between folders
+    # exprs = ["./paper_data/DatasetA/", "./paper_data/DatasetB/",
+    #          "./paper_data/iscas/iscas89/", "./paper_data/iscas/iscas93/",
+    #          "./paper_data/iscas/iscas99/",
+    # exprs = ["./results/data_sdd/DatasetA/", "./results/data_sdd/DatasetB/" ]
+    # exprs = ["./results/data/DatasetA/", "./results/data/DatasetB/",  "./results/data/iscas89/", "./results/data/iscas93/", "./results/data/iscas99/" ]
+    # columns = ["p", "var", "value",  'n_vars', "MC", "BDD len", 'n_nodes', 'n_reorderings', 'dag_size', 'time']
+
+    # labels = [ "static", "static_ratio", "dynamic", "dynamic_ratio"]#, "random_1234", "random_selection_1234" ]
+    labels = [ "static", "dynamic", "random_selection_1234"]#, "dynamic", "random_selection_1234" ]
+    # exprs = ["./results/wmc2022_track2_private_count/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
+    exprs = ["./results/sdd/wmc2022_track2_private_WMC/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
+    # exprs = ["./results/sdd/wmc2022_track2_private_comp/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
+    # exprs = ["./results/wmc2022_track2_private_MC/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
+    # exprs = ["./results/wmc2022_track2_private_count/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
+    # exprs = ["./results/test/f1g1/", "./results/test/f1g2/","./results/test/f2g1/", "./results/test/f2g2/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
+    # exprs = [  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
+    # columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "SDD size", 'node_count', 'time', 'WMC', 'g2']
+    # columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "g2"]
+
+    # columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC"] #for d4
+    columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "SDD size", 'node_count', 'time', 'WMC', "logWMC"] #for weighted sdd
+    for f in exprs:
+        type = f.split("/")[-2]
+        # title = "Average efficiency over "+type+" instances"
+        # create_average_efficiency_plot([f], f+type+"_avg_efficiency", title, labels, 1, columns)
+        # title = "Average ratio over "+type+" instances"
+        # create_average_ratio_plot([f], f+type+"_avg_ratio", title, labels, 1, columns)
+        title = "Average weighted efficiency over " + type + " instances"
+        create_average_efficiency_plot([f], f+type+"_avg_weighted_efficiency", title, labels, 1, columns)
+        title = "Average weighted ratio over " + type + " instances"
+        create_average_ratio_plot([f], f+type+"_avg_weighted_ratio", title, labels, 1, columns)
+        evaluate_folder( f, labels, columns )
+    exit(1)
+
+    ##################
+    # columns =  ["p", "var", "value", "MC", "BDD len", 'n_vars', 'n_nodes', 'n_reorderings', 'dag_size', 'time']
+    # type = "dynamic_ratio"
+    # stats_file = "./paper_data/Planning/uts/" + "dataset_stats_" + type + "_reorder.csv"
+    # expr_data_dynamic2 = ExprData(columns)
+    # expr_data_dynamic2.read_stats_file(stats_file)
+    # expr_data_dynamic2.best_ratio_table_per_alg()
+
+    ###################
+    # exprs = ["./paper_data/DatasetA/", "./paper_data/DatasetB/",
+    #          "./paper_data/iscas/iscas89/", "./paper_data/iscas/iscas93/",
+    #          "./paper_data/iscas/iscas99/",
+    #     "./paper_data/Planning/blocks/", "./paper_data/Planning/bomb/",  "./paper_data/Planning/coins/", "./paper_data/Planning/comm/",
+    #          "./paper_data/Planning/emptyroom/", "./paper_data/Planning/flip/", "./paper_data/Planning/ring/",
+    #               "./paper_data/Planning/safe/", "./paper_data/Planning/sort/", "./paper_data/Planning/uts/" ]
+    # labels = ["random_1234", "random_selection_1234",  "random_ratio_selection_1234", "static", "static_ratio", "dynamic", "dynamic_ratio"]
+    # # create_best_ratio_table("paper_data/ratio_table.csv", exprs, labels, aggregate=True)
+
+    # create_time_table(exprs, labels)
+    # metric = "mc"
+    # read_ratio_table("paper_data/base_ratio_table.csv", metric)
+    # exprs = ["./paper_data/DatasetA/"]
+    # for f in exprs:
+    #     evaluate_folder(f, labels)
+
+    ################ end paper results ###################
+
+
+    # look at ratio table
+
+    # exprs = ["./paper_data/DatasetA/", "./paper_data/DatasetB/",
+    #          "./paper_data/iscas/iscas89/", "./paper_data/iscas/iscas93/",
+    #          "./paper_data/iscas/iscas99/",
+    #          "./paper_data/Planning/blocks/", "./paper_data/Planning/bomb/", "./paper_data/Planning/coins/",
+    #          "./paper_data/Planning/comm/",
+    #          "./paper_data/Planning/emptyroom/", "./paper_data/Planning/flip/", "./paper_data/Planning/ring/",
+    #          "./paper_data/Planning/safe/", "./paper_data/Planning/sort/", "./paper_data/Planning/uts/"]
+    # create_best_ratio_tables(exprs)
+
+    # count_all_backbones()
+    # folder = "./paper_data/DatasetA/"
+
+
+
+
+    # alg_types = [ "init", "random", "random_selection", "static","static_ratio", "dynamic","dynamic_ratio"]
+    #
+    # exprs = ["./paper_data/BayesianNetwork/","./paper_data/DatasetA/","./paper_data/DatasetB/",
+    #          "./paper_data/iscas/iscas89/", "./paper_data/iscas/iscas89/" , "./paper_data/iscas/iscas93/","./paper_data/iscas/iscas99/",
+    #          "./paper_data/Planning/base/", "./paper_data/Planning/blocks/",  "./paper_data/Planning/bomb/",  "./paper_data/Planning/coins/",
+    #          "./paper_data/Planning/flip/", "./paper_data/Planning/sort/", "./paper_data/Planning/uts/", "./paper_data/Planning/comm/"]
+
+    # exprs = ["./paper_data/Planning/comm/", "./paper_data/Planning/coins/"]
+    # exprs = ["./aaai_data/datasetA/"]
+    # for e in exprs:
+    #     evaluate_folder(e, ["lit", "opp"])
+
+    ############################ AAAI eval #############################
+
+    # exprs = [   "./aaai_data/output/Planning/blocks/",    "./aaai_data/output/Planning/ring/",
+    #     "./aaai_data/output/Planning/sort/" ]
+    expr_folders = [         "./aaai_data/output/DatasetA/"
+                             # "./aaai_data/output/DatasetB/"
+                             #     "./aaai_data/output/iscas/iscas93/",
+                             #          "./aaai_data/output/iscas/iscas89/",
+                             #          "./aaai_data/output/iscas/iscas99/"
+                             #          "./aaai_data/output/Planning/blocks/",
+                             #           "./aaai_data/output/Planning/bomb/",
+                             #                "./aaai_data/output/Planning/coins/",
+                             #           "./aaai_data/output/Planning/comm/",
+                             #     "./aaai_data/output/Planning/emptyroom/",
+                             #     "./aaai_data/output/Planning/flip/",
+                             #          "./aaai_data/output/Planning/ring/",
+                             #          "./aaai_data/output/Planning/safe/",
+                             #          "./aaai_data/output/Planning/comm/",
+                             #          "./aaai_data/output/Planning/uts/"
+
+                             ]
+    # exprs = ["./aaai_data/output/Planning/coins/"]
+
+    # exprs = [  "./aaai_data/output/DatasetA/", "./aaai_data/output/DatasetB/" ,
+    #"./aaai_data/output/Planning/coins/",
+    # "./aaai_data/output/DatasetB/" # , "./aaai_data/output/DatasetB/",
+    #    "./aaai_data/output/iscas/iscas89/",
+    # exprs = ["./aaai_data/output/iscas/iscas93/","./aaai_data/output/iscas/iscas99/"]
+    # labels = ["dynamic_opp", "dynamic_lit"]
+    # labels = [ "dlisTieBreakPurity", "StrictDlisTieBreakPurity", "dynamic_lit"] #, "dynamic_opp","dynamic_wopp", "dynamic_lit", "dynamic_wlit", "dynamic_ratio", "dynamic", "random_ratio_selection"]
+    # colors = ["blue", "cyan", mcolors.CSS4_COLORS["gold"], "orange", "green", "olive", 'red', "grey"]
+
+
+    for exp_folder in expr_folders:
+        labels = ["dynamic_opp","dynamic_wopp", "dynamic_lit", "dynamic_wlit", "static_opp","static_wopp", "static_lit", "static_wlit", "dynamic_ratio", "dynamic", "random_ratio_selection"]
+        # labels = ["dynamic_opp","dynamic_wopp", "dynamic_lit", "dynamic_wlit", "dynamic_ratio", "dynamic", "random_ratio_selection"]
+        # labels = ["dynamic_opp","dynamic_wopp", "dynamic_lit", "dynamic_wlit",  "dynamic_ratio", "dynamic", "random_ratio_selection", "StrictDlisTieBreakPurity", "dlisRelativePurity"]
+        columns = ["p", "var", "value", "nb_vars", "nb_cls", "obj", 'time', "MC", "dag_size", "compilation_time"] #this variable is getting modified somewhere in the code below
+        type = exp_folder.split("/")[-2]
+        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",type)
+        title = "Average efficiency over "+type+" instances"
+        create_average_efficiency_plot([exp_folder], exp_folder+type+"_avg_efficiency", title, labels, 1, columns)
+        title = "Average ratio over "+type+" instances"
+        create_average_ratio_plot([exp_folder], exp_folder+type+"_avg_ratio", title, labels, 1, columns)
+        evaluate_folder( exp_folder, labels, columns)
+
+
+    #use this code to convert past csv expr results to new ones
+    # exprs = [
+    #     # "./aaai_data/output/Planning/blocks/",
+    #     #       "./aaai_data/output/Planning/bomb/","./aaai_data/output/Planning/coins/",
+    #     #       "./aaai_data/output/Planning/comm/", "./aaai_data/output/Planning/emptyroom/",
+    #     # "./aaai_data/output/Planning/flip/",
+    #          "./aaai_data/output/Planning/ring/", "./aaai_data/output/Planning/safe/",
+    #          "./aaai_data/output/Planning/sort/", "./aaai_data/output/Planning/uts/",
+    #     "./aaai_data/output/DatasetA/", "./aaai_data/output/DatasetB/",
+    #       "./aaai_data/output/iscas/iscas89/", "./aaai_data/output/iscas/iscas93/",
+    #           "./aaai_data/output/iscas/iscas99/" ]
+    # for folder in exprs:
+    #     print(folder)
+    #     stats_file = folder + "dataset_stats_static_opp.csv"
+    #     columns = ["p", "var", "value", "opp", 'time', "MC", "dag_size", "compilation_time"]
+    #     columns = ["p", "var", "value", "nb_vars", "nb_cls", "obj", 'time', "MC", "dag_size", "compilation_time"]
+    #
+    #     expr_data = ExprData(columns)
+    #     expr_data.read_stats_file(stats_file)
+    #     exp_names = expr_data.exprs
+    #
+    #     # stats_file = folder + "dataset_stats_" + type + "_reorder.csv"
+    #     stats_file = folder + "dataset_stats_dynamic_reorder.csv"
+    #     columns2 = ["p", "var", "value", "MC", "BDD len", 'n_vars', 'n_nodes', 'n_reorderings', 'dag_size', 'time']
+    #
+    #     expr_data2 = ExprData(columns2)
+    #     expr_data2.read_stats_file(stats_file)
+    #     expr_data2.convert_to_columns(columns, exp_names)
+    #     print(expr_data.all_expr_data)
+    #
+    #
+    #
+    #     stats_file = folder + "dataset_stats_random_ratio_selection_1234_reorder.csv"
+    #     expr_data2 = ExprData(columns2)
+    #     expr_data2.read_stats_file(stats_file)
+    #     print("------------------------------------")
+    #     print(exp_names)
+    #     print(expr_data.exprs)
+    #     if len(exp_names) < len(expr_data2.exprs):
+    #         expr_data2.exprs = expr_data2.exprs[:-1]
+    #     print(exp_names)
+    #     print(expr_data.exprs)
+    #     print("------------------------------------")
+    #     expr_data2.convert_to_columns(columns, exp_names)
+    #     print(expr_data.all_expr_data)
+    #
+    #     stats_file = folder + "dataset_stats_dynamic_ratio_reorder.csv"
+    #     expr_data2 = ExprData(columns2)
+    #     expr_data2.read_stats_file(stats_file)
+    #     print("------------------------------------")
+    #     print(exp_names)
+    #     print(expr_data.exprs)
+    #     if len(exp_names) < len(expr_data2.exprs):
+    #         expr_data2.exprs = expr_data2.exprs[:-1]
+    #     print(exp_names)
+    #     print(expr_data.exprs)
+    #     print("------------------------------------")
+    #     expr_data2.convert_to_columns(columns, exp_names)
+    #     print(expr_data.all_expr_data)
+
     cutoff = {'half/': {
-        'static': {'01_istance_K3_N15_M45_01.cnf': 6.0, '01_istance_K3_N15_M45_02.cnf': 3.0,
+       'static': {'01_istance_K3_N15_M45_01.cnf': 6.0, '01_istance_K3_N15_M45_02.cnf': 3.0,
                    '01_istance_K3_N15_M45_03.cnf': 10.0, '01_istance_K3_N15_M45_04.cnf': 2.0,
                    '01_istance_K3_N15_M45_05.cnf': 5.0, '01_istance_K3_N15_M45_06.cnf': 6.0,
                    '01_istance_K3_N15_M45_07.cnf': 7.0, '01_istance_K3_N15_M45_08.cnf': 7.0,
@@ -4526,295 +4823,3 @@ if __name__ == "__main__":
                      '16_uts_k1_p_t4.cnf': 48.0, '16_uts_k1_p_t5.cnf': 5.0, '16_uts_k1_p_t6.cnf': 1.0,
                      '16_uts_k1_p_t7.cnf': 25.0, '16_uts_k1_p_t8.cnf': 102.0, '16_uts_k1_p_t9.cnf': 2.0,
                      '16_uts_k2_p_t1.cnf': 102.0, '16_uts_k2_p_t2.cnf': 37.0, '16_uts_k3_p_t1.cnf': 200.0}}}
-
-    # create_time_table_d4(expr_folders, alg_types, columns, nocompile=True, cutoff=cutoff)
-    # exit(4)
-
-    subfolder = "planning"
-    obj = "MC"
-    # obj = "WMC"
-    out_file = "./results/"+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
-    if obj == "MC":
-        out_file = "./results/Dataset_preproc_avg_MC_"
-    same_expr = True
-    filter_timeout = False
-    filter_conflict = False
-
-    out_file = "./results/Dataset_preproc_avg_MC"
-    # out_file = "./results/Dataset_preproc_avg_MC_and_WMC"
-    # average_efficiency_WMC_MC(expr_folders, out_file +"_efficiency", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
-    # average_efficiency_WMC_MC(expr_folders, out_file +"_VIRTUAL_BEST_efficiency", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
-    #                    filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
-    # average_ratio_MC_WMC(expr_folders, out_file +"ratio", "", alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
-    #               filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
-    # exit(8)
-
-    # out_file = "./results/Benchmark_preproc2_avg_weighted_"
-    if not same_expr:
-        out_file = out_file+"diff_exprs_"
-    if filter_timeout:
-        out_file = out_file+"filterT_"
-    if filter_conflict:
-        out_file = out_file+"filterC_"
-    title = "Average weighted efficiency over dataset "
-    if obj == "MC":
-        title = "Average MC efficiency over instances "
-    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
-                       filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
-    title = "Average weighted ratio over instances"
-    if obj == "MC":
-        title = "Average MC efficiency over instances"
-    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
-                  filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
-    # col = "WMC"
-    # title = "Average weighted " + col
-    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col,
-    #                same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
-    # col = "edge_count"
-    # title = "Average weighted " + col
-    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col,
-    #                same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict , subfolder=subfolder)
-
-    exit(11)
-
-    # read_ratio("paper_data/ratio_table.csv")
-    # plot_init()
-    # count_all_backbones()
-    # exit(666)
-
-    folder = "./aaai_data/DatasetA/"
-    # compile_folder_with_stats(folder)
-    # exit(9)
-
-
-    labels = ["random_1234",  "random_selection_1234",  "random_ratio_selection_1234", "static", "static_ratio", "dynamic", "dynamic_ratio"]
-
-
-    ################ paper results ###################
-
-    # plt.rcParams.update({'font.size': 16})
-    ################### avg dataset A and B
-    # exprs = ["./paper_data/DatasetA/", "./paper_data/DatasetB/"]
-    # outfile = "./paper_data/AB_avg_"
-    # title = "Average efficiency over Dataset A and B"
-    # create_average_efficiency_plot( exprs , outfile+"efficiency.png", title,  labels, 1)
-    # title = "Average ratio over Dataset A and B"
-    # create_average_ratio_plot(  exprs ,  outfile+"ratio.png", title, labels, 1)
-
-    ################### avg iscas
-    # exprs = ["./paper_data/iscas/iscas89/", "./paper_data/iscas/iscas89/" , "./paper_data/iscas/iscas93/","./paper_data/iscas/iscas99/"]
-    # outfile = "./paper_data/iscas_avg50_"
-    # title = "Average efficiency over iscas instances"
-    # create_average_efficiency_plot(exprs, outfile + "efficiency.png", title, labels, 50)
-    # title = "Average ratio over iscas instances"
-    # create_average_ratio_plot(exprs, outfile + "ratio.png", title, labels, 50)
-
-    ################### avg planning
-    # exprs = ["./paper_data/Planning/blocks/", "./paper_data/Planning/bomb/", "./paper_data/Planning/coins/",
-    #          "./paper_data/Planning/comm/",
-    #          "./paper_data/Planning/emptyroom/", "./paper_data/Planning/flip/", "./paper_data/Planning/ring/",
-    #          "./paper_data/Planning/safe/", "./paper_data/Planning/sort/", "./paper_data/Planning/uts/"]
-    # outfile = "./paper_data/planning_avg50_"
-    # title = "Average efficiency over planning instances"
-    # create_average_efficiency_plot(exprs, outfile + "efficiency.png", title, labels, 50)
-    # title = "Average ratio over planning instances"
-    # create_average_ratio_plot(exprs, outfile + "ratio.png", title, labels, 50)
-
-    ################### evaluate folders and average between folders
-    # exprs = ["./paper_data/DatasetA/", "./paper_data/DatasetB/",
-    #          "./paper_data/iscas/iscas89/", "./paper_data/iscas/iscas93/",
-    #          "./paper_data/iscas/iscas99/",
-    # exprs = ["./results/data_sdd/DatasetA/", "./results/data_sdd/DatasetB/" ]
-    # exprs = ["./results/data/DatasetA/", "./results/data/DatasetB/",  "./results/data/iscas89/", "./results/data/iscas93/", "./results/data/iscas99/" ]
-    # columns = ["p", "var", "value",  'n_vars', "MC", "BDD len", 'n_nodes', 'n_reorderings', 'dag_size', 'time']
-
-    # labels = [ "static", "static_ratio", "dynamic", "dynamic_ratio"]#, "random_1234", "random_selection_1234" ]
-    labels = [ "static", "dynamic", "random_selection_1234"]#, "dynamic", "random_selection_1234" ]
-    # exprs = ["./results/wmc2022_track2_private_count/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
-    exprs = ["./results/sdd/wmc2022_track2_private_WMC/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
-    # exprs = ["./results/sdd/wmc2022_track2_private_comp/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
-    # exprs = ["./results/wmc2022_track2_private_MC/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
-    # exprs = ["./results/wmc2022_track2_private_count/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
-    # exprs = ["./results/test/f1g1/", "./results/test/f1g2/","./results/test/f2g1/", "./results/test/f2g2/"]#, "./results/data_sdd/DatasetB/",  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
-    # exprs = [  "./results/data_sdd/iscas89/", "./results/data_sdd/iscas93/", "./results/data_sdd/iscas99/" ]
-    # columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "SDD size", 'node_count', 'time', 'WMC', 'g2']
-    # columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "g2"]
-
-    # columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC"] #for d4
-    columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "SDD size", 'node_count', 'time', 'WMC', "logWMC"] #for weighted sdd
-    for f in exprs:
-        type = f.split("/")[-2]
-        # title = "Average efficiency over "+type+" instances"
-        # create_average_efficiency_plot([f], f+type+"_avg_efficiency", title, labels, 1, columns)
-        # title = "Average ratio over "+type+" instances"
-        # create_average_ratio_plot([f], f+type+"_avg_ratio", title, labels, 1, columns)
-        title = "Average weighted efficiency over " + type + " instances"
-        create_average_efficiency_plot([f], f+type+"_avg_weighted_efficiency", title, labels, 1, columns)
-        title = "Average weighted ratio over " + type + " instances"
-        create_average_ratio_plot([f], f+type+"_avg_weighted_ratio", title, labels, 1, columns)
-        evaluate_folder( f, labels, columns )
-    exit(1)
-
-    ##################
-    # columns =  ["p", "var", "value", "MC", "BDD len", 'n_vars', 'n_nodes', 'n_reorderings', 'dag_size', 'time']
-    # type = "dynamic_ratio"
-    # stats_file = "./paper_data/Planning/uts/" + "dataset_stats_" + type + "_reorder.csv"
-    # expr_data_dynamic2 = ExprData(columns)
-    # expr_data_dynamic2.read_stats_file(stats_file)
-    # expr_data_dynamic2.best_ratio_table_per_alg()
-
-    ###################
-    # exprs = ["./paper_data/DatasetA/", "./paper_data/DatasetB/",
-    #          "./paper_data/iscas/iscas89/", "./paper_data/iscas/iscas93/",
-    #          "./paper_data/iscas/iscas99/",
-    #     "./paper_data/Planning/blocks/", "./paper_data/Planning/bomb/",  "./paper_data/Planning/coins/", "./paper_data/Planning/comm/",
-    #          "./paper_data/Planning/emptyroom/", "./paper_data/Planning/flip/", "./paper_data/Planning/ring/",
-    #               "./paper_data/Planning/safe/", "./paper_data/Planning/sort/", "./paper_data/Planning/uts/" ]
-    # labels = ["random_1234", "random_selection_1234",  "random_ratio_selection_1234", "static", "static_ratio", "dynamic", "dynamic_ratio"]
-    # # create_best_ratio_table("paper_data/ratio_table.csv", exprs, labels, aggregate=True)
-
-    # create_time_table(exprs, labels)
-    # metric = "mc"
-    # read_ratio_table("paper_data/base_ratio_table.csv", metric)
-    # exprs = ["./paper_data/DatasetA/"]
-    # for f in exprs:
-    #     evaluate_folder(f, labels)
-
-    ################ end paper results ###################
-
-
-    # look at ratio table
-
-    # exprs = ["./paper_data/DatasetA/", "./paper_data/DatasetB/",
-    #          "./paper_data/iscas/iscas89/", "./paper_data/iscas/iscas93/",
-    #          "./paper_data/iscas/iscas99/",
-    #          "./paper_data/Planning/blocks/", "./paper_data/Planning/bomb/", "./paper_data/Planning/coins/",
-    #          "./paper_data/Planning/comm/",
-    #          "./paper_data/Planning/emptyroom/", "./paper_data/Planning/flip/", "./paper_data/Planning/ring/",
-    #          "./paper_data/Planning/safe/", "./paper_data/Planning/sort/", "./paper_data/Planning/uts/"]
-    # create_best_ratio_tables(exprs)
-
-    # count_all_backbones()
-    # folder = "./paper_data/DatasetA/"
-
-
-
-
-    # alg_types = [ "init", "random", "random_selection", "static","static_ratio", "dynamic","dynamic_ratio"]
-    #
-    # exprs = ["./paper_data/BayesianNetwork/","./paper_data/DatasetA/","./paper_data/DatasetB/",
-    #          "./paper_data/iscas/iscas89/", "./paper_data/iscas/iscas89/" , "./paper_data/iscas/iscas93/","./paper_data/iscas/iscas99/",
-    #          "./paper_data/Planning/base/", "./paper_data/Planning/blocks/",  "./paper_data/Planning/bomb/",  "./paper_data/Planning/coins/",
-    #          "./paper_data/Planning/flip/", "./paper_data/Planning/sort/", "./paper_data/Planning/uts/", "./paper_data/Planning/comm/"]
-
-    # exprs = ["./paper_data/Planning/comm/", "./paper_data/Planning/coins/"]
-    # exprs = ["./aaai_data/datasetA/"]
-    # for e in exprs:
-    #     evaluate_folder(e, ["lit", "opp"])
-
-    ############################ AAAI eval #############################
-
-    # exprs = [   "./aaai_data/output/Planning/blocks/",    "./aaai_data/output/Planning/ring/",
-    #     "./aaai_data/output/Planning/sort/" ]
-    expr_folders = [         "./aaai_data/output/DatasetA/"
-                             # "./aaai_data/output/DatasetB/"
-                             #     "./aaai_data/output/iscas/iscas93/",
-                             #          "./aaai_data/output/iscas/iscas89/",
-                             #          "./aaai_data/output/iscas/iscas99/"
-                             #          "./aaai_data/output/Planning/blocks/",
-                             #           "./aaai_data/output/Planning/bomb/",
-                             #                "./aaai_data/output/Planning/coins/",
-                             #           "./aaai_data/output/Planning/comm/",
-                             #     "./aaai_data/output/Planning/emptyroom/",
-                             #     "./aaai_data/output/Planning/flip/",
-                             #          "./aaai_data/output/Planning/ring/",
-                             #          "./aaai_data/output/Planning/safe/",
-                             #          "./aaai_data/output/Planning/comm/",
-                             #          "./aaai_data/output/Planning/uts/"
-
-                             ]
-    # exprs = ["./aaai_data/output/Planning/coins/"]
-
-    # exprs = [  "./aaai_data/output/DatasetA/", "./aaai_data/output/DatasetB/" ,
-    #"./aaai_data/output/Planning/coins/",
-    # "./aaai_data/output/DatasetB/" # , "./aaai_data/output/DatasetB/",
-    #    "./aaai_data/output/iscas/iscas89/",
-    # exprs = ["./aaai_data/output/iscas/iscas93/","./aaai_data/output/iscas/iscas99/"]
-    # labels = ["dynamic_opp", "dynamic_lit"]
-    # labels = [ "dlisTieBreakPurity", "StrictDlisTieBreakPurity", "dynamic_lit"] #, "dynamic_opp","dynamic_wopp", "dynamic_lit", "dynamic_wlit", "dynamic_ratio", "dynamic", "random_ratio_selection"]
-    # colors = ["blue", "cyan", mcolors.CSS4_COLORS["gold"], "orange", "green", "olive", 'red', "grey"]
-
-
-    for exp_folder in expr_folders:
-        labels = ["dynamic_opp","dynamic_wopp", "dynamic_lit", "dynamic_wlit", "static_opp","static_wopp", "static_lit", "static_wlit", "dynamic_ratio", "dynamic", "random_ratio_selection"]
-        # labels = ["dynamic_opp","dynamic_wopp", "dynamic_lit", "dynamic_wlit", "dynamic_ratio", "dynamic", "random_ratio_selection"]
-        # labels = ["dynamic_opp","dynamic_wopp", "dynamic_lit", "dynamic_wlit",  "dynamic_ratio", "dynamic", "random_ratio_selection", "StrictDlisTieBreakPurity", "dlisRelativePurity"]
-        columns = ["p", "var", "value", "nb_vars", "nb_cls", "obj", 'time', "MC", "dag_size", "compilation_time"] #this variable is getting modified somewhere in the code below
-        type = exp_folder.split("/")[-2]
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",type)
-        title = "Average efficiency over "+type+" instances"
-        create_average_efficiency_plot([exp_folder], exp_folder+type+"_avg_efficiency", title, labels, 1, columns)
-        title = "Average ratio over "+type+" instances"
-        create_average_ratio_plot([exp_folder], exp_folder+type+"_avg_ratio", title, labels, 1, columns)
-        evaluate_folder( exp_folder, labels, columns)
-
-
-    #use this code to convert past csv expr results to new ones
-    # exprs = [
-    #     # "./aaai_data/output/Planning/blocks/",
-    #     #       "./aaai_data/output/Planning/bomb/","./aaai_data/output/Planning/coins/",
-    #     #       "./aaai_data/output/Planning/comm/", "./aaai_data/output/Planning/emptyroom/",
-    #     # "./aaai_data/output/Planning/flip/",
-    #          "./aaai_data/output/Planning/ring/", "./aaai_data/output/Planning/safe/",
-    #          "./aaai_data/output/Planning/sort/", "./aaai_data/output/Planning/uts/",
-    #     "./aaai_data/output/DatasetA/", "./aaai_data/output/DatasetB/",
-    #       "./aaai_data/output/iscas/iscas89/", "./aaai_data/output/iscas/iscas93/",
-    #           "./aaai_data/output/iscas/iscas99/" ]
-    # for folder in exprs:
-    #     print(folder)
-    #     stats_file = folder + "dataset_stats_static_opp.csv"
-    #     columns = ["p", "var", "value", "opp", 'time', "MC", "dag_size", "compilation_time"]
-    #     columns = ["p", "var", "value", "nb_vars", "nb_cls", "obj", 'time', "MC", "dag_size", "compilation_time"]
-    #
-    #     expr_data = ExprData(columns)
-    #     expr_data.read_stats_file(stats_file)
-    #     exp_names = expr_data.exprs
-    #
-    #     # stats_file = folder + "dataset_stats_" + type + "_reorder.csv"
-    #     stats_file = folder + "dataset_stats_dynamic_reorder.csv"
-    #     columns2 = ["p", "var", "value", "MC", "BDD len", 'n_vars', 'n_nodes', 'n_reorderings', 'dag_size', 'time']
-    #
-    #     expr_data2 = ExprData(columns2)
-    #     expr_data2.read_stats_file(stats_file)
-    #     expr_data2.convert_to_columns(columns, exp_names)
-    #     print(expr_data.all_expr_data)
-    #
-    #
-    #
-    #     stats_file = folder + "dataset_stats_random_ratio_selection_1234_reorder.csv"
-    #     expr_data2 = ExprData(columns2)
-    #     expr_data2.read_stats_file(stats_file)
-    #     print("------------------------------------")
-    #     print(exp_names)
-    #     print(expr_data.exprs)
-    #     if len(exp_names) < len(expr_data2.exprs):
-    #         expr_data2.exprs = expr_data2.exprs[:-1]
-    #     print(exp_names)
-    #     print(expr_data.exprs)
-    #     print("------------------------------------")
-    #     expr_data2.convert_to_columns(columns, exp_names)
-    #     print(expr_data.all_expr_data)
-    #
-    #     stats_file = folder + "dataset_stats_dynamic_ratio_reorder.csv"
-    #     expr_data2 = ExprData(columns2)
-    #     expr_data2.read_stats_file(stats_file)
-    #     print("------------------------------------")
-    #     print(exp_names)
-    #     print(expr_data.exprs)
-    #     if len(exp_names) < len(expr_data2.exprs):
-    #         expr_data2.exprs = expr_data2.exprs[:-1]
-    #     print(exp_names)
-    #     print(expr_data.exprs)
-    #     print("------------------------------------")
-    #     expr_data2.convert_to_columns(columns, exp_names)
-    #     print(expr_data.all_expr_data)

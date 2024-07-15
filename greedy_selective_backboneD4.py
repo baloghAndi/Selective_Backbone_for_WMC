@@ -453,7 +453,6 @@ def static_greedy_pWSB(csp, obj_type,logger,  NO_COMPILE=False):
             #             stats['n_reorderings'], stats['dag_size']])
 
             if not NO_COMPILE:
-
                 if obj_type == "WMC" or obj_type == "MC" or obj_type == "SUB":
                     if obj_type == "MC":
                         nb_nodes, nb_edges, mc, comp_time = csp.check_mc_of(variable, value)
@@ -493,6 +492,8 @@ def static_greedy_pWSB(csp, obj_type,logger,  NO_COMPILE=False):
                     score_of_assignment, size, node_count, temp_root = csp.check_wmc_ratio_of(variable, value)
                 elif obj_type == "g2":
                     score_of_assignment, size, node_count, temp_root = csp.calculate_g2(variable, value)
+                elif obj_type == "hybrid_wmc":
+                    pass
                 else:
                     print("ERROR")
                     exit(666)
@@ -629,7 +630,7 @@ if __name__ == "__main__":
     d = sys.argv[1] #"./input/wmc2022_track2_private/"
     folder = d.split("/")[-2]
     filename = sys.argv[2]
-    inobj = sys.argv[3]
+    inobj = sys.argv[3] #hybrid_wmc
     alg_type = sys.argv[4]
     NO_COMPILE = False
 
