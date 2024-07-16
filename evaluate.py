@@ -1389,6 +1389,8 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
             fname = f.split("_")[-1]
             if "rand_dynamic" in f:
                 fname = "random"
+            if "hybrid" in f:
+                fname = "hybrid_wmc/"
             ax1.scatter(avg_size, avg_wmc, c=colors[index], label=HEUR_NAMES[fname]+" "+l, marker=marks[index])
             ax1.plot(avg_size, avg_wmc, c=colors[index], alpha=0.7, linewidth=1)
             index +=1
@@ -1684,7 +1686,8 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
             fname = f.split("_")[-1]
             if "rand_dynamic" in f:
                 fname = "random"
-
+            if "hybrid" in f:
+                fname = "hybrid_wmc/"
             ax1.scatter(x, avg_wmc, c=colors[index], label=HEUR_NAMES[fname]+" "+l, marker=marks[index])
             ax1.plot(x, avg_wmc, c=colors[index])
 
@@ -4116,18 +4119,18 @@ if __name__ == "__main__":
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
     # alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
-    # alg_types = [  "static" ]
-    alg_types = [  "dynamic" , "static"]
+    alg_types = [  "dynamic" ]
+    # alg_types = [  "dynamic" , "static"]
     FOLDER = "Dataset_preproc"
     result_folder = "./results_aaai/"
     # FOLDER = "Dataset_preproc_final"
     # FOLDER = "Dataset_preproc_NO_COMPILE_2"
-    HEUR_NAMES = {"MC/": "actual_MC", "WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random"}
+    HEUR_NAMES = {"MC/": "actual_MC", "WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random", "hybrid_wmc/": "hybrid"}
     # FOLDER = "Dataset_preproc_part2"
     # expr_folders =  [  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_MC/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
-    expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/", result_folder+FOLDER+"_hybrid_wmc/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
     # expr_folders = [ "./results/Benchmark_preproc2_wscore_half/" ,"./results/Benchmark_preproc2_wscore_estimate/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
@@ -4183,13 +4186,13 @@ if __name__ == "__main__":
     # create_time_table_d4(expr_folders, alg_types, columns, nocompile=True, cutoff=cutoff)
     # exit(4)
 
-    subfolder = "planning"
+    subfolder = ""
     # obj = "MC"
     obj = "WMC"
     out_file = result_folder+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
     if obj == "MC":
         out_file = result_folder+"Dataset_preproc_avg_MC_"
-    same_expr = True
+    same_expr = False
     filter_timeout = False
     filter_conflict = False
 
@@ -4212,12 +4215,12 @@ if __name__ == "__main__":
     title = "Average weighted efficiency over dataset "
     if obj == "MC":
         title = "Average MC efficiency over instances "
-    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 100, columns, obj, padding=True, same_expr=same_expr,
+    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
                        filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     title = "Average weighted ratio over instances"
     if obj == "MC":
         title = "Average MC efficiency over instances"
-    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 100, columns, obj, padding=True, same_expr=same_expr,
+    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
                   filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     # col = "WMC"
     # title = "Average weighted " + col

@@ -593,7 +593,7 @@ def inti_compilation(alg_type, d, filename, out_folder, obj_type):
     print(logger.get_time_elapsed())
 
 
-def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE=False):
+def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE=False, part=""):
     # obj_type: mc or g2
     # columns = ["p", "var", "value", "MC", "BDD len", 'n_vars', 'n_nodes', 'n_reorderings', 'dag_size', 'time']
     columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]
@@ -603,9 +603,11 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE
     else:
         # stats_file = d + "dataset_stats_" + alg_type + ".csv"
         stats_file = out_folder + "dataset_stats_" + alg_type + ".csv"
+    if part != "":
+        stats_file = stats_file.replace(".csv", "_part"+str(part)+".csv")
+    print("stats file: --------", stats_file)
     expr_data = evaluate.ExprData(columns)
     logger = evaluate.Logger(stats_file, columns, expr_data, out_folder, compile=True)
-
     print(filename)
     all_start = time.perf_counter()
     logger.log_expr(filename)
@@ -678,6 +680,7 @@ if __name__ == "__main__":
     filename = sys.argv[2]
     inobj = sys.argv[3] #hybrid_wmc
     alg_type = sys.argv[4]
+    part = str(sys.argv[5])
     NO_COMPILE = False
 
     # d = "./input/Dataset_preproc/"
@@ -746,7 +749,7 @@ if __name__ == "__main__":
     filename_only  = filename.split("/")[-1]
     if filename_only.count(".") > 1:
         filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    if filename_only not in ecai23:
+    if filename_only in ecai23:
         exit(2)
 
     # run(alg_type, d, filename,  seed)
@@ -763,7 +766,7 @@ if __name__ == "__main__":
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE)
+    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part)
 
     # inti_compilation("init300", d, filename, out_folder, inobj)
     exit(0)
