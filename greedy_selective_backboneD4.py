@@ -675,20 +675,21 @@ if __name__ == "__main__":
     # alg_type = sys.argv[2]
 
 
-    d = sys.argv[1] #"./input/wmc2022_track2_private/"
-    folder = d.split("/")[-2]
-    filename = sys.argv[2]
-    inobj = sys.argv[3] #hybrid_wmc
-    alg_type = sys.argv[4]
-    part = str(sys.argv[5])
+    # d = sys.argv[1] #"./input/wmc2022_track2_private/"
+    # folder = d.split("/")[-2]
+    # filename = sys.argv[2]
+    # inobj = sys.argv[3] #hybrid_wmc
+    # alg_type = sys.argv[4]
+    # part = str(sys.argv[5])
     NO_COMPILE = False
 
-    # d = "./input/Dataset_preproc/"
-    # folder = d.split("/")[-2]
-    # filename = d+"01_istance_K3_N15_M45_01.cnf"
-    # inobj = "hybrid_wmc"
-    # alg_type = "dynamic"
-    # NO_COMPILE = False
+    d = "./input/Dataset_preproc/"
+    folder = d.split("/")[-2]
+    filename = d+"01_istance_K3_N15_M45_01.cnf"
+    inobj = "hybrid_wmc"
+    alg_type = "dynamic"
+    NO_COMPILE = False
+    part=1
 
     ecai23 = ['01_istance_K3_N15_M45_01.cnf', '01_istance_K3_N15_M45_02.cnf', '01_istance_K3_N15_M45_03.cnf',
               '01_istance_K3_N15_M45_04.cnf', '01_istance_K3_N15_M45_05.cnf', '01_istance_K3_N15_M45_06.cnf',
@@ -749,7 +750,7 @@ if __name__ == "__main__":
     filename_only  = filename.split("/")[-1]
     if filename_only.count(".") > 1:
         filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    if filename_only in ecai23:
+    if filename_only not in ecai23:
         exit(2)
 
     # run(alg_type, d, filename,  seed)

@@ -4120,8 +4120,8 @@ if __name__ == "__main__":
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
     # alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
-    alg_types = [  "dynamic" ]
-    # alg_types = [  "dynamic" , "static"]
+    # alg_types = [  "dynamic" ]
+    alg_types = [  "dynamic" , "static"]
     FOLDER = "Dataset_preproc"
     result_folder = "./results_aaai/"
     # FOLDER = "Dataset_preproc_final"
@@ -4178,17 +4178,17 @@ if __name__ == "__main__":
     # exit(4)
 
     # subfolder = "planning"
-    # subfolder = "iscas"
+    subfolder = "iscas"
     # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
     # exit(9)
 
-    # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
-    # exit(5)
+    best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
+    exit(5)
 
     # create_time_table_d4(expr_folders, alg_types, columns, nocompile=False, cutoff={})
-    # exit(4)
+    exit(4)
 
-    subfolder = ""
+    subfolder = "iscas"
     # obj = "MC"
     obj = "WMC"
     out_file = result_folder+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
@@ -4217,12 +4217,12 @@ if __name__ == "__main__":
     title = "Average weighted efficiency over dataset "
     if obj == "MC":
         title = "Average MC efficiency over instances "
-    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 300, columns, obj, padding=True, same_expr=same_expr,
                        filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     title = "Average weighted ratio over instances"
     if obj == "MC":
         title = "Average MC efficiency over instances"
-    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 300, columns, obj, padding=True, same_expr=same_expr,
                   filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     # col = "WMC"
     # title = "Average weighted " + col
