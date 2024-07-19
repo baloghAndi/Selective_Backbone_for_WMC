@@ -4022,7 +4022,8 @@ def check_benchmark_preproc2():
 def create_time_table_d4(folders, labels, columns, nocompile=False, cutoff={}):
     #cutoff is used for the no compiled setting to only count time for when we actually have looked results for
     import statistics
-    f = open("./results/times_table.csv", "w")
+    # f = open("./results/times_table.csv", "w")
+    f = open("./results_aaai/times_table.csv", "w")
     if nocompile:
         f = open("./results/times_table_NO_COMPILE_2.csv", "w")
     writer = csv.writer(f, delimiter=',')
@@ -4044,10 +4045,10 @@ def create_time_table_d4(folders, labels, columns, nocompile=False, cutoff={}):
             nb_exprs += 1
             stats_file = folder + "dataset_stats_" + type + ".csv"
             expr_data = ExprData(columns)
-            expr_cutoff = cutoff[folder.split("_")[-1]][type]
             if nocompile:
+                expr_cutoff = cutoff[folder.split("_")[-1]][type]
                 expr_data.read_nocompile_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False,
-                                      filter_timeout=False, filter_conflict=False,cutoff=expr_cutoff)
+                                                    filter_timeout=False, filter_conflict=False,cutoff=expr_cutoff)
             else:
                 expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False,
                                       filter_timeout=False, filter_conflict=False)
@@ -4130,6 +4131,7 @@ if __name__ == "__main__":
     # expr_folders =  [  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_MC/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    # expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/", result_folder+FOLDER+"_hybrid_wmc/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
@@ -4176,14 +4178,14 @@ if __name__ == "__main__":
     # exit(4)
 
     # subfolder = "planning"
-    # subfolder = ""
+    # subfolder = "iscas"
     # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
     # exit(9)
 
     # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
     # exit(5)
 
-    # create_time_table_d4(expr_folders, alg_types, columns, nocompile=True, cutoff=cutoff)
+    # create_time_table_d4(expr_folders, alg_types, columns, nocompile=False, cutoff={})
     # exit(4)
 
     subfolder = ""
@@ -4192,7 +4194,7 @@ if __name__ == "__main__":
     out_file = result_folder+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
     if obj == "MC":
         out_file = result_folder+"Dataset_preproc_avg_MC_"
-    same_expr = False
+    same_expr = True
     filter_timeout = False
     filter_conflict = False
 
