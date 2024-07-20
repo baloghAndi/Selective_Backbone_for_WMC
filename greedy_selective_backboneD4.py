@@ -128,11 +128,13 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
         logger.progress_log.write("E:"+ str([best_variable, best_value, best_cost])+"\n")
         logger.progress_log.flush()
         actual_wmc_queue = _queue.PriorityQueue()
+        nb_considered = 0
         while not assign_queue.empty():
             top_tuple = assign_queue.get()
             # print(top_tuple)
             score = abs(top_tuple[0])
             if score/abs(best_cost) >= 0.9:
+                nb_considered +=1
                 var = top_tuple[2]
                 val = top_tuple[3]
                 nb_nodes, nb_edges,  wmc, comp_time = csp.check_wmc_of(var,val, compile=False)
@@ -150,13 +152,13 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
         best_node_count = -1
         # logger.progress_log.write("order after actual wmc calculation: \n")
         # logger.progress_log.flush()
-        logger.progress_log.write("A:"+ str([best_variable, best_value, best_cost]) + "\n")
+        logger.progress_log.write("A:"+ str([best_variable, best_value, best_cost, nb_considered]) + "\n")
         logger.progress_log.write("----- \n")
         logger.progress_log.flush()
         # while not actual_wmc_queue.empty():
         #     top_tuple = actual_wmc_queue.get()
         #     logger.progress_log.write(str(top_tuple)+"\n")
-            # logger.progress_log.flush()
+        # logger.progress_log.flush()
     elif backbone_assigned:
         logger.progress_log.write("backbone" + "\n")
         logger.progress_log.write(str([best_variable, best_value, best_cost]) + "\n")
