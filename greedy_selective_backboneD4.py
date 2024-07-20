@@ -174,31 +174,55 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
     return best_variable,best_value, best_cost, best_size, best_node_count, best_mc, best_wmc
 
 
-def dynamic_greedy_pWSB(csp, max_p, obj_type,logger, NO_COMPILE=False):
+def dynamic_greedy_pWSB(csp, max_p, obj_type,logger, NO_COMPILE=False, sample_size=-1):
     #obj_type = MC or WMC
     print("DYNAMIC")
     pa = csp.partial_assignment
     p = len(pa.assigned)
     print(p, max_p)
+    extra_iterations = 0
+    if sample_size != -1:
+        sample_index = [ int((i*max_p/sample_size))+1 for i in range(sample_size)]
+    iteration_index = 0
     while p < max_p:
         #select the assignment that maximizes the score
         p += 1
+        if sample_size != -1:
+            index_count = sample_index.count(p)
+            if index_count == 0: #no need to compile this run
+                NO_COMPILE = True
+                extra_iterations = 0
+            else:
+                NO_COMPILE = False #need to compile
+                extra_iterations = index_count
+
+        else:
+            iteration_index = p
+
+        print("---------------no compile",  NO_COMPILE , p, extra_iterations)
         best_variable, best_value, best_cost, best_size, best_node_count, mc, wmc = get_best_assignment(csp,obj_type, NO_COMPILE,logger)
-        print("assign ",p , best_variable, best_value, best_cost, wmc, mc)
+        print("assign ",iteration_index , best_variable, best_value, best_cost, wmc, mc)
 
         elapsed = logger.get_time_elapsed()
 
         if wmc == 0.0:
-            logger.log([p, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, 0, 0, best_cost])
+            log_line = [iteration_index, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, 0, 0, best_cost]
+            logger.log(log_line)
             return
         else:
             if wmc == -1:
                 logWMC = -1
             else:
                 logWMC = math.log10(wmc)
-            logger.log([p, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, wmc, logWMC, best_cost])
+            log_line = [iteration_index, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, wmc, logWMC, best_cost]
 
-        csp.extend_assignment(best_variable,best_value, abs(best_cost), propagate=True )
+        while extra_iterations > 0 :
+            iteration_index += 1
+            log_line[0] = iteration_index
+            logger.log(log_line)
+            extra_iterations -= 1
+
+        csp.extend_assignment( best_variable,best_value, abs(best_cost), propagate=True )
         # print( p, best_variable, best_value, best_cost)
 
     # print("p=", p)
@@ -593,7 +617,7 @@ def inti_compilation(alg_type, d, filename, out_folder, obj_type):
     print(logger.get_time_elapsed())
 
 
-def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE=False, part=""):
+def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE=False, part="", sample_size=-1):
     # obj_type: mc or g2
     # columns = ["p", "var", "value", "MC", "BDD len", 'n_vars', 'n_nodes', 'n_reorderings', 'dag_size', 'time']
     columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]
@@ -625,16 +649,16 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE
     if alg_type == "dynamic":
         logger.progress_log.write(filename + "\n")
         logger.progress_log.flush()
-        dynamic_greedy_pWSB(cnf, maxp, obj_type, logger,NO_COMPILE)
+        dynamic_greedy_pWSB(cnf, maxp, obj_type, logger,NO_COMPILE, sample_size)
     elif alg_type == "dynamic_ratio":
-        dynamic_greedy_pWSB(cnf, maxp, "dynamic_ratio",logger,NO_COMPILE)
+        dynamic_greedy_pWSB(cnf, maxp, "dynamic_ratio",logger,NO_COMPILE, sample_size)
     elif alg_type == "rand_dynamic":
         random.seed(seed)
         dynamic_random(cnf, maxp, obj_type, logger, NO_COMPILE)
     elif alg_type == "static":
-        static_greedy_pWSB(cnf, obj_type, logger, NO_COMPILE)
+        static_greedy_pWSB(cnf, obj_type, logger, NO_COMPILE, sample_size)
     elif alg_type == "static_ratio":
-        static_greedy_pWSB(cnf, "static_ratio",logger, NO_COMPILE)
+        static_greedy_pWSB(cnf, "static_ratio",logger, NO_COMPILE, sample_size)
     elif "random" == alg_type:
         random_pWSB(cnf, seed,logger)
     elif "random_selection" in alg_type:
@@ -649,6 +673,7 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE
     all_end = time.perf_counter()
     logger.close()
     print("ELAPSED TIME: ", all_end - all_start)
+
 
 if __name__ == "__main__":
     # type = "dynamic"
@@ -689,6 +714,10 @@ if __name__ == "__main__":
     # inobj = "hybrid_wmc"
     # alg_type = "dynamic"
     # NO_COMPILE = False
+    # part=1
+    sample_size = 50
+
+    no_init_compilation = ['16_uts_k3_p_t3.cnf', '16_uts_k4_p_t2.cnf', '15_sort_num_s_5_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k2_p_t9.cnf', '15_sort_num_s_6_p_t2.cnf', '15_sort_num_s_5_p_t4.cnf', '16_uts_k3_p_t5.cnf', '16_uts_k4_p_t3.cnf', '16_uts_k5_p_t2.cnf', '15_sort_num_s_5_p_t5.cnf', '16_uts_k3_p_t6.cnf', '03_iscas85_c2670_isc.cnf', '16_uts_k4_p_t4.cnf', '15_sort_num_s_6_p_t3.cnf', '16_uts_k3_p_t7.cnf', '15_sort_num_s_5_p_t6.cnf', '16_uts_k5_p_t3.cnf', '15_sort_num_s_7_p_t2.cnf', '16_uts_k3_p_t8.cnf', '09_coins_p01_p_t10.cnf', '09_coins_p02_p_t10.cnf', '09_coins_p03_p_t10.cnf', '09_coins_p04_p_t10.cnf', '09_coins_p05_p_t10.cnf', '15_sort_num_s_5_p_t7.cnf', '16_uts_k4_p_t5.cnf', '07_blocks_right_4_p_t6.cnf', '07_blocks_right_5_p_t4.cnf', '09_coins_p10_p_t5.cnf', '16_uts_k3_p_t9.cnf', '15_sort_num_s_6_p_t4.cnf', '07_blocks_right_6_p_t3.cnf', '15_sort_num_s_5_p_t8.cnf', '16_uts_k10_p_t1.cnf', '16_uts_k3_p_t10.cnf', '16_uts_k4_p_t6.cnf', '07_blocks_right_4_p_t7.cnf', '16_uts_k5_p_t4.cnf', '09_coins_p10_p_t6.cnf', '15_sort_num_s_5_p_t9.cnf', '07_blocks_right_5_p_t5.cnf', '11_emptyroom_d20_g10_corners_p_t10.cnf', '15_sort_num_s_6_p_t5.cnf', '07_blocks_right_4_p_t8.cnf', '15_sort_num_s_7_p_t3.cnf', '16_uts_k4_p_t7.cnf', '15_sort_num_s_5_p_t10.cnf', '07_blocks_right_6_p_t4.cnf', '09_coins_p10_p_t7.cnf', '16_uts_k5_p_t5.cnf', '07_blocks_right_4_p_t9.cnf', '07_blocks_right_5_p_t6.cnf', '16_uts_k4_p_t8.cnf', '15_sort_num_s_6_p_t6.cnf', '09_coins_p10_p_t8.cnf', '07_blocks_right_4_p_t10.cnf', '16_uts_k4_p_t9.cnf', '07_blocks_right_5_p_t7.cnf', '07_blocks_right_6_p_t5.cnf', '16_uts_k5_p_t6.cnf', '11_emptyroom_d28_g14_corners_p_t10.cnf', '15_sort_num_s_7_p_t4.cnf', '09_coins_p10_p_t9.cnf', '15_sort_num_s_6_p_t7.cnf', '16_uts_k4_p_t10.cnf', '07_blocks_right_5_p_t8.cnf', '03_iscas85_c7552_isc.cnf', '09_coins_p10_p_t10.cnf', '16_uts_k5_p_t7.cnf', '15_sort_num_s_6_p_t8.cnf', '07_blocks_right_6_p_t6.cnf', '05_iscas93_s6669_bench.cnf', '16_uts_k10_p_t2.cnf', '15_sort_num_s_7_p_t5.cnf', '07_blocks_right_5_p_t9.cnf', '16_uts_k5_p_t8.cnf', '15_sort_num_s_6_p_t9.cnf', '07_blocks_right_6_p_t7.cnf', '07_blocks_right_5_p_t10.cnf', '15_sort_num_s_6_p_t10.cnf', '16_uts_k5_p_t9.cnf', '15_sort_num_s_7_p_t6.cnf', '07_blocks_right_6_p_t8.cnf', '16_uts_k5_p_t10.cnf', '15_sort_num_s_7_p_t7.cnf', '07_blocks_right_6_p_t9.cnf', '16_uts_k10_p_t3.cnf', '10_comm_p10_p_t3.cnf', '07_blocks_right_6_p_t10.cnf', '15_sort_num_s_7_p_t8.cnf', '10_comm_p05_p_t10.cnf', '15_sort_num_s_7_p_t9.cnf', '16_uts_k10_p_t4.cnf', '10_comm_p10_p_t4.cnf', '15_sort_num_s_7_p_t10.cnf', '16_uts_k10_p_t5.cnf', '10_comm_p10_p_t5.cnf', '10_comm_p10_p_t6.cnf', '16_uts_k10_p_t6.cnf', '10_comm_p10_p_t7.cnf', '16_uts_k10_p_t7.cnf', '10_comm_p10_p_t8.cnf', '16_uts_k10_p_t8.cnf', '10_comm_p10_p_t9.cnf', '16_uts_k10_p_t9.cnf', '10_comm_p10_p_t10.cnf', '08_bomb_b10_t10_p_t19.cnf', '16_uts_k10_p_t10.cnf', '08_bomb_b10_t10_p_t20.cnf']
 
     ecai23 = ['01_istance_K3_N15_M45_01.cnf', '01_istance_K3_N15_M45_02.cnf', '01_istance_K3_N15_M45_03.cnf',
               '01_istance_K3_N15_M45_04.cnf', '01_istance_K3_N15_M45_05.cnf', '01_istance_K3_N15_M45_06.cnf',
@@ -749,11 +778,11 @@ if __name__ == "__main__":
     filename_only  = filename.split("/")[-1]
     if filename_only.count(".") > 1:
         filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    if filename_only in ecai23:
+    if filename_only not in ecai23:
         exit(2)
 
     # run(alg_type, d, filename,  seed)
-    out_folder = "./results_aaai/" + folder + "_" + inobj + "/"
+    out_folder = "./results_aaai2/" + folder + "_" + inobj + "/"
     # out_folder = "./results2/" + folder + "_" + inobj + "/"
     # out_folder = "./results/" + folder + "_NO_COMPILE_2_" + inobj + "/"
 
@@ -766,7 +795,7 @@ if __name__ == "__main__":
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part)
+    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
 
     # inti_compilation("init300", d, filename, out_folder, inobj)
     exit(0)

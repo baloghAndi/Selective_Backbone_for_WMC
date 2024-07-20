@@ -25,6 +25,7 @@ class WCNF:
         self.init_WMC = -1
         self.trivial_backbone = []
         self.NO_COMPILE = NO_COMPILE
+        self.literal_clause_map = {} #lit:[len of clauses it appears in]
 
     def load_file(self, filename, obj_type=None, heur_type=None):
         self.obj_type = obj_type
@@ -55,6 +56,9 @@ class WCNF:
                 # return False
             # nb_vars = int(content[0].strip().split(" ")[2])
             print("NB VARS", nb_vars)
+            for i in range(1, nb_vars + 1):
+                self.literal_clause_map[-i]= []
+                self.literal_clause_map[i] = []
             # self.literal_weights = {0: nb_vars * [1], 1: nb_vars * [1]}
             for str_clause in content[init_nb_lines:]:
                 # if "c p weight" in str_clause:
@@ -78,6 +82,8 @@ class WCNF:
                     if len(lits) == 1:
                         self.trivial_backbone.append(lits[0])
                     self.cls.append(lits)
+                    for l in lits:
+                        self.literal_clause_map[l].append(len(lits))
 
             self.literals = [i for i in range(1, nb_vars + 1)]
             if self.literal_weights == None:
@@ -103,6 +109,7 @@ class WCNF:
             print("finished reading")
             self.variables = {i: [0, 1] for i in self.literals}
             self.n = len(self.literals)
+
             # self.write_weights()
             if self.logger:
                 if self.NO_COMPILE:
@@ -347,6 +354,7 @@ class WCNF:
             var = -var
             opp = abs(var)
         new_cls = [var]
+        self.literal_clause_map[var].append(1)
         #call this if you want to save intermediate cnf files
         # fname = self.instance_name.replace(".cnf", "_x"+str(var) + ".cnf")
         # self.write_cnf_extend(fname, [new_cls])
@@ -371,13 +379,22 @@ class WCNF:
                     for i in c:
                         if i != opp:
                             updated_c.append(i)
+                        #remove count for i - it is removed from cls
+                    if len(updated_c) != len(c):
+                        for temp in c:
+                            self.literal_clause_map[temp].remove(len(c))
+                        for temp in updated_c:
+                            self.literal_clause_map[temp].append(len(updated_c))
                     # print(c, updated_c, variable, value)
                     csp_clauses.append(updated_c)
+
                     if len(updated_c) == 1 and abs(updated_c[0]) not in self.partial_assignment.assigned:
-                        #check that variable has not been assigned alredy
+                        #check that variable has not been assigned already
                         self.trivial_backbone.append(updated_c[0])
                 # if var in c we should just eliminate it so not adding to new clauses
-
+                else: #remove clause c because it is satisfied by var - need to decrease cls count for literals in it
+                    for l in c:
+                        self.literal_clause_map[l].remove(len(c))
             self.cls = csp_clauses.copy()
             if self.obj_type == "WMC":
                 cnf_file_name = self.instance_name.replace(".cnf", "_temp"+self.obj_type+self.heur_type+".cnf")
@@ -504,12 +521,13 @@ class WCNF:
             lit = -var
         else:
             lit = var
+        return len(self.literal_clause_map[lit])
         # print(var, value, opp_literal)
-        count = 0
-        for cls in self.cls:
-            if lit in cls:
-                count += 1
-        return count
+        # count = 0
+        # for cls in self.cls:
+        #     if lit in cls:
+        #         count += 1
+        # return count
 
     def adjusted_occurance(self, var, value):
         """
@@ -524,13 +542,19 @@ class WCNF:
         else:
             lit = var
         # print(var, value, opp_literal)
-        for cls in self.cls:
-            if lit in cls:
-                m = len(cls)
-                if m not in cls_len_occurance:
-                    cls_len_occurance[m] = 0
-                cls_len_occurance[m] += 1
+        for m in self.literal_clause_map[lit]:
+            if m not in cls_len_occurance:
+                cls_len_occurance[m] = 0
+            cls_len_occurance[m] += 1
         count = sum([v/k for k,v in cls_len_occurance.items()] )
+        # for cls in self.cls:
+        #     if lit in cls:
+        #         for m in self.literal_clause_map[lit]:
+        #             m = len(cls)
+        #             if m not in cls_len_occurance:
+        #                 cls_len_occurance[m] = 0
+        #             cls_len_occurance[m] += 1
+        # count = sum([v / k for k, v in self.cls_len_occurance.items()])
         return count
 
     def calculate_score(self, var, value, score_type, weighted=True):
@@ -542,7 +566,7 @@ class WCNF:
         else:
             lit = var
             opp_lit = -var
-        if [lit] in self.cls:
+        if lit in self.trivial_backbone:
             print("backbone: ", lit)
             if weighted:
                 return weight * 100000
@@ -564,12 +588,14 @@ class WCNF:
             #     print("UNCONSTRAINED VAR CHOSEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             #     score =  0
             # else:
-            est_lit = math.prod([1-math.pow(0.5, len(cls)-1 ) for cls in opp_occurance_list])
-            est_opp_lit = math.prod([1-math.pow(0.5, len(cls)-1 ) for cls in occurance_list])
+            est_lit = math.prod([1-math.pow(0.5, cls_len-1 ) for cls_len in self.literal_clause_map[opp_lit]])
+            est_opp_lit = math.prod([1-math.pow(0.5, cls_len-1 ) for cls_len in self.literal_clause_map[lit]])
+            # est_lit = math.prod([1 - math.pow(0.5, len(cls) - 1) for cls in opp_occurance_list])
+            # est_opp_lit = math.prod([1 - math.pow(0.5, len(cls) - 1) for cls in occurance_list])
             score = est_lit / (est_lit + est_opp_lit)
                 # score = math.prod([1-math.pow(0.5, len(cls)-1 ) for cls in occurance_list])
         elif score_type == "otherwg":
-            opp_occurance_list = [cls for cls in self.cls if opp_lit in cls]
+            # opp_occurance_list = [cls for cls in self.cls if opp_lit in cls]
             score = 1
             for cls in self.cls:
                 if opp_lit in cls:

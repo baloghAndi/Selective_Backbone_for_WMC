@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.pylab as pl
 import time
+
+from torch import no_grad
+
 import CNFmodelBDD
 import matplotlib.colors as mcolors
 import CNFmodelBDD as _cnfBDD
@@ -245,7 +248,7 @@ class ExprData:
                 self.all_expr_data[self.exprs[-1]] = self.data.copy()
                 self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
                 self.finish_time[self.exprs[-1]] = float(self.data[-1][self.column_names.index("time")])
-            if len(self.data) == 0 and len(self.exprs) > 0:
+            if len(self.data) == 0 and len(self.exprs) > 0: #remove expr if it has no data at all
                 self.exprs.pop()
                 self.full_expr_name.pop()
 
@@ -272,10 +275,10 @@ class ExprData:
                 if expr not in remove_expr:
                     remove_expr.append(expr)
                     print("remove: ", expr)
-        # remove exprs that have inf as mc or wmc
+        # remove exprs that have inf as mc or wmc - if min_nb = -1
         wmc_index = self.column_names.index("WMC")
         for expr in self.all_expr_data.keys():
-            if math.isinf(self.all_expr_data[expr][0][mc_index]) or math.isinf(self.all_expr_data[expr][0][wmc_index]):
+            if math.isinf(self.all_expr_data[expr][0][mc_index]) or math.isinf(self.all_expr_data[expr][0][wmc_index]) :
                 print("expr has inf mc or wmc ", expr)
                 if expr not in remove_expr:
                     remove_expr.append(expr)
@@ -4022,7 +4025,8 @@ def check_benchmark_preproc2():
 def create_time_table_d4(folders, labels, columns, nocompile=False, cutoff={}):
     #cutoff is used for the no compiled setting to only count time for when we actually have looked results for
     import statistics
-    f = open("./results/times_table.csv", "w")
+    # f = open("./results/times_table.csv", "w")
+    f = open("./results_aaai/times_table.csv", "w")
     if nocompile:
         f = open("./results/times_table_NO_COMPILE_2.csv", "w")
     writer = csv.writer(f, delimiter=',')
@@ -4044,10 +4048,10 @@ def create_time_table_d4(folders, labels, columns, nocompile=False, cutoff={}):
             nb_exprs += 1
             stats_file = folder + "dataset_stats_" + type + ".csv"
             expr_data = ExprData(columns)
-            expr_cutoff = cutoff[folder.split("_")[-1]][type]
             if nocompile:
+                expr_cutoff = cutoff[folder.split("_")[-1]][type]
                 expr_data.read_nocompile_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False,
-                                      filter_timeout=False, filter_conflict=False,cutoff=expr_cutoff)
+                                                    filter_timeout=False, filter_conflict=False,cutoff=expr_cutoff)
             else:
                 expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False,
                                       filter_timeout=False, filter_conflict=False)
@@ -4113,14 +4117,102 @@ def create_time_table_d4(folders, labels, columns, nocompile=False, cutoff={}):
 
     print(nb_assigned_vars_data)
 
+def filer_instances():
+    FOLDER = "Dataset_preproc"
+    nb_vars_data = {}
+    columns = [ "p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
 
+    all_expr_names_count = {}
+    nb_exprs = 0
+    smallest_n = 600
+    all_exprs = []
+    folders = ["./results_aaai/Dataset_preproc_WMC/"]
+    # folders = ["./results_aaai/Dataset_preproc_wscore_estimate/"]
+    labels = ["static"]
+    nb_vars_data = {}
+    for folder in folders:
+        for type in labels:
+            # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder) and type == 'static':
+            if 'rand_dynamic' in folder and type == 'static':
+                continue
+            nb_exprs += 1
+            stats_file = folder + "dataset_stats_" + type + ".csv"
+
+            with (open(stats_file) as csvfile):
+                prev_line_expr_name = False
+                reader = csv.reader(csvfile, delimiter=',')
+                for line in reader:
+                    if len(line) == 1 or ".cnf" in line[0]:  # if first line or start of new expr
+                        print("expr:", line)
+                        expr_file = line[0].split("/")[-1]
+                        save_expr_name = line[0]
+                        save_expr_name = save_expr_name.split("/")[-1]
+                        if "_bench"  in expr_file:
+                            expr_file = expr_file.replace("_bench", ".bench")
+                        if save_expr_name.count(".") > 1:
+                            save_expr_name = save_expr_name.replace(".", "_", save_expr_name.count( ".") - 1)  # actually first . will always be ./input so should skipp that
+                        if save_expr_name not in nb_vars_data:
+
+                            with open('./input/Dataset_preproc/'+expr_file, "r") as f:
+                                content = f.readlines()
+                                nb_vars = int(content[0].strip().split(" ")[2])
+                            nb_vars_data[save_expr_name] = nb_vars
+            expr_data = ExprData(columns)
+            expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=-1, padding=False,
+                                      filter_timeout=False, filter_conflict=False)
+            print("========", folder, type, len(expr_data.all_expr_data))
+            nb_assigned_vars_data = expr_data.nb_completed_assignments
+
+    sorted_nb_vars_data = sorted(nb_vars_data.items(), key=lambda kv: kv[1])
+    print(sorted_nb_vars_data)
+    print( len(sorted_nb_vars_data))
+    # f = open("./results_aaai/instances.txt","w")
+    no_init_comp = []
+    for item in sorted_nb_vars_data:
+        assigned = -1
+        if item[0] in nb_assigned_vars_data:
+            assigned = nb_assigned_vars_data[ item[0] ]
+        else: #no init compilation
+            no_init_comp.append(item[0])
+            print(item[0])
+    print(no_init_comp)
+    #     f.write(str(item[0])+ " "+str(item[1])+ " "+ str(assigned) +"\n")
+    # f.flush()
+    # f.close()
+    #get unique values
+    nb_vars = [item[1] for item in sorted_nb_vars_data]
+    keys = sorted(list(set(nb_vars)))
+
+    occurance =[]
+    for k in keys:
+        occurance.append(nb_vars.count(k))
+
+
+    # fig = plt.figure()
+    # ax1 = fig.add_subplot(111)
+    # print(len(keys), len(occurance))
+    # ax1.bar(keys, occurance )
+    # # plt.xticks(keys)
+    # plt.show()
+    # print(keys)
+    # print(occurance)
+
+def get_best_variable_percentage():
+    #given a set of experiments :
+    # 1. read stats files - no padding - all should have the same nb iterations - if not eliminate it
+    # 2. calculate adjusted ratio(AR) for each iteration - ratio with respect to initial compilation wmc and size
+    # 3. for each p - number of iteration - calculate how many instanes have AR > 1 ( improvement)
+    pass
 
 if __name__ == "__main__":
+    filer_instances()
+    exit(8)
+
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
     # alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
-    alg_types = [  "dynamic" ]
-    # alg_types = [  "dynamic" , "static"]
+    # alg_types = [  "dynamic" ]
+    alg_types = [  "dynamic" , "static"]
     FOLDER = "Dataset_preproc"
     result_folder = "./results_aaai/"
     # FOLDER = "Dataset_preproc_final"
@@ -4130,6 +4222,7 @@ if __name__ == "__main__":
     # expr_folders =  [  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_MC/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    # expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/", result_folder+FOLDER+"_hybrid_wmc/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
@@ -4176,23 +4269,23 @@ if __name__ == "__main__":
     # exit(4)
 
     # subfolder = "planning"
-    # subfolder = ""
+    subfolder = "iscas"
     # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
     # exit(9)
 
-    # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
-    # exit(5)
+    best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
+    exit(5)
 
-    # create_time_table_d4(expr_folders, alg_types, columns, nocompile=True, cutoff=cutoff)
-    # exit(4)
+    # create_time_table_d4(expr_folders, alg_types, columns, nocompile=False, cutoff={})
+    exit(4)
 
-    subfolder = ""
+    subfolder = "iscas"
     # obj = "MC"
     obj = "WMC"
     out_file = result_folder+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
     if obj == "MC":
         out_file = result_folder+"Dataset_preproc_avg_MC_"
-    same_expr = False
+    same_expr = True
     filter_timeout = False
     filter_conflict = False
 
@@ -4215,12 +4308,12 @@ if __name__ == "__main__":
     title = "Average weighted efficiency over dataset "
     if obj == "MC":
         title = "Average MC efficiency over instances "
-    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 300, columns, obj, padding=True, same_expr=same_expr,
                        filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     title = "Average weighted ratio over instances"
     if obj == "MC":
         title = "Average MC efficiency over instances"
-    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 300, columns, obj, padding=True, same_expr=same_expr,
                   filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     # col = "WMC"
     # title = "Average weighted " + col
