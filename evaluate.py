@@ -4197,6 +4197,13 @@ def filer_instances():
     # print(keys)
     # print(occurance)
 
+def get_best_variable_percentage():
+    #given a set of experiments :
+    # 1. read stats files - no padding - all should have the same nb iterations - if not eliminate it
+    # 2. calculate adjusted ratio(AR) for each iteration - ratio with respect to initial compilation wmc and size
+    # 3. for each p - number of iteration - calculate how many instanes have AR > 1 ( improvement)
+    pass
+
 if __name__ == "__main__":
     filer_instances()
     exit(8)
