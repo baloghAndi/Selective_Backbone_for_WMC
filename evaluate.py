@@ -9,7 +9,6 @@ import numpy as np
 import matplotlib.pylab as pl
 import time
 
-from torch import no_grad
 
 import CNFmodelBDD
 import matplotlib.colors as mcolors
@@ -4201,8 +4200,26 @@ def get_best_variable_percentage():
     #given a set of experiments :
     # 1. read stats files - no padding - all should have the same nb iterations - if not eliminate it
     # 2. calculate adjusted ratio(AR) for each iteration - ratio with respect to initial compilation wmc and size
-    # 3. for each p - number of iteration - calculate how many instanes have AR > 1 ( improvement)
-    pass
+    # 3. nb_improvement = for each p - number of iteration - calculate how many instanes have AR > 1 ( improvement)
+    # 4. percentage var = p that maximizes 3.nb_improvement(nb_p)
+    # break ties for 4 with max lb_p ; lb_p =  min AR per each p
+    FOLDER = "Dataset_preproc"
+    nb_vars_data = {}
+    columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
+    nb_exprs = 0
+    all_expr_names_count = {}
+    folders = ["./results_aaai/Dataset_preproc_hybrid_wmc/"]
+    labels = ["dynamic"]
+    nb_vars_data = {}
+    for folder in folders:
+        for type in labels:
+            # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder) and type == 'static':
+            if 'rand_dynamic' in folder and type == 'static':
+                continue
+            nb_exprs += 1
+            stats_file = folder + "dataset_stats_" + type + ".csv"
+            expr_data = ExprData(columns)
+            expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=-1, padding=False, filter_timeout=False, filter_conflict=False)
 
 if __name__ == "__main__":
     filer_instances()
