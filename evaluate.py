@@ -9,8 +9,6 @@ import numpy as np
 import matplotlib.pylab as pl
 import time
 
-from torch import no_grad
-
 import CNFmodelBDD
 import matplotlib.colors as mcolors
 import CNFmodelBDD as _cnfBDD
