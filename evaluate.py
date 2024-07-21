@@ -97,7 +97,7 @@ class ExprData:
                     if len(self.data) > 0: #next expr is starting, need to save current expr data
                         if self.exprs[-1] in self.all_expr_data:
                             print("duplicate expr: ",  self.exprs[-1])
-                            exit(8)
+                            exit(88)
                         if len(cutoff) > 0:
                             self.all_expr_data[self.exprs[-1]] = self.data.copy()[:int(cutoff[self.exprs[-1]])+1]
                             prev_line = self.all_expr_data[self.exprs[-1]][-1]
@@ -4223,14 +4223,14 @@ def get_best_variable_percentage():
             expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=-1, padding=False, filter_timeout=False, filter_conflict=False)
 
 if __name__ == "__main__":
-    filer_instances()
-    exit(8)
+    # filer_instances()
+    # exit(8)
 
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
     # alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
-    # alg_types = [  "dynamic" ]
-    alg_types = [  "dynamic" , "static"]
+    alg_types = [  "dynamic" ]
+    # alg_types = [  "dynamic" , "static"]
     FOLDER = "Dataset_preproc"
     result_folder = "./results_aaai/"
     # FOLDER = "Dataset_preproc_final"
@@ -4287,17 +4287,17 @@ if __name__ == "__main__":
     # exit(4)
 
     # subfolder = "planning"
-    subfolder = "iscas"
+    # subfolder = "iscas"
     # count_conflicts_timeout(expr_folders, alg_types, columns, subfolder)
     # exit(9)
 
-    best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
-    exit(5)
+    # best_ratio_per_alg(expr_folders, alg_types, columns, subfolder)
+    # exit(5)
 
     # create_time_table_d4(expr_folders, alg_types, columns, nocompile=False, cutoff={})
-    exit(4)
+    # exit(4)
 
-    subfolder = "iscas"
+    subfolder = ""
     # obj = "MC"
     obj = "WMC"
     out_file = result_folder+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
