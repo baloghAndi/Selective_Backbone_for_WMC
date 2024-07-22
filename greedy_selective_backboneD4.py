@@ -176,7 +176,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
     return best_variable,best_value, best_cost, best_size, best_node_count, best_mc, best_wmc
 
 
-def dynamic_greedy_pWSB(csp, max_p, obj_type,logger, NO_COMPILE=False, sample_size=-1):
+def dynamic_greedy_pWSB(csp, max_p, obj_type,logger, NO_COMPILE=False, sample_size=-1) :
     #obj_type = MC or WMC
     print("DYNAMIC")
     pa = csp.partial_assignment
@@ -233,6 +233,44 @@ def dynamic_greedy_pWSB(csp, max_p, obj_type,logger, NO_COMPILE=False, sample_si
     #     print(','.join(map(str, i)))
 
 
+def dynamic_greedy_pWSB_at_variable_percent(csp, max_p, obj_type,logger, NO_COMPILE=False, sample_size=-1, var_percentage=-1) :
+    #obj_type = MC or WMC
+    pa = csp.partial_assignment
+    p = len(pa.assigned)
+    print(p, max_p)
+    variable_assignment = round((var_percentage * max_p) / 100)
+    print("DYNAMIC ---- var ", variable_assignment, "out of ", max_p)
+
+    while p <= variable_assignment:
+        #select the assignment that maximizes the score
+        p += 1
+
+        best_variable, best_value, best_cost, best_size, best_node_count, mc, wmc = get_best_assignment(csp,obj_type, NO_COMPILE,logger)
+        print("assign ",p , best_variable, best_value, best_cost, wmc, mc)
+        csp.extend_assignment( best_variable,best_value, abs(best_cost), propagate=True )
+
+
+    elapsed = logger.get_time_elapsed()
+
+    if wmc == 0.0:
+        log_line = [p, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, 0, 0, best_cost]
+        logger.log(log_line)
+        return
+    else:
+        if wmc == -1:
+            logWMC = -1
+        else:
+            logWMC = math.log10(wmc)
+        log_line = [p, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, wmc, logWMC, best_cost]
+    logger.log(log_line)
+
+
+        # print( p, best_variable, best_value, best_cost)
+
+    # print("p=", p)
+    # print("variable,value,score")
+    # for i in result:
+    #     print(','.join(map(str, i)))
 def dynamic_random(csp, max_p, obj_type, logger, NO_COMPILE=False):
     print("DYNAMIC RANDOM")
     pa = csp.partial_assignment
@@ -676,6 +714,39 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE
     logger.close()
     print("ELAPSED TIME: ", all_end - all_start)
 
+def run_at_p_percent_variable(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE=True, var_percentage=4):
+    columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC",
+               "obj"]
+    if "random" in alg_type or "ls" in alg_type:
+        # stats_file = d + "dataset_stats_" + alg_type + "_" + str(seed) + ".csv"
+        stats_file = out_folder + "dataset_stats_p_" + alg_type + "_" + str(seed) + ".csv"
+    else:
+        # stats_file = d + "dataset_stats_" + alg_type + ".csv"
+        stats_file = out_folder + "dataset_stats_p_" + alg_type + ".csv"
+    print("stats file: --------", stats_file)
+    expr_data = evaluate.ExprData(columns)
+    logger = evaluate.Logger(stats_file, columns, expr_data, out_folder, compile=True)
+    print(filename)
+    all_start = time.perf_counter()
+    logger.log_expr(filename)
+    start = time.perf_counter()
+    logger.set_start_time(start)
+    cnf = _wcnfd4.WCNF(logger, scalar=scalar, NO_COMPILE=NO_COMPILE)
+    b = cnf.load_file(filename, obj_type, alg_type)
+    print(logger.get_time_elapsed())
+    # if not b:
+    #     return
+
+    # TODO: iterate here between the alf types to avoid spending time for loding initial compilation -
+    # needt to save first line in log to add it to all consequtive stat files
+    maxp = len(cnf.literals)
+    if alg_type == "dynamic":
+        logger.progress_log.write(filename + "\n")
+        logger.progress_log.flush()
+        dynamic_greedy_pWSB_at_variable_percent(cnf, maxp, obj_type, logger, NO_COMPILE=True, sample_size=0, var_percentage=var_percentage)
+    all_end = time.perf_counter()
+    logger.close()
+    print("ELAPSED TIME: ", all_end - all_start)
 
 if __name__ == "__main__":
     # type = "dynamic"
@@ -708,7 +779,8 @@ if __name__ == "__main__":
     inobj = sys.argv[3] #hybrid_wmc
     alg_type = sys.argv[4]
     part = str(sys.argv[5])
-    NO_COMPILE = False
+    # NO_COMPILE = False
+
 
     # d = "./input/Dataset_preproc/"
     # folder = d.split("/")[-2]
@@ -718,6 +790,7 @@ if __name__ == "__main__":
     # NO_COMPILE = False
     # part=1
     sample_size = -1
+
 
     no_init_compilation = ['16_uts_k3_p_t3.cnf', '16_uts_k4_p_t2.cnf', '15_sort_num_s_5_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k2_p_t9.cnf',
                            '15_sort_num_s_6_p_t2.cnf', '15_sort_num_s_5_p_t4.cnf', '16_uts_k3_p_t5.cnf', '16_uts_k4_p_t3.cnf', '16_uts_k5_p_t2.cnf',
@@ -792,7 +865,7 @@ if __name__ == "__main__":
     filename_only  = filename.split("/")[-1]
     if filename_only.count(".") > 1:
         filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    if filename_only not in no_init_compilation:
+    if filename_only in ecai23:
         exit(2)
 
     # run(alg_type, d, filename,  seed)
@@ -809,7 +882,8 @@ if __name__ == "__main__":
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
+    # run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
+    run_at_p_percent_variable(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True, var_percentage=4)
 
     # inti_compilation("init300", d, filename, out_folder, inobj)
     exit(0)

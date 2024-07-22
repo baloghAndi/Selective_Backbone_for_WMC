@@ -326,6 +326,7 @@ class ExprData:
                 # exit(12345678)
 
         if padding:
+            print("-------------------------padding--------------------------")
             for expr in self.all_expr_data.keys():  # in case mc got to 0 make it look like expr finished -- why is this needed?
                 last_row = self.all_expr_data[expr][-1]
                 nb_vars_index = self.column_names.index("nb_vars")
@@ -705,7 +706,7 @@ class ExprData:
         # bdd_index = self.column_names.index("SDD size")
         size_index = self.column_names.index("edge_count")
         # bdd_index = self.column_names.index("dag_size")
-        smallest_n = 600
+        smallest_n = 600000
         for expr in self.exprs:
             curren_n = self.get_nb_vars(expr)
             # if curren_n >= 100:
@@ -1299,7 +1300,7 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
     all_expr_names = []
     all_expr_names_count = {}
     nb_exps = 0
-    smallest_n = 600
+    smallest_n = 10000
     if subfolder != "":
         outputfile = outputfile + subfolder
         title = title + subfolder
@@ -1557,6 +1558,8 @@ def average_efficiency_WMC_MC(folders, outputfile, title, labels, min_n, columns
             fname = f.split("_")[-1]
             if "rand_dynamic" in f:
                 fname = "random"
+            if "hybrid" in f:
+                fname = "hybrid_wmc/"
             print(fname)
             if "WMC" not in fname:
                 dist_index = 0
@@ -1793,7 +1796,8 @@ def average_ratio_MC_WMC(folders, outputfile, title, labels, min_n, columns, obj
             fname = f.split("_")[-1]
             if "rand_dynamic" in f:
                 fname = "random"
-
+            if "hybrid" in f:
+                fname = "hybrid_wmc/"
             ax1.scatter(x, avg_wmc, c=colors[index], label=HEUR_NAMES[fname]+" "+l+" WMC", marker=marks[index])
             ax1.plot(x, avg_wmc, c=colors[index])
             index +=1
@@ -1898,6 +1902,8 @@ def average_column(folders, outputfile, title, labels, min_n, columns, obj, padd
             fname = f.split("_")[-1]
             if "rand_dynamic" in f:
                 fname = "random"
+            if "hybrid" in f:
+                fname = "hybrid_wmc/"
             ax1.scatter(x, avg_col, c=colors[index], label=HEUR_NAMES[fname]+" "+l, marker=marks[index])
             ax1.plot(x, avg_col, c=colors[index], alpha=0.7, linewidth=1)
             index +=1
@@ -4197,7 +4203,7 @@ def filer_instances():
     # print(keys)
     # print(occurance)
 
-def get_best_variable_percentage():
+def get_best_variable_percentage(sample_size = 50):
     #given a set of experiments :
     # 1. read stats files - no padding - all should have the same nb iterations - if not eliminate it
     # 2. calculate adjusted ratio(AR) for each iteration - ratio with respect to initial compilation wmc and size
@@ -4209,22 +4215,54 @@ def get_best_variable_percentage():
     columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
     nb_exprs = 0
     all_expr_names_count = {}
-    folders = ["./results_aaai/Dataset_preproc_hybrid_wmc/"]
-    labels = ["dynamic"]
+    folder = "./results_aaai2/Dataset_preproc_hybrid_wmc/"
+    type = "dynamic"
     nb_vars_data = {}
-    for folder in folders:
-        for type in labels:
-            # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder) and type == 'static':
-            if 'rand_dynamic' in folder and type == 'static':
-                continue
-            nb_exprs += 1
-            stats_file = folder + "dataset_stats_" + type + ".csv"
-            expr_data = ExprData(columns)
-            expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=-1, padding=False, filter_timeout=False, filter_conflict=False)
+    stats_file = folder + "dataset_stats_" + type + ".csv"
+    expr_data = ExprData(columns)
+    expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=-1, padding=False, filter_timeout=False, filter_conflict=False)
+    ratios_per_expr, smallest_n = expr_data.get_metric_wrt_initial_per_expr(metric="ratio", obj="WMC")
+    dont_consider = []
+    for e in ratios_per_expr.keys():
+        if len(ratios_per_expr[e]) < sample_size+1:
+            dont_consider.append(e)
+    nb_compact_ars = [0 for i in  range(1, sample_size+1)]
+    lbs = [100 for i in  range(1, sample_size+1)]
+    all_ars = [[] for i in  range(1, sample_size+1)]
+
+    for index in range(1, sample_size+1):
+        for e in ratios_per_expr.keys():
+            if e not in dont_consider:
+                current_ar = ratios_per_expr[e][index]
+                if current_ar > 1 :
+                    nb_compact_ars[index-1] += 1
+                    all_ars[index-1].append(current_ar)
+                    if current_ar < lbs[index-1]:
+                        lbs[index - 1] = current_ar
+    best_var_percentage = 0
+    best_var_percentage_index = 0
+    for i, ar in enumerate(nb_compact_ars):
+        if ar > best_var_percentage:
+            best_var_percentage = ar
+            best_var_percentage_index = i
+        elif ar == best_var_percentage:
+            if lbs[i] > lbs[best_var_percentage_index]:
+                best_var_percentage = ar
+                best_var_percentage_index = i
+
+
+    print(nb_compact_ars)
+    print(best_var_percentage_index, best_var_percentage)
+    print("lbs: ", lbs)
+    print("all")
+    for ar in all_ars:
+        print(ar)
+
 
 if __name__ == "__main__":
     # filer_instances()
-    # exit(8)
+    get_best_variable_percentage(50)
+    exit(8)
 
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
@@ -4232,7 +4270,7 @@ if __name__ == "__main__":
     alg_types = [  "dynamic" ]
     # alg_types = [  "dynamic" , "static"]
     FOLDER = "Dataset_preproc"
-    result_folder = "./results_aaai/"
+    result_folder = "./results_aaai2/"
     # FOLDER = "Dataset_preproc_final"
     # FOLDER = "Dataset_preproc_NO_COMPILE_2"
     HEUR_NAMES = {"MC/": "actual_MC", "WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random", "hybrid_wmc/": "hybrid"}
@@ -4241,7 +4279,8 @@ if __name__ == "__main__":
     # expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_MC/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
-    expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/", result_folder+FOLDER+"_hybrid_wmc/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    expr_folders =  [  result_folder+FOLDER+"_hybrid_wmc/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    # expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/", result_folder+FOLDER+"_hybrid_wmc/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
     # expr_folders = [ "./results/Benchmark_preproc2_wscore_half/" ,"./results/Benchmark_preproc2_wscore_estimate/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
@@ -4326,20 +4365,20 @@ if __name__ == "__main__":
     title = "Average weighted efficiency over dataset "
     if obj == "MC":
         title = "Average MC efficiency over instances "
-    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 300, columns, obj, padding=True, same_expr=same_expr,
+    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 100, columns, obj, padding=True, same_expr=same_expr,
                        filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     title = "Average weighted ratio over instances"
     if obj == "MC":
         title = "Average MC efficiency over instances"
-    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 300, columns, obj, padding=True, same_expr=same_expr,
+    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 100, columns, obj, padding=True, same_expr=same_expr,
                   filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     # col = "WMC"
     # title = "Average weighted " + col
-    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col,
+    # average_column(expr_folders, out_file + col, title, alg_types, 100, columns, "WMC", padding=True, plot_tye=col,
     #                same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
     # col = "edge_count"
     # title = "Average weighted " + col
-    # average_column(expr_folders, out_file + col, title, alg_types, 50, columns, "WMC", padding=True, plot_tye=col,
+    # average_column(expr_folders, out_file + col, title, alg_types, 100, columns, "WMC", padding=True, plot_tye=col,
     #                same_expr=same_expr, filter_timeout=filter_timeout, filter_conflict=filter_conflict , subfolder=subfolder)
 
     exit(11)
