@@ -91,3 +91,6 @@ p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
 ./input/Dataset_preproc/15_sort_num_s_6_p_t9.cnf
 p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
 0,-1,-1,3735,15633,-1,-1,-1,0.14444768894463778,-1,-1,-1
+./input/Dataset_preproc/15_sort_num_s_7_p_t10.cnf
+p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
+0,-1,-1,7049,30380,-1,-1,-1,0.18694895994849503,-1,-1,-1
