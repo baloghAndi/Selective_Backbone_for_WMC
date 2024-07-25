@@ -4299,21 +4299,29 @@ def write_inits():
             inits = expr_data.get_line(0)
             for e in inits.keys():
                 if e not in init_exprs:
-                    init_exprs[e] = [inits[e]]
+                    init_exprs[e] = inits[e]
                     if i > 1:
                         print("+++++++++++++++++++++++++++++++++++++++++++++++++++++", e, folder, type)
                         # exit(9)
                 else:
                     init_exprs[e].append(inits[e])
-            for e in expr_data.no_data_expr:
-                if e not in no_compiling_expr:
-                    no_compiling_expr.append(e)
-    for e in init_exprs:
-        print(e, [t[5] for t in init_exprs[e]])
+            # for e in expr_data.no_data_expr:
+            #     if e not in no_compiling_expr:
+            #         no_compiling_expr.append(e)
+    # for e in init_exprs:
+    #     print(e, [t[5] for t in init_exprs[e]])
         # print(e, variance([t[5] for t in init_exprs[e]]), variance([t[6] for t in init_exprs[e]]), len([t[5] for t in init_exprs[e]]))
     print(len(init_exprs))
     print(len(no_compiling_expr))
     print(no_compiling_expr)
+    f = open(result_folder+"init_compilations.csv", "w+")
+    writer = csv.writer(f, delimiter=',')
+    for e in init_exprs:
+        writer.writerow([e])
+        writer.writerow(list(init_exprs[e]))
+    f.flush()
+    f.close()
+
 
 
 
