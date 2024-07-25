@@ -204,3 +204,6 @@ p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
 ./input/Dataset_preproc/07_blocks_right_4_p_t7.cnf
 p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
 0,-1,-1,1856,11585,-1,-1,-1,0.07422833703458309,-1,-1,-1
+./input/Dataset_preproc/07_blocks_right_4_p_t8.cnf
+p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
+0,-1,-1,2117,13223,-1,-1,-1,0.05381243606097996,-1,-1,-1
