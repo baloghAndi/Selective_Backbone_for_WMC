@@ -179,6 +179,12 @@ class ExprData:
 
                         self.all_expr_data[expr].append(add_row)
 
+    def get_line(self, line_index):
+        lines = {}
+        for e in self.all_expr_data.keys():
+            expr_init = self.all_expr_data[e][line_index]
+            lines[e] = expr_init
+        return lines
     def read_stats_file(self, filename, full_expr_only=True, min_nb_expr=1, padding=True, filter_timeout=False, filter_conflict=False):
         """
         Remove exprs that only have 1 solution -as in iniial mc is 1
@@ -189,6 +195,9 @@ class ExprData:
         self.exprs = []
         self.full_expr_name = []
         self.filename = filename
+        self.no_data_expr = []
+        self.only_init_compilation = []
+        expr_count = 0
         print(filename)
         with (open(filename) as csvfile):
             reader = csv.reader(csvfile, delimiter=',')
@@ -197,6 +206,7 @@ class ExprData:
             for line in reader:
                 # print(line)
                 if len(line) == 1 or ".cnf" in line[0]: #if first line or start of new expr
+                    expr_count +=1
                     line_index = 0
                     save_expr_name = line[0]
                     if save_expr_name.count(".")>1:
@@ -210,8 +220,10 @@ class ExprData:
                         self.finish_time[self.exprs[-1]] = float(prev_line[self.column_names.index("time")]) # - self.init_compilation_time[self.exprs[-1]]
                         self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
                     if len(self.data) == 0 and len(self.exprs) > 0: #last expr finished
-                        self.exprs.pop()
+                        temp = self.exprs.pop()
                         self.full_expr_name.pop()
+                        self.no_data_expr.append(temp)
+
                     self.full_expr_name.append(save_expr_name)
                     expr_short_name = save_expr_name.split("/")[-1]
                     self.exprs.append(expr_short_name) #add expr name - should only add if it has data
@@ -225,18 +237,23 @@ class ExprData:
                     for i,x in enumerate(line[:-1]): #why do we ignore last column? it might be the empty value after the end line separator
                         # print(x)
                         if i!=1:
-                            if "[" in x:
-                                typed_line.append(x)
+                            # if "[" in x:
+                            #     typed_line.append(x)
+                            #     print("why? ", x)
+                            #     exit(3)
                             # elif i ==3 or "." in x or i == self.column_names.index("MC") :
                             #     typed_line.append(float(x)) #read mc as float
-                            else:
-                                # print(type(x), x ,i)
-                                # typed_line.append(int(x))
-                                # print(x)
-                                typed_line.append(float(x))
+                            # else:
+                            x_val = float(x)
+                            if math.isinf(x_val):
+                                x_val = np.float128(x)
+                            typed_line.append(x_val)
                         else:
                             typed_line.append(x)
-                    typed_line.append(float(line[-1]))
+                    x_val = float(line[-1])
+                    if math.isinf(x_val):
+                        x_val = np.float128(line[-1])
+                    typed_line.append(x_val)
                     self.data.append(typed_line)
                     prev_line = line
                 if line_index == 1:
@@ -248,10 +265,11 @@ class ExprData:
                 self.nb_completed_assignments[self.exprs[-1]] = self.data[-1][self.column_names.index("p")]
                 self.finish_time[self.exprs[-1]] = float(self.data[-1][self.column_names.index("time")])
             if len(self.data) == 0 and len(self.exprs) > 0: #remove expr if it has no data at all
-                self.exprs.pop()
+                temp = self.exprs.pop()
                 self.full_expr_name.pop()
+                self.no_data_expr.append(temp)
 
-        print("@@@@@@@@@@@@@@@@@@@@@@ read stat file:", self.filename, len(self.full_expr_name), len(self.all_expr_data))
+        print("@@@@@@@@@@@@@@@@@@@@@@ read stat file:", self.filename, len(self.full_expr_name), len(self.all_expr_data), expr_count)
 
         mc_index = self.column_names.index("MC")
 
@@ -277,8 +295,9 @@ class ExprData:
         # remove exprs that have inf as mc or wmc - if min_nb = -1
         wmc_index = self.column_names.index("WMC")
         for expr in self.all_expr_data.keys():
-            if math.isinf(self.all_expr_data[expr][0][mc_index]) or math.isinf(self.all_expr_data[expr][0][wmc_index]) :
-                print("expr has inf mc or wmc ", expr)
+            # if math.isinf(self.all_expr_data[expr][0][mc_index]) or math.isinf(self.all_expr_data[expr][0][wmc_index]) :
+            if np.isinf(self.all_expr_data[expr][0][mc_index]) or np.isinf(self.all_expr_data[expr][0][wmc_index]) :
+                print("expr has inf mc or wmc ", expr, self.all_expr_data[expr][0][mc_index], self.all_expr_data[expr][0][wmc_index] )
                 if expr not in remove_expr:
                     remove_expr.append(expr)
                     print("remove: ", expr)
@@ -4258,11 +4277,57 @@ def get_best_variable_percentage(sample_size = 50):
     for ar in all_ars:
         print(ar)
 
+def write_inits():
+    alg_types = [  "dynamic"]# , "static"]
+    FOLDER = "Dataset_preproc"
+    result_folder = "./results_aaai/"
+    from statistics import variance
+    expr_folders = [result_folder + FOLDER+"_wscore_estimate/" ]#,  result_folder + FOLDER+"_WMC/",result_folder + FOLDER + "_hybrid_wmc/"  ]
+    columns = [ "p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
+    init_exprs = {}
+    no_compiling_expr = []
+    i = 0
+    for folder in expr_folders:
+        for type in alg_types:
+            if 'rand_dynamic' in folder and type == 'static' :
+                # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
+                continue
+            i +=1
+            stats_file = folder + "dataset_stats_" + type + ".csv"
+            expr_data = ExprData(columns)
+            expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False, filter_timeout=False, filter_conflict=False)
+            inits = expr_data.get_line(0)
+            for e in inits.keys():
+                if e not in init_exprs:
+                    init_exprs[e] = [inits[e]]
+                    if i > 1:
+                        print("+++++++++++++++++++++++++++++++++++++++++++++++++++++", e, folder, type)
+                        # exit(9)
+                else:
+                    init_exprs[e].append(inits[e])
+            for e in expr_data.no_data_expr:
+                if e not in no_compiling_expr:
+                    no_compiling_expr.append(e)
+    for e in init_exprs:
+        print(e, [t[5] for t in init_exprs[e]])
+        # print(e, variance([t[5] for t in init_exprs[e]]), variance([t[6] for t in init_exprs[e]]), len([t[5] for t in init_exprs[e]]))
+    print(len(init_exprs))
+    print(len(no_compiling_expr))
+    print(no_compiling_expr)
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     # filer_instances()
-    get_best_variable_percentage(50)
+    # get_best_variable_percentage(50)
+    write_inits()
     exit(8)
+
 
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
