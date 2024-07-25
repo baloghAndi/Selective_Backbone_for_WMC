@@ -4222,8 +4222,9 @@ def get_best_variable_percentage(sample_size = 50):
     expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=-1, padding=False, filter_timeout=False, filter_conflict=False)
     ratios_per_expr, smallest_n = expr_data.get_metric_wrt_initial_per_expr(metric="ratio", obj="WMC")
     dont_consider = []
+    nb_vars = columns.index("nb_vars")
     for e in ratios_per_expr.keys():
-        if len(ratios_per_expr[e]) < sample_size+1:
+        if len(ratios_per_expr[e]) < sample_size+1 or expr_data.all_expr_data[e][0][nb_vars] < 50 :
             dont_consider.append(e)
     nb_compact_ars = [0 for i in  range(1, sample_size+1)]
     lbs = [100 for i in  range(1, sample_size+1)]
@@ -4233,7 +4234,7 @@ def get_best_variable_percentage(sample_size = 50):
         for e in ratios_per_expr.keys():
             if e not in dont_consider:
                 current_ar = ratios_per_expr[e][index]
-                if current_ar > 1 :
+                if current_ar > 1.5 :
                     nb_compact_ars[index-1] += 1
                     all_ars[index-1].append(current_ar)
                     if current_ar < lbs[index-1]:
