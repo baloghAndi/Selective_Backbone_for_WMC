@@ -35,7 +35,7 @@ class Logger:
     def log_expr(self, expr_name):
         self.writer.writerow([expr_name])
         self.writer.writerow(self.column_names)
-        if len(self.expr_data.data) > 0:
+        if len(self.expr_data.data) > 0: #TODO why
             self.expr_data.all_expr_data[expr_name] = self.expr_data.data.copy()
         self.expr_data.exprs.append(expr_name)
         self.expr_data.data = []
@@ -282,16 +282,18 @@ class ExprData:
                 if len(self.all_expr_data[expr]) <= min_nb_expr:
                     if expr not in remove_expr:
                         remove_expr.append(expr)
+                        if expr not in self.no_data_expr:
+                            self.no_data_expr.append(expr)
                         print("remove: ", expr, " from ", self.filename)
-
-        #remove exprs who only have less then 2 models, initial and another one
-        mc_index = self.column_names.index("MC")
-        for expr in self.all_expr_data.keys():
-            if self.all_expr_data[expr][0][mc_index] <= 2 or self.all_expr_data[expr][0][mc_index] == "1.0":
-                print("expr has 1 solution ", expr)
-                if expr not in remove_expr:
-                    remove_expr.append(expr)
-                    print("remove: ", expr)
+        # if min_nb_expr  > 0:
+        #     #remove exprs who only have less then 2 models, initial and another one
+        #     mc_index = self.column_names.index("MC")
+        #     for expr in self.all_expr_data.keys():
+        #         if self.all_expr_data[expr][0][mc_index] <= 2 or self.all_expr_data[expr][0][mc_index] == "1.0":
+        #             print("expr has 1 solution ", expr)
+        #             if expr not in remove_expr:
+        #                 remove_expr.append(expr)
+        #                 print("remove: ", expr)
         # remove exprs that have inf as mc or wmc - if min_nb = -1
         wmc_index = self.column_names.index("WMC")
         for expr in self.all_expr_data.keys():
@@ -4314,7 +4316,7 @@ def write_inits():
     print(len(init_exprs))
     print(len(no_compiling_expr))
     print(no_compiling_expr)
-    f = open(result_folder+"init_compilations.csv", "w+")
+    f = open(result_folder+"init_compilations2.csv", "w+")
     writer = csv.writer(f, delimiter=',')
     for e in init_exprs:
         writer.writerow([e])
@@ -4323,17 +4325,85 @@ def write_inits():
     f.close()
 
 
+def plot_percentage_experiments():
+    #read in init data
+    f = open("./results_aaai2/" + "init_compilations.csv", "r")
+    init_compilations = {}
+    init_times = []
+    columns = [ "p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
 
+    while True:
+        line1 = f.readline()
+        line2 = f.readline()
+        if not line2: break  # EOF
+        data_row = []
+        print(line1)
+        print(line2)
+        for x in line2.split(","):  # why do we ignore last column? it might be the empty value after the end line separator
+            print(x)
+            x_val = float(x)
+            if math.isinf(x_val):
+                x_val = np.float128(x)
+            data_row.append(x_val)
+        init_compilations[line1.strip()] = data_row
+    #read compilation data
+    expr_data = ExprData(columns)
+    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "dataset_stats_p8_dynamic.csv"
+    expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False, filter_timeout=False,
+                              filter_conflict=False)
+    lines = expr_data.get_line(1)
+    print(len(lines))
+    print(len(expr_data.no_data_expr))
+    print(len(expr_data.no_data_expr))
+    no_init_compilation = 0
 
+    ars = {}
+    y = []
+    wmc_index = columns.index("WMC")
+    size_index = columns.index("edge_count")
+    time_index = columns.index("time")
+    nb_expr = 0
+    current_times = []
+    for expr in lines.keys():
+        if expr in init_compilations:
+            init_ratio = init_compilations[expr][wmc_index] /  init_compilations[expr][size_index]
+            current_ratio = lines[expr][wmc_index] /  lines[expr][size_index]
+            ar = current_ratio / init_ratio
+            ars[expr] = ar
+            y.append(ar)
+            init_times.append(init_compilations[expr][time_index])
+            current_times.append(lines[expr][time_index])
+            nb_expr += 1
+        else:
+            print(expr)
+            no_init_compilation +=1
 
+    fig = plt.figure(figsize=(10, 7))
+    ax1 = fig.add_subplot(111)
+    x = [i for i in range(nb_expr)]
+    # ax1.scatter(x, y,)
+    # ax1.plot(x, y)
+    ax1.plot(x, init_times, color="r")
+    ax1.plot(x, current_times, color="g")
 
+    handles, labels = ax1.get_legend_handles_labels()
+    ax1.legend(handles, labels)
+    fig.tight_layout()
+    plt.grid()
+    # plt.show()
 
+    # print(y)
+    print(init_times)
+    print(current_times)
+    print(nb_expr)
+    print(no_init_compilation)
 
 
 if __name__ == "__main__":
     # filer_instances()
     # get_best_variable_percentage(50)
-    write_inits()
+    # write_inits()
+    plot_percentage_experiments()
     exit(8)
 
 
