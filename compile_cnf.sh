@@ -66,8 +66,32 @@ for i in $folder*.cnf; do
       if  [[ "$ecai23" =~ (" "|^)$filename(" "|$) ]] ; then
         echo $filename
       else
+             if [[  $1 == "1" ]]  ; then
+	            	if [[ $i == *"/03_"* ]] || [[ $i == *"/04_"* ]] || [[ $i == *"/05_"* ]] || [[ $i == *"/06_"* ]] || [[ $i == *"/07_"* ]] ; then
+		            	echo "start1" $i
+			           timeout 3600 python3 compile_cnf.py $i $1
+
+		            fi
+	           fi
+	          if [[  $1 == "2" ]]  ; then
+      	      if [[   $i == *"/08_"* ]] || [[   $i == *"/09_"* ]]   ; then
+	             echo "start2" $i
+		             timeout 3600 python3 compile_cnf.py $i $1
+	            fi
+	         fi
+	          if [[  $1 == "3" ]]  ; then
+      	      if [[   $i == *"/10_"* ]] || [[   $i == *"/11_"* ]] || [[ $i == *"/12_"* ]] || [[ $i == *"/13_"* ]] || [[ $i == *"/14_"* ]]  ; then
+	              echo "start3" $i
+		                 timeout 3600 python3 compile_cnf.py $i $1
+	            fi
+	          fi
+	          if [[  $1 == "4" ]]  ; then
+      	      if [[   $i == *"/15_"* ]] || [[ $i == *"/16_"* ]]  ; then
+	              echo "start4" $i
+		             timeout 3600 python3 compile_cnf.py $i $1
+	            fi
         echo "compile" $filename
-        timeout 3600 python3 compile_cnf.py $i
+        fi
 
       fi
     fi

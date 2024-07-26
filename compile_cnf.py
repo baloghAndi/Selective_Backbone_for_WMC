@@ -9,12 +9,14 @@ if __name__ == "__main__":
 	columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC",
 			   "obj"]
 
-	stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/8percent_compilations.csv"
+	cnf_file =  sys.argv[1]
+	part = sys.argv[2]
+	stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/8percent_compilations_part"+str(part)+".csv"
 
 	f = open(stats_file, "a+")
 	writer = csv.writer(f, delimiter=',')
 
-	cnf_file =  sys.argv[1]
+
 	writer.writerow([cnf_file])
 	weights_file = cnf_file.replace(".cnf", "_w3.w" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
 	weights_file = weights_file.replace("_temphybrid_wmcdynamic", "" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
