@@ -80,7 +80,7 @@ for i in $folder*.cnf; do
 	            fi
 	         fi
 	          if [[  $1 == "3" ]]  ; then
-      	      if [[   $i == *"/10_"* ]] || [[   $i == *"/11_"* ]] || [[ $i == *"/12_"* ]] || [[ $i == *"/13_"* ]] || [[ $i == *"/14_"* ]]  ; then
+      	      if  [[   $i == *"/11_"* ]] || [[ $i == *"/12_"* ]] || [[ $i == *"/13_"* ]] || [[ $i == *"/14_"* ]]  ; then
 	              echo "start3" $i
 		                 timeout 3600 python3 compile_cnf.py $i $1
 	            fi
