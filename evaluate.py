@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pylab as pl
 import time
 
+from torch import save
 
 import CNFmodelBDD
 import matplotlib.colors as mcolors
@@ -4398,12 +4399,61 @@ def plot_percentage_experiments():
     print(nb_expr)
     print(no_init_compilation)
 
+def count_hybrid_call():
+    filename = "./results_aaai2/Dataset_preproc_hybrid_wmc/dataset_stats_p_dynamic.txt"
+    total_d4_callcount = {}
+    iteration_d4_callcount = {}
+
+    d4_calls = 0
+    prev_expr = ""
+    with open(filename, "r") as f:
+        content = f.readlines()
+        for line in content:
+            if "input/" in line:
+                if line.count(".") > 1:
+                    save_expr_name = line.strip("\n").replace(".", "_", line.count(".") - 1)  # actually first . will always be ./input so should skipp tha
+                    save_expr_name = save_expr_name.split("/")[-1]
+                if prev_expr != "":
+                    total_d4_callcount[prev_expr] = d4_calls
+                iteration_d4_callcount[save_expr_name] = []
+                total_d4_callcount[save_expr_name] = 0
+                prev_expr = save_expr_name
+                d4_calls = 0
+            elif "A:" in line:
+                nb_d4 = int(line.split(",")[-1].strip("]\n"))
+                iteration_d4_callcount[prev_expr].append(nb_d4)
+                d4_calls +=nb_d4
+
+    columns = [ "p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
+
+    expr_data = ExprData(columns)
+    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p8_dynamic.csv"
+    expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False, filter_timeout=False,
+                              filter_conflict=False)
+    sb_lines = expr_data.get_line(1)
+    print(len(sb_lines))
+
+    for e in total_d4_callcount:
+        if e in sb_lines:
+            nb_vars = sb_lines[e][3]
+            iteration_len = len(iteration_d4_callcount[e])
+            percentages = []
+            for i in range(iteration_len):
+                vars = nb_vars-i
+                assignments = 2*vars
+                p =  ( iteration_d4_callcount[e][i] * 100 ) / assignments
+                formatted = "{:.3f}".format(p)
+                percentages.append(formatted)
+            print(e, "-" ,sb_lines[e][3], "-" , sb_lines[e][4], "-", total_d4_callcount[e], "-", iteration_len , "-",  max(percentages), "-", percentages,  "-", iteration_d4_callcount[e])
+    print(len(total_d4_callcount))
+
 
 if __name__ == "__main__":
     # filer_instances()
     # get_best_variable_percentage(50)
     # write_inits()
-    plot_percentage_experiments()
+    # plot_percentage_experiments()
+    count_hybrid_call()
     exit(8)
 
 
