@@ -663,10 +663,10 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE
     columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]
     if "random" in alg_type or "ls" in alg_type:
         # stats_file = d + "dataset_stats_" + alg_type + "_" + str(seed) + ".csv"
-        stats_file = out_folder + "dataset_stats_" + alg_type + "_" + str(seed) + ".csv"
+        stats_file = out_folder + "dataset_stats_init" + alg_type + "_" + str(seed) + ".csv"
     else:
         # stats_file = d + "dataset_stats_" + alg_type + ".csv"
-        stats_file = out_folder + "dataset_stats_" + alg_type + ".csv"
+        stats_file = out_folder + "dataset_stats_init" + alg_type + ".csv"
     if part != "":
         stats_file = stats_file.replace(".csv", "_part"+str(part)+".csv")
     print("stats file: --------", stats_file)
@@ -689,6 +689,9 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE
     if alg_type == "dynamic":
         logger.progress_log.write(filename + "\n")
         logger.progress_log.flush()
+        if "init" in stats_file:
+            print("ONLY INIT !!!!!!!!!!!!!!!")
+            maxp = 1
         dynamic_greedy_pWSB(cnf, maxp, obj_type, logger,NO_COMPILE, sample_size)
     elif alg_type == "dynamic_ratio":
         dynamic_greedy_pWSB(cnf, maxp, "dynamic_ratio",logger,NO_COMPILE, sample_size)
@@ -867,7 +870,7 @@ if __name__ == "__main__":
     filename_only  = filename.split("/")[-1]
     if filename_only.count(".") > 1:
         filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    if filename_only in ecai23:
+    if filename_only not in no_init_compilation:
         exit(2)
 
     # run(alg_type, d, filename,  seed)
@@ -884,8 +887,9 @@ if __name__ == "__main__":
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    # run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
-    run_at_p_percent_variable(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True, part=part ,var_percentage=8)
+    NO_COMPILE = False
+    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
+    # run_at_p_percent_variable(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True, part=part ,var_percentage=8)
 
     # inti_compilation("init300", d, filename, out_folder, inobj)
     exit(0)
