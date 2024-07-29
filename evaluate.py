@@ -2,6 +2,7 @@ import csv
 import math
 import os
 import sys
+from csv import excel
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,7 +10,6 @@ import numpy as np
 import matplotlib.pylab as pl
 import time
 
-from torch import save
 
 import CNFmodelBDD
 import matplotlib.colors as mcolors
@@ -270,7 +270,7 @@ class ExprData:
                 self.full_expr_name.pop()
                 self.no_data_expr.append(temp)
 
-        print("@@@@@@@@@@@@@@@@@@@@@@ read stat file:", self.filename, len(self.full_expr_name), len(self.all_expr_data), expr_count)
+        print("@@@@@@@@@@@@@@@@@@@@@@ read stat file:", self.filename, len(self.full_expr_name), len(self.all_expr_data), expr_count, len(self.no_data_expr))
 
         mc_index = self.column_names.index("MC")
 
@@ -4153,9 +4153,10 @@ def filer_instances():
     nb_exprs = 0
     smallest_n = 600
     all_exprs = []
-    folders = ["./results_aaai/Dataset_preproc_WMC/"]
+    folders = ["./results_aaai/dataset_preproc_wmc/"]
     # folders = ["./results_aaai/Dataset_preproc_wscore_estimate/"]
     labels = ["static"]
+    # labels = ["dynamic"]
     nb_vars_data = {}
     for folder in folders:
         for type in labels:
@@ -4189,6 +4190,29 @@ def filer_instances():
                                       filter_timeout=False, filter_conflict=False)
             print("========", folder, type, len(expr_data.all_expr_data))
             nb_assigned_vars_data = expr_data.nb_completed_assignments
+
+    #-----------------------
+    # count_less300 = 0
+    # count_less600 = 0
+    # exprs = []
+    # expr_time = []
+    # for e, nb_var in nb_vars_data.items():
+    #     print(e, nb_var)
+    #     if nb_var <= 300:
+    #         count_less300+=1
+    #     if nb_var > 300 and nb_var <=900:
+    #         count_less600+=1
+    #         exprs.append(e)
+    #         if e in expr_data.all_expr_data:
+    #             expr_time.append( expr_data.all_expr_data[e][-1][-4] )
+    #         else:
+    #             print("no init", e,nb_var)
+    # print("count_less300 ",count_less300)
+    # print("count_less600 ",count_less600)
+    # print(exprs)
+    # print(len(expr_time), sum( expr_time), max(expr_time))
+
+    #------
 
     sorted_nb_vars_data = sorted(nb_vars_data.items(), key=lambda kv: kv[1])
     print(sorted_nb_vars_data)
@@ -4241,22 +4265,23 @@ def get_best_variable_percentage(sample_size = 50):
     nb_vars_data = {}
     stats_file = folder + "dataset_stats_" + type + ".csv"
     expr_data = ExprData(columns)
-    expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=-1, padding=False, filter_timeout=False, filter_conflict=False)
+    expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False, filter_timeout=False, filter_conflict=False)
     ratios_per_expr, smallest_n = expr_data.get_metric_wrt_initial_per_expr(metric="ratio", obj="WMC")
+    print("data set len, ", len(expr_data.all_expr_data))
     dont_consider = []
     nb_vars = columns.index("nb_vars")
     for e in ratios_per_expr.keys():
         if len(ratios_per_expr[e]) < sample_size+1 or expr_data.all_expr_data[e][0][nb_vars] < 50 :
             dont_consider.append(e)
     nb_compact_ars = [0 for i in  range(1, sample_size+1)]
-    lbs = [100 for i in  range(1, sample_size+1)]
+    lbs = [100000 for i in  range(1, sample_size+1)]
     all_ars = [[] for i in  range(1, sample_size+1)]
-
+    # print("dont consider ", len(dont_consider) )
     for index in range(1, sample_size+1):
         for e in ratios_per_expr.keys():
             if e not in dont_consider:
                 current_ar = ratios_per_expr[e][index]
-                if current_ar > 1.5 :
+                if current_ar >= 1.5 :
                     nb_compact_ars[index-1] += 1
                     all_ars[index-1].append(current_ar)
                     if current_ar < lbs[index-1]:
@@ -4277,8 +4302,8 @@ def get_best_variable_percentage(sample_size = 50):
     print(best_var_percentage_index, best_var_percentage)
     print("lbs: ", lbs)
     print("all")
-    for ar in all_ars:
-        print(ar)
+    # for ar in all_ars:
+    #     print(ar)
 
 def write_inits():
     alg_types = [  "dynamic"]# , "static"]
@@ -4352,11 +4377,11 @@ def plot_percentage_experiments():
     stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "dataset_stats_p8_dynamic.csv"
     expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False, filter_timeout=False,
                               filter_conflict=False)
-    lines = expr_data.get_line(1)
-    print(len(lines))
-    print(len(expr_data.no_data_expr))
-    print(len(expr_data.no_data_expr))
-    no_init_compilation = 0
+    # lines = expr_data.get_line(1)
+    # print(len(lines))
+    # print(len(expr_data.no_data_expr))
+    # print(len(expr_data.no_data_expr))
+    # no_init_compilation = 0
 
     ars = {}
     y = []
@@ -4364,28 +4389,66 @@ def plot_percentage_experiments():
     size_index = columns.index("edge_count")
     time_index = columns.index("time")
     nb_expr = 0
-    current_times = []
-    for expr in lines.keys():
+    # current_times = []
+    # init_ratios = {}
+    # for expr in lines.keys():
+    #     if expr in init_compilations:
+    #         init_ratio = init_compilations[expr][wmc_index] /  init_compilations[expr][size_index]
+    #         current_ratio = lines[expr][wmc_index] /  lines[expr][size_index]
+    #         ar = current_ratio / init_ratio
+    #         init_ratios[expr] = init_ratio
+    #         # ars[expr] = ar
+    #         # y.append(ar)
+    #         init_times.append(init_compilations[expr][time_index])
+    #         current_times.append(lines[expr][time_index])
+    #         # nb_expr += 1
+    #     else:
+    #         print(expr)
+    #         no_init_compilation +=1
+
+    compfile = open("./results_aaai2/Dataset_preproc_hybrid_wmc/8percent_compilations.csv", "r")
+    percent_compilations = []
+
+    while True:
+        line1 = compfile.readline()
+        expr = line1.split("_temphybrid")[0].split("/")[-1]+".cnf"
+        if expr.count(".") > 1:
+            expr = expr.strip("\n").replace(".", "_", expr.count(".") - 1)  # actually first . will always be ./input so should skipp tha
+        line2 = compfile.readline()
+        if not line2: break  # EOF
+
         if expr in init_compilations:
-            init_ratio = init_compilations[expr][wmc_index] /  init_compilations[expr][size_index]
-            current_ratio = lines[expr][wmc_index] /  lines[expr][size_index]
-            ar = current_ratio / init_ratio
-            ars[expr] = ar
-            y.append(ar)
-            init_times.append(init_compilations[expr][time_index])
-            current_times.append(lines[expr][time_index])
-            nb_expr += 1
+            if expr  in expr_data.exprs:
+                print("LOOK at expr", expr)
+                init_ratio = init_compilations[expr][wmc_index] / init_compilations[expr][size_index]
+                comp = line2.split(",")
+                wmc = float(comp[wmc_index])
+                if math.isinf(x_val):
+                    wmc = np.float128(comp[wmc_index])
+                size = float(comp[size_index])
+                if math.isinf(x_val):
+                    size = np.float128(comp[size_index])
+                current = wmc / size
+                ar =  current / init_ratio
+                ars[expr] = ar
+                y.append(ar)
+                nb_expr+=1
+            else:
+                print("NO PERCENT COMPILATION", expr)
+                # exit(2)
         else:
-            print(expr)
-            no_init_compilation +=1
+            print("NOT IN COMPILATION", expr)
+            exit(3)
+
+
 
     fig = plt.figure(figsize=(10, 7))
     ax1 = fig.add_subplot(111)
     x = [i for i in range(nb_expr)]
-    # ax1.scatter(x, y,)
-    # ax1.plot(x, y)
-    ax1.plot(x, init_times, color="r")
-    ax1.plot(x, current_times, color="g")
+    ax1.scatter(x, y,)
+    ax1.plot(x, y)
+    # ax1.plot(x, init_times, color="r")
+    # ax1.plot(x, current_times, color="g")
 
     handles, labels = ax1.get_legend_handles_labels()
     ax1.legend(handles, labels)
@@ -4450,10 +4513,10 @@ def count_hybrid_call():
 
 if __name__ == "__main__":
     # filer_instances()
-    # get_best_variable_percentage(50)
+    get_best_variable_percentage(50)
     # write_inits()
     # plot_percentage_experiments()
-    count_hybrid_call()
+    # count_hybrid_call()
     exit(8)
 
 
