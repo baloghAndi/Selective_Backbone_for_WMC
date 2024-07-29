@@ -631,8 +631,9 @@ class PartialAssigment:
 
 
 if __name__ == "__main__":
-    cnf = CNF()
-    cnf.compile_d4_wmc("./input/test.cnf", "./input/test_weights.w")
+    cnf = WCNF()
+    cnf.get_d4_wmc("./input/Dataset_preproc/01_istance_K3_N15_M45_01.cnf", "./input/Dataset_preproc/01_istance_K3_N15_M45_01_w3.w")
+    # get_d4_wmc
     exit(99)
 
 
