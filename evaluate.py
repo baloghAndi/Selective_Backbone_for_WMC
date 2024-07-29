@@ -9,7 +9,6 @@ import numpy as np
 import matplotlib.pylab as pl
 import time
 
-from torch import save
 
 import CNFmodelBDD
 import matplotlib.colors as mcolors
