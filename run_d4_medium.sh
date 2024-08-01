@@ -17,22 +17,22 @@ seed=1234
             if [[  $3 = "2" ]]  ; then
               if [[   $i = *"/10_"* ]] || [[   $i = *"/11_"* ]] || [[   $i = *"/12_"* ]]  ; then
                      echo 2 $i
-                      timeout 3600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
+                      #timeout 3600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
               fi
             fi
             if [[  $3 = "3" ]]  ; then
               if [[   $i = *"/13_"* ]] || [[   $i = *"/14_"* ]] ; then
                       echo 3 $i
-                      timeout 3600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
+                      #timeout 3600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
               fi
             fi
             if [[  $3 = "4" ]]  ; then
               if [[   $i = *"/16_"* ]] || [[   $i = *"/15_"* ]] ; then
                       echo 4 $i
-                      timeout 3600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
+                      #timeout 3600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
               fi
             fi
-          echo "done" $i
+          #echo "done" $i
      done
   done
 done
