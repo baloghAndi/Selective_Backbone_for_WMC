@@ -726,7 +726,7 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE
     logger.close()
     print("ELAPSED TIME: ", all_end - all_start)
 
-def run_at_p_percent_variable(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE=True,part="",  var_percentage=4):
+def run_at_p_percent_variable(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE=True,part="",  var_percentage=0):
     columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC",
                "obj"]
     if "random" in alg_type or "ls" in alg_type:
@@ -737,6 +737,8 @@ def run_at_p_percent_variable(alg_type, filename, seed, out_folder, obj_type, sc
         stats_file = out_folder + "dataset_stats_p_" + alg_type + ".csv"
     if part != "":
         stats_file = stats_file.replace(".csv", "_part"+str(part)+".csv")
+    if var_percentage != 0:
+        stats_file = stats_file.replace("_part", "_p" + str(var_percentage)+ "_part")
     print("stats file: --------", stats_file)
     expr_data = evaluate.ExprData(columns)
     logger = evaluate.Logger(stats_file, columns, expr_data, out_folder, compile=True)

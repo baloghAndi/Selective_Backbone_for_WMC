@@ -1726,6 +1726,7 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
     ax1.legend(handles, labels)
     fig.tight_layout()
     plt.grid()
+    ax1.yticks([i for i in range(26)])
 
     outputfile = outputfile + "_pad" + str(padding)
     print(outputfile)
@@ -4263,24 +4264,24 @@ def get_best_variable_percentage(sample_size = 50):
     folder = "./results_aaai2/Dataset_preproc_hybrid_wmc/"
     type = "dynamic"
     nb_vars_data = {}
-    stats_file = folder + "dataset_stats_" + type + ".csv"
+    stats_file = folder + "dataset_stats_" + type + ".csv" #-for init compilations
     expr_data = ExprData(columns)
     expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False, filter_timeout=False, filter_conflict=False)
-    ratios_per_expr, smallest_n = expr_data.get_metric_wrt_initial_per_expr(metric="ratio", obj="WMC")
+    init_ratios_per_expr, smallest_n = expr_data.get_metric_wrt_initial_per_expr(metric="ratio", obj="WMC")
     print("data set len, ", len(expr_data.all_expr_data))
     dont_consider = []
     nb_vars = columns.index("nb_vars")
-    for e in ratios_per_expr.keys():
-        if len(ratios_per_expr[e]) < sample_size+1 or expr_data.all_expr_data[e][0][nb_vars] < 50 :
+    for e in init_ratios_per_expr.keys():
+        if len(init_ratios_per_expr[e]) < sample_size+1 or expr_data.all_expr_data[e][0][nb_vars] < 50 :
             dont_consider.append(e)
     nb_compact_ars = [0 for i in  range(1, sample_size+1)]
     lbs = [100000 for i in  range(1, sample_size+1)]
     all_ars = [[] for i in  range(1, sample_size+1)]
     # print("dont consider ", len(dont_consider) )
     for index in range(1, sample_size+1):
-        for e in ratios_per_expr.keys():
+        for e in init_ratios_per_expr.keys():
             if e not in dont_consider:
-                current_ar = ratios_per_expr[e][index]
+                current_ar = init_ratios_per_expr[e][index]
                 if current_ar >= 1.5 :
                     nb_compact_ars[index-1] += 1
                     all_ars[index-1].append(current_ar)
@@ -4352,6 +4353,7 @@ def write_inits():
 
 
 def plot_percentage_experiments():
+    #look at exprs that have an init compilation, are present in the list of the dynamic_p_ stats file - and have a line for it -  and have a non zero value for compilation
     #read in init data
     f = open("./results_aaai2/" + "init_compilations.csv", "r")
     init_compilations = {}
@@ -4367,19 +4369,42 @@ def plot_percentage_experiments():
         print(line2)
         for x in line2.split(","):  # why do we ignore last column? it might be the empty value after the end line separator
             print(x)
+            # x_val = float(x.strip('.%'))
             x_val = float(x)
             if math.isinf(x_val):
                 x_val = np.float128(x)
             data_row.append(x_val)
         init_compilations[line1.strip()] = data_row
-    #read compilation data
-    expr_data = ExprData(columns)
+        # read compilation file
+    f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + "8percent_compilations.csv", "r")
+    percent_compilations = {}
+    while True:
+        line1 = f.readline()
+        line2 = f.readline()
+        if not line2: break  # EOF
+        data_row = []
+        print(line1)
+        print(line2)
+        for x in line2.split(","):
+            print(x, type(x))
+            x_val = float(x.strip('"'))
+            # x_val = float(x.strip())
+            if math.isinf(x_val):
+                x_val = np.float128(x.strip('"'))
+            data_row.append(x_val)
+        ename = line1.split(",")[0].split("_temphybrid")[0].split("/")[-1]+".cnf"
+        if ename.count(".") > 1:
+            ename = ename.strip("\n").replace(".", "_", ename.count(".") - 1)  # actually first . will always be ./input so should skipp tha
+        percent_compilations[ename] = data_row
+    #read csv from where we extract if expr shoul have a compilation
+    percent_expr_data = ExprData(columns)
     stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "dataset_stats_p8_dynamic.csv"
-    expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False, filter_timeout=False,
+    percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False, filter_timeout=False,
                               filter_conflict=False)
-    # lines = expr_data.get_line(1)
+    lines = percent_expr_data.get_line(1)
     # print(len(lines))
-    # print(len(expr_data.no_data_expr))
+    print(len(percent_expr_data.no_data_expr))
+    print(len(percent_expr_data.all_expr_data))
     # print(len(expr_data.no_data_expr))
     # no_init_compilation = 0
 
@@ -4389,56 +4414,31 @@ def plot_percentage_experiments():
     size_index = columns.index("edge_count")
     time_index = columns.index("time")
     nb_expr = 0
-    # current_times = []
-    # init_ratios = {}
-    # for expr in lines.keys():
-    #     if expr in init_compilations:
-    #         init_ratio = init_compilations[expr][wmc_index] /  init_compilations[expr][size_index]
-    #         current_ratio = lines[expr][wmc_index] /  lines[expr][size_index]
-    #         ar = current_ratio / init_ratio
-    #         init_ratios[expr] = init_ratio
-    #         # ars[expr] = ar
-    #         # y.append(ar)
-    #         init_times.append(init_compilations[expr][time_index])
-    #         current_times.append(lines[expr][time_index])
-    #         # nb_expr += 1
-    #     else:
-    #         print(expr)
-    #         no_init_compilation +=1
-
-    compfile = open("./results_aaai2/Dataset_preproc_hybrid_wmc/8percent_compilations.csv", "r")
-    percent_compilations = []
-
-    while True:
-        line1 = compfile.readline()
-        expr = line1.split("_temphybrid")[0].split("/")[-1]+".cnf"
-        if expr.count(".") > 1:
-            expr = expr.strip("\n").replace(".", "_", expr.count(".") - 1)  # actually first . will always be ./input so should skipp tha
-        line2 = compfile.readline()
-        if not line2: break  # EOF
-
-        if expr in init_compilations:
-            if expr  in expr_data.exprs:
-                print("LOOK at expr", expr)
-                init_ratio = init_compilations[expr][wmc_index] / init_compilations[expr][size_index]
-                comp = line2.split(",")
-                wmc = float(comp[wmc_index])
-                if math.isinf(x_val):
-                    wmc = np.float128(comp[wmc_index])
-                size = float(comp[size_index])
-                if math.isinf(x_val):
-                    size = np.float128(comp[size_index])
-                current = wmc / size
-                ar =  current / init_ratio
-                ars[expr] = ar
+    current_times = []
+    init_ratios = {}
+    count_compact = 0
+    count_not_compact = 0
+    for expr in lines.keys():
+        if expr in init_compilations and expr in percent_compilations:
+            if percent_compilations[expr][wmc_index] > 0 and  percent_compilations[expr][size_index] > 0 :
+                print(expr, init_compilations[expr][wmc_index],  init_compilations[expr][size_index],  percent_compilations[expr][wmc_index] , percent_compilations[expr][size_index])
+                init_ratio = init_compilations[expr][wmc_index] /  init_compilations[expr][size_index]
+                current_ratio = percent_compilations[expr][wmc_index] /  percent_compilations[expr][size_index]
+                ar = current_ratio / init_ratio
+                if ar > 1:
+                    count_compact += 1
+                else:
+                    print("not compact: ", ar)
+                    count_not_compact += 1
+                init_ratios[expr] = init_ratio
+                # ars[expr] = ar
                 y.append(ar)
-                nb_expr+=1
-            else:
-                print("NO PERCENT COMPILATION", expr)
-                # exit(2)
+                init_times.append(init_compilations[expr][time_index])
+                current_times.append(lines[expr][time_index])
+                nb_expr += 1
         else:
-            print("NOT IN COMPILATION", expr)
-            exit(3)
+            print(expr)
+        #     no_init_compilation +=1
 
 
 
@@ -4453,14 +4453,16 @@ def plot_percentage_experiments():
     handles, labels = ax1.get_legend_handles_labels()
     ax1.legend(handles, labels)
     fig.tight_layout()
+    plt.yticks([i for i in range(30)])
     plt.grid()
-    # plt.show()
+    plt.show()
 
     # print(y)
     print(init_times)
     print(current_times)
     print(nb_expr)
-    print(no_init_compilation)
+    print("count_compact", count_compact )
+    print("count_not_compact", count_not_compact )
 
 def count_hybrid_call():
     filename = "./results_aaai2/Dataset_preproc_hybrid_wmc/dataset_stats_p_dynamic.txt"
@@ -4513,9 +4515,9 @@ def count_hybrid_call():
 
 if __name__ == "__main__":
     # filer_instances()
-    get_best_variable_percentage(50)
+    # get_best_variable_percentage(50)
     # write_inits()
-    # plot_percentage_experiments()
+    plot_percentage_experiments()
     # count_hybrid_call()
     exit(8)
 
