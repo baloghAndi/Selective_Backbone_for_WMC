@@ -21,7 +21,7 @@ seed=1234
               fi
             fi
             if [[  $3 = "3" ]]  ; then
-              if [[   $i = *"/10_"* ]] ||; then
+              if [[   $i = *"/10_"* ]] ; then
                       echo 3 $i
                       timeout 3600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
               fi
