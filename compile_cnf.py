@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
 	cnf_file =  sys.argv[1]
 	part = sys.argv[2]
-	stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_part"+str(part)+".csv"
+	stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_large_part"+str(part)+".csv"
 
 	f = open(stats_file, "a+")
 	writer = csv.writer(f, delimiter=',')
@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
 	writer.writerow([cnf_file])
 	weights_file = cnf_file.replace(".cnf", "_w3.w" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
-	weights_file = weights_file.replace("_temphybrid_wmcdynamic_22percent", "" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
+	weights_file = weights_file.replace("_temphybrid_wmcdynamic_22percent_large", "" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
 	res = subprocess.run(["./d4", "-dDNNF", cnf_file, "-wFile="+weights_file ], stdout=subprocess.PIPE, text=True)
 	output = res.stdout
 	# print(output)
