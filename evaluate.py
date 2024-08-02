@@ -11,6 +11,7 @@ import matplotlib.pylab as pl
 import time
 
 from torch._C._return_types import median
+from triton.ops.matmul import init_to_zero
 
 import CNFmodelBDD
 import matplotlib.colors as mcolors
@@ -4445,9 +4446,66 @@ def plot_percentage_experiments(percent=8):
                         '16_uts_k3_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k4_p_t1.cnf', '16_uts_k4_p_t2.cnf',
                         '16_uts_k5_p_t1.cnf']
 
+    large_instances = ['05_iscas93_s3271_bench.cnf', '05_iscas93_s3330_bench.cnf', '05_iscas93_s3384_bench.cnf',
+                       '05_iscas93_s4863_bench.cnf', '06_iscas99_b05.cnf',
+                       '06_iscas99_b12.cnf', '07_blocks_right_3_p_t10.cnf', '07_blocks_right_3_p_t6.cnf',
+                       '07_blocks_right_3_p_t7.cnf', '07_blocks_right_3_p_t8.cnf',
+                       '07_blocks_right_3_p_t9.cnf', '07_blocks_right_4_p_t4.cnf', '07_blocks_right_4_p_t5.cnf',
+                       '07_blocks_right_5_p_t3.cnf', '07_blocks_right_6_p_t2.cnf',
+                       '08_bomb_b10_t10_p_t10.cnf', '08_bomb_b10_t10_p_t11.cnf', '08_bomb_b10_t10_p_t12.cnf',
+                       '08_bomb_b10_t10_p_t13.cnf', '08_bomb_b10_t10_p_t14.cnf',
+                       '08_bomb_b10_t10_p_t15.cnf', '08_bomb_b10_t10_p_t16.cnf', '08_bomb_b10_t10_p_t17.cnf',
+                       '08_bomb_b10_t10_p_t18.cnf', '08_bomb_b10_t10_p_t1.cnf',
+                       '08_bomb_b10_t10_p_t2.cnf', '08_bomb_b10_t10_p_t3.cnf', '08_bomb_b10_t10_p_t4.cnf',
+                       '08_bomb_b10_t10_p_t5.cnf', '08_bomb_b10_t10_p_t6.cnf', '08_bomb_b10_t10_p_t7.cnf',
+                       '08_bomb_b10_t10_p_t8.cnf', '08_bomb_b10_t10_p_t9.cnf', '08_bomb_b10_t5_p_t10.cnf',
+                       '08_bomb_b10_t5_p_t2.cnf', '08_bomb_b10_t5_p_t3.cnf', '08_bomb_b10_t5_p_t4.cnf',
+                       '08_bomb_b10_t5_p_t5.cnf', '08_bomb_b10_t5_p_t6.cnf', '08_bomb_b10_t5_p_t7.cnf',
+                       '08_bomb_b10_t5_p_t8.cnf', '08_bomb_b10_t5_p_t9.cnf', '08_bomb_b20_t5_p_t10.cnf',
+                       '08_bomb_b20_t5_p_t1.cnf', '08_bomb_b20_t5_p_t2.cnf', '08_bomb_b20_t5_p_t3.cnf',
+                       '08_bomb_b20_t5_p_t4.cnf', '08_bomb_b20_t5_p_t5.cnf', '08_bomb_b20_t5_p_t6.cnf',
+                       '08_bomb_b20_t5_p_t7.cnf', '08_bomb_b20_t5_p_t8.cnf', '08_bomb_b20_t5_p_t9.cnf',
+                       '08_bomb_b5_t1_p_t10.cnf', '08_bomb_b5_t1_p_t9.cnf', '08_bomb_b5_t5_p_t10.cnf',
+                       '08_bomb_b5_t5_p_t4.cnf', '08_bomb_b5_t5_p_t5.cnf', '08_bomb_b5_t5_p_t6.cnf',
+                       '08_bomb_b5_t5_p_t7.cnf', '08_bomb_b5_t5_p_t8.cnf', '08_bomb_b5_t5_p_t9.cnf',
+                       '09_coins_p01_p_t6.cnf', '09_coins_p01_p_t7.cnf', '09_coins_p01_p_t8.cnf',
+                       '09_coins_p01_p_t9.cnf', '09_coins_p02_p_t6.cnf', '09_coins_p02_p_t7.cnf',
+                       '09_coins_p02_p_t8.cnf', '09_coins_p02_p_t9.cnf', '09_coins_p03_p_t6.cnf',
+                       '09_coins_p03_p_t7.cnf', '09_coins_p03_p_t8.cnf', '09_coins_p03_p_t9.cnf',
+                       '09_coins_p04_p_t6.cnf', '09_coins_p04_p_t7.cnf', '09_coins_p04_p_t8.cnf',
+                       '09_coins_p04_p_t9.cnf', '09_coins_p05_p_t6.cnf', '09_coins_p05_p_t7.cnf',
+                       '09_coins_p05_p_t8.cnf', '09_coins_p05_p_t9.cnf', '09_coins_p10_p_t3.cnf',
+                       '09_coins_p10_p_t4.cnf', '10_comm_p01_p_t10.cnf', '10_comm_p01_p_t7.cnf',
+                       '10_comm_p01_p_t8.cnf', '10_comm_p01_p_t9.cnf', '10_comm_p02_p_t10.cnf', '10_comm_p02_p_t4.cnf',
+                       '10_comm_p02_p_t5.cnf', '10_comm_p02_p_t6.cnf',
+                       '10_comm_p02_p_t7.cnf', '10_comm_p02_p_t8.cnf', '10_comm_p02_p_t9.cnf', '10_comm_p03_p_t10.cnf',
+                       '10_comm_p03_p_t3.cnf', '10_comm_p03_p_t4.cnf',
+                       '10_comm_p03_p_t5.cnf', '10_comm_p03_p_t6.cnf', '10_comm_p03_p_t7.cnf', '10_comm_p03_p_t8.cnf',
+                       '10_comm_p03_p_t9.cnf', '10_comm_p04_p_t10.cnf',
+                       '10_comm_p04_p_t2.cnf', '10_comm_p04_p_t3.cnf', '10_comm_p04_p_t4.cnf', '10_comm_p04_p_t5.cnf',
+                       '10_comm_p04_p_t6.cnf', '10_comm_p04_p_t7.cnf',
+                       '10_comm_p04_p_t8.cnf', '10_comm_p04_p_t9.cnf', '10_comm_p05_p_t2.cnf', '10_comm_p05_p_t3.cnf',
+                       '10_comm_p05_p_t4.cnf', '10_comm_p05_p_t5.cnf',
+                       '10_comm_p05_p_t6.cnf', '10_comm_p05_p_t7.cnf', '10_comm_p05_p_t8.cnf', '10_comm_p05_p_t9.cnf',
+                       '10_comm_p10_p_t1.cnf', '10_comm_p10_p_t2.cnf',
+                       '11_emptyroom_d12_g6_p_t10.cnf', '11_emptyroom_d12_g6_p_t8.cnf', '11_emptyroom_d12_g6_p_t9.cnf',
+                       '11_emptyroom_d16_g8_p_t10.cnf', '11_emptyroom_d16_g8_p_t6.cnf',
+                       '11_emptyroom_d16_g8_p_t7.cnf', '11_emptyroom_d16_g8_p_t8.cnf', '11_emptyroom_d16_g8_p_t9.cnf',
+                       '11_emptyroom_d20_g10_corners_p_t5.cnf',
+                       '11_emptyroom_d20_g10_corners_p_t6.cnf', '11_emptyroom_d20_g10_corners_p_t7.cnf',
+                       '11_emptyroom_d20_g10_corners_p_t8.cnf', '11_emptyroom_d20_g10_corners_p_t9.cnf',
+                       '11_emptyroom_d24_g12_p_t10.cnf', '11_emptyroom_d24_g12_p_t4.cnf',
+                       '11_emptyroom_d24_g12_p_t5.cnf', '11_emptyroom_d24_g12_p_t6.cnf',
+                       '11_emptyroom_d24_g12_p_t7.cnf', '11_emptyroom_d24_g12_p_t8.cnf',
+                       '11_emptyroom_d24_g12_p_t9.cnf', '11_emptyroom_d28_g14_corners_p_t4.cnf',
+                       '11_emptyroom_d28_g14_corners_p_t5.cnf', '11_emptyroom_d28_g14_corners_p_t6.cnf',
+                       '11_emptyroom_d28_g14_corners_p_t7.cnf', '11_emptyroom_d28_g14_corners_p_t8.cnf',
+                       '11_emptyroom_d28_g14_corners_p_t9.cnf', '14_safe_safe_30_p_t10.cnf',
+                       '15_sort_num_s_4_p_t10.cnf', '16_uts_k2_p_t10.cnf']
+
     f = open("./results_aaai2/" + "init_compilations.csv", "r")
     init_compilations = {}
-    init_times = []
+    init_times = {}
     columns = [ "p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
 
     while True:
@@ -4507,11 +4565,14 @@ def plot_percentage_experiments(percent=8):
     time_index = columns.index("time")
     nb_vars_index = columns.index("nb_vars")
     nb_expr = 0
-    current_times = []
+    sb_times = {}
+    sb_compilation_times = {}
     init_ratios = {}
     count_compact = 0
     count_not_compact = 0
     no_init_compilation = 0
+    compilation_zero = 0
+    compilation_zero_expr = []
     plotted_expr_ratios = {}
     plotted_expr_nb_count = {}
     for expr in lines.keys():
@@ -4522,7 +4583,7 @@ def plot_percentage_experiments(percent=8):
                     init_ratio = init_compilations[expr][wmc_index] /  init_compilations[expr][size_index]
                     current_ratio = percent_compilations[expr][wmc_index] /  percent_compilations[expr][size_index]
                     ar = current_ratio / init_ratio
-                    if ar > 1.5:
+                    if ar >= 1:
                         count_compact += 1
                     else:
                         print("not compact: ", ar)
@@ -4533,9 +4594,13 @@ def plot_percentage_experiments(percent=8):
                     plotted_expr_ratios[expr] = ar
                     plotted_expr_nb_count[expr] = percent_expr_data.all_expr_data[expr][0][nb_vars_index]
 
-                    init_times.append(init_compilations[expr][time_index])
-                    current_times.append(lines[expr][time_index])
+                    init_times[expr] = init_compilations[expr][time_index]
+                    sb_times[expr] = lines[expr][time_index]
+                    sb_compilation_times[expr] = percent_compilations[expr][time_index]
                     nb_expr += 1
+                else:
+                    compilation_zero += 1
+                    compilation_zero_expr.append(expr)
         else:
             print(expr)
             no_init_compilation += 1
@@ -4550,46 +4615,98 @@ def plot_percentage_experiments(percent=8):
     x = [i for i in range(nb_expr)]
     ax1.scatter(instance_sizes, y)
     ax1.plot(instance_sizes, y)
-    # ax1.plot(instance_sizes, [0 for i in y], color="r")
-    # ax1.scatter(instance_sizes, [0 for i in y], color="r")
-    # ax1.plot(x, init_times, color="r")
-    # ax1.plot(x, current_times, color="g")
-
     handles, labels = ax1.get_legend_handles_labels()
     ax1.legend(handles, labels)
     # fig.tight_layout()
     # plt.yticks([i for i in range(300)])
-    plt.xticks(instance_sizes)
-    plt.ylim((float(6.931164793584654e-21), 280.37139126615557))
+    # plt.xticks(instance_sizes)
+    # plt.ylim((float(6.931164793584654e-21), 280.37139126615557))
     plt.yscale("log")
     plt.grid()
     # plt.show()
-    plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+".png")
+    # plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_log.png")
 
+
+    #plot time
+    init_y = []
+    sb_y = []
+    sb_comp_y = []
+    for e in sorted_exprs.keys():
+        init_y.append(init_times[e])
+        sb_y.append(sb_times[e])
+        sb_comp_y.append(sb_compilation_times[e])
+    fig = plt.figure(figsize=(10, 7))
+    ax1 = fig.add_subplot(111)
+
+    ax1.scatter(instance_sizes, init_y, color="r")
+    ax1.plot(instance_sizes, init_y, color = "r", label="init compilation time")
+
+    # ax1.scatter(instance_sizes, sb_y, color="green")
+    # ax1.plot(instance_sizes, sb_y, color="green", label=str(percent)+" var percent SB")
+
+    ax1.scatter(instance_sizes, sb_comp_y, color="cyan")
+    ax1.plot(instance_sizes, sb_comp_y, color="cyan", label=str(percent) + " var percent compilation")
+    handles, labels = ax1.get_legend_handles_labels()
+    ax1.legend(handles, labels)
+    # fig.tight_layout()
+    # plt.yticks([i for i in range(300)])
+    # plt.xticks(instance_sizes)
+    # plt.ylim((float(6.931164793584654e-21), 280.37139126615557))
+    # plt.yscale("log")
+    plt.grid()
+    plt.show()
+    # plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_log.png")
+
+    # --------------------------s
     # print(y)
     print(init_times)
-    print(current_times)
+    print(sb_times)
     print(nb_expr)
     print("count_compact", count_compact)
     print("count_not_compact", count_not_compact)
     print("no_init_compilation", no_init_compilation)
     print(len(medium_instances))
     print(y)
-    count = 0
-    for expr in plotted_expr_nb_count.keys():
+    count_medium = 0
+    count_large = 0
+    diff_count = 0
+    for expr in percent_expr_data.all_expr_data.keys():
         # print(expr, plotted_expr_nb_count[expr], plotted_expr_ratios[expr] )
-        if expr not in medium_instances:
-            count+=1
-            print(" ---------------------- not in medium :", expr)
-    print(count)
+        if expr in medium_instances:
+            count_medium+=1
+        elif expr in large_instances:
+            count_large +=1
+        else:
+            diff_count += 1
+            print(expr)
+    print("count_medium: ", count_medium, "count_large: ", count_large, len(medium_instances), len(large_instances), len(percent_expr_data.all_expr_data), diff_count)
+
     count = 0
+    no_sb = []
     for expr in medium_instances:
         if expr not in plotted_expr_ratios:
-            print(" ---------------------- not in plotted :", expr)
+            if expr in compilation_zero_expr:
+                print("zero compilation ", expr)
+            else:
+                print(" ---------------------- not in plotted :", expr)
             count += 1
-    print(count)
-    print( len(medium_instances), len(sorted_exprs))
-    print(min(y),max(y))
+        if expr not in percent_compilations:
+            print("no sb within an hour: ", expr)
+            no_sb.append(expr)
+    print(count, len(medium_instances), len(plotted_expr_ratios), len(no_sb))
+    print(no_sb)
+
+    # count = 0
+    # for expr in large_instances:
+    #     if expr not in plotted_expr_ratios:
+    #         # print(" ---------------------- not in plotted :", expr)
+    #         count += 1
+    # print("large ", count)
+    # print( len(medium_instances), len(sorted_exprs), len(percent_compilations))
+    # print(min(y),max(y))
+    # print("avg:", sum(y)/len(y) )
+    # print("avg:", statistics.mean(y) )
+    # print("compilation_zero:", compilation_zero)
 
 
 
@@ -4646,10 +4763,10 @@ def count_hybrid_call():
 
 
 if __name__ == "__main__":
-    filer_instances()
+    # filer_instances()
     # get_best_variable_percentage(50)
     # write_inits()
-    # plot_percentage_experiments(22)
+    plot_percentage_experiments(22)
     # plot_percentage_experiments(8)
     # count_hybrid_call()
     exit(8)
