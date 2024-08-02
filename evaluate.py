@@ -10,7 +10,6 @@ import numpy as np
 import matplotlib.pylab as pl
 import time
 
-from torch._C._return_types import median
 
 import CNFmodelBDD
 import matplotlib.colors as mcolors
