@@ -10,6 +10,9 @@ import numpy as np
 import matplotlib.pylab as pl
 import time
 
+import statistics
+
+from pandas.core._numba.kernels.var_ import add_var
 
 import CNFmodelBDD
 import matplotlib.colors as mcolors
@@ -4288,15 +4291,17 @@ def get_best_variable_percentage(sample_size = 50):
             dont_consider.append(e)
     nb_compact_ars = [0 for i in  range(1, sample_size+1)]
     lbs = [100000 for i in  range(1, sample_size+1)]
+    all_compact_ars = [[] for i in  range(1, sample_size+1)]
     all_ars = [[] for i in  range(1, sample_size+1)]
     # print("dont consider ", len(dont_consider) )
     for index in range(1, sample_size+1):
         for e in init_ratios_per_expr.keys():
             if e not in dont_consider:
                 current_ar = init_ratios_per_expr[e][index]
+                all_ars[index-1].append(current_ar)
                 if current_ar >= 1.5 :
                     nb_compact_ars[index-1] += 1
-                    all_ars[index-1].append(current_ar)
+                    all_compact_ars[index-1].append(current_ar)
                     if current_ar < lbs[index-1]:
                         lbs[index - 1] = current_ar
     best_var_percentage = 0
@@ -4317,6 +4322,16 @@ def get_best_variable_percentage(sample_size = 50):
     print("all")
     # for ar in all_ars:
     #     print(ar)
+    avgs = []
+    medians = []
+    maxes = []
+    for adjusted_ratio_at_index in all_ars:
+        avg = sum(adjusted_ratio_at_index) / len(adjusted_ratio_at_index)
+        avgs.append(avg)
+        median = statistics.median(adjusted_ratio_at_index)
+        medians.append(median)
+    print("max avg: ", max(avgs), np.argmax(avgs))
+    print("medians avg: ", max(medians), np.argmax(medians))
 
 def write_inits():
     alg_types = [  "dynamic"]# , "static"]
@@ -4522,6 +4537,13 @@ def plot_percentage_experiments(percent=8):
             data_row.append(x_val)
         init_compilations[line1.strip()] = data_row
         # read compilation file
+    c = 0
+    for e in init_compilations:
+        if e not in medium_instances:
+            c+=1
+    print(c)
+    exit(1)
+
     f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + str(percent)+"percent_compilations.csv", "r")
     # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + "8percent_compilations.csv", "r")
     percent_compilations = {}
@@ -4608,6 +4630,10 @@ def plot_percentage_experiments(percent=8):
     y = []
     for e in sorted_exprs.keys():
         y.append(plotted_expr_ratios[e])
+
+    print(statistics.median(y))
+    exit(9)
+
     fig = plt.figure(figsize=(10, 7))
     ax1 = fig.add_subplot(111)
     x = [i for i in range(nb_expr)]
@@ -4767,7 +4793,7 @@ if __name__ == "__main__":
     plot_percentage_experiments(22)
     # plot_percentage_experiments(8)
     # count_hybrid_call()
-    exit(8)
+    # exit(8)
 
 
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
