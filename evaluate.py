@@ -1,29 +1,23 @@
 import csv
 import math
 import os
-import sys
-from csv import excel
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.pylab as pl
+import re
+import statistics
 import time
 
-import statistics
-
-from pandas.core._numba.kernels.var_ import add_var
-
-import CNFmodelBDD
 import matplotlib.colors as mcolors
-import CNFmodelBDD as _cnfBDD
-import re
-from natsort import natsorted
+import matplotlib.pylab as pl
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import pylatex as px
-from sklearn.metrics.pairwise import euclidean_distances,manhattan_distances
 from shapely.geometry import Polygon
 from shapely.ops import polygonize, unary_union
-import statistics
+from sklearn.metrics.pairwise import euclidean_distances, manhattan_distances
+
+import CNFmodelBDD as _cnfBDD
+
+
 class Logger:
 
     def __init__(self, filename, column_names, expr_data, out_folder, compile=False):
@@ -3718,295 +3712,6 @@ def check_benchmark_preproc2():
     #'medium.cnf','par8-1.cnf', 'par8-2.cnf','par8-4.cnf','par8-3.cnf', 'par8-5.cnf','par32-2.cnf',
     # 'par32-5.cnf', 'par32-3.cnf',
     #missing from half static: or-70-10-8.cnf
-    all_files = ['C169_FV.cnf', 'C169_FW.cnf', 'or-100-5-1-UC-40.cnf', 'or-60-10-2-UC-40.cnf', 'or-60-10-6-UC-40.cnf',
-                 'or-60-20-2-UC-30.cnf', 'or-60-20-9-UC-40.cnf', 'or-70-5-5-UC-30.cnf', 'or-70-20-9-UC-40.cnf',
-                 'or-100-5-10-UC-40.cnf', 'or-50-5-4-UC-40.cnf', 'or-50-10-7-UC-30.cnf', 'or-50-10-9-UC-40.cnf',
-                 'or-60-5-7-UC-40.cnf', 'or-60-10-10-UC-40.cnf', 'or-60-5-9-UC-30.cnf', 'or-50-10-3-UC-30.cnf',
-                 'or-100-10-6-UC-50.cnf', 'or-100-20-9-UC-50.cnf', 'or-100-10-1-UC-40.cnf', 'or-50-10-8-UC-20.cnf',
-                 'or-50-20-3-UC-30.cnf', 'or-50-5-9-UC-30.cnf', 'or-60-20-9-UC-30.cnf', 'or-70-5-3-UC-40.cnf',
-                 'or-100-5-9-UC-40.cnf', 'or-50-10-4-UC-40.cnf', 'or-50-20-8-UC-40.cnf', 'or-60-10-2-UC-30.cnf',
-                 'or-70-10-2-UC-40.cnf', 'or-50-10-2-UC-20.cnf', 'or-50-5-7-UC-30.cnf', 'or-60-5-2-UC-40.cnf',
-                 'or-100-10-3-UC-50.cnf', 'or-100-10-9-UC-60.cnf', 'or-100-20-1-UC-60.cnf', 'or-100-20-3-UC-50.cnf',
-                 'or-50-5-6-UC-20.cnf', 'or-60-20-3-UC-40.cnf', 'or-60-20-7-UC-40.cnf', 'or-70-20-4-UC-40.cnf',
-                 'or-70-5-9-UC-30.cnf', 'or-50-10-4-UC-30.cnf', 'or-60-5-10-UC-30.cnf', 'or-70-10-3-UC-30.cnf',
-                 'or-50-10-10-UC-20.cnf', 'blasted_case134.cnf', 'blasted_case137.cnf', 'or-50-10-5-UC-40.cnf',
-                 'or-50-10-9-UC-30.cnf', 'or-50-20-5-UC-40.cnf', 'or-100-10-7-UC-50.cnf', 'or-100-5-7-UC-50.cnf',
-                 'or-60-10-4-UC-30.cnf', 'or-60-10-7-UC-30.cnf', 'or-70-10-10-UC-40.cnf', 'or-70-10-9-UC-40.cnf',
-                 'or-70-5-8-UC-30.cnf', 'or-50-20-8-UC-30.cnf', 'or-60-5-4-UC-20.cnf', 'or-70-5-2-UC-30.cnf',
-                 'or-70-10-7-UC-40.cnf', 'blasted_case36.cnf', 'or-50-20-1-UC-30.cnf', 'or-60-5-8-UC-20.cnf',
-                 'or-60-20-8-UC-30.cnf', 'or-100-5-6-UC-40.cnf', 'or-50-20-6-UC-30.cnf', 'or-70-5-3-UC-20.cnf',
-                 'or-100-5-5-UC-60.cnf', 'ais6.cnf', 'or-50-20-4-UC-40.cnf', 'or-50-20-7-UC-30.cnf',
-                 'or-60-5-7-UC-30.cnf', 'or-60-20-1-UC-40.cnf', 'or-70-10-6-UC-30.cnf', 'or-70-20-6-UC-40.cnf',
-                 'or-60-10-1-UC-40.cnf', 'or-50-10-1-UC-20.cnf', 'or-100-5-2-UC-50.cnf', 'blasted_case29.cnf',
-                 'blasted_case24.cnf', 'countdump1.cnf', 'countdump10.cnf', 'countdump2.cnf', 'countdump9.cnf',
-                 'or-100-10-10-UC-50.cnf', 'or-50-5-10-UC-20.cnf', 'or-60-5-5-UC-30.cnf', 'or-70-10-1-UC-40.cnf',
-                 'or-100-5-8-UC-40.cnf', 'or-100-10-8-UC-60.cnf', 'or-50-20-10-UC-30.cnf', 'or-50-20-2-UC-40.cnf',
-                 'or-50-20-3-UC-20.cnf', 'or-100-20-7-UC-60.cnf', 'or-50-5-7-UC-20.cnf', 'or-50-5-4-UC-30.cnf',
-                 'or-50-20-5-UC-30.cnf', 'or-50-20-9-UC-20.cnf', 'or-60-10-5-UC-30.cnf', 'or-70-5-3-UC-30.cnf',
-                 'or-70-20-6-UC-30.cnf',  'blasted_case30.cnf', 'blasted_case25.cnf',
-                 'or-100-10-2-UC-50.cnf', 'or-50-10-6-UC-30.cnf', 'or-60-10-10-UC-30.cnf', 'or-60-10-6-UC-30.cnf',
-                 'or-70-20-7-UC-40.cnf', 'or-70-20-9-UC-30.cnf', 'or-100-5-5-UC-50.cnf', 'or-50-5-3-UC-10.cnf',
-                 'or-60-5-6-UC-20.cnf', 'or-70-10-5-UC-30.cnf', 'or-60-10-8-UC-30.cnf', 'or-100-20-1-UC-50.cnf',
-                 'or-70-5-7-UC-30.cnf', 'or-50-10-6-UC-20.cnf', 'or-50-20-7-UC-20.cnf', 'or-50-5-1-UC-20.cnf',
-                 'or-60-20-10-UC-40.cnf', 'or-60-5-9-UC-20.cnf', 'or-70-5-6-UC-30.cnf', 'or-70-5-10-UC-40.cnf',
-                 'or-60-5-5-UC-20.cnf', 'or-100-5-1-UC-30.cnf',  'or-100-10-10-UC-40.cnf',
-                 'or-60-20-1-UC-30.cnf', 'or-60-5-1-UC-30.cnf', 'or-100-5-3-UC-50.cnf',
-                 'blasted_case100.cnf', 'blasted_case101.cnf', 'or-50-5-6-UC-10.cnf', 'or-50-5-8-UC-20.cnf',
-                 'or-60-10-3-UC-40.cnf', 'or-70-10-10-UC-30.cnf', 'or-100-20-10-UC-60.cnf', 'blasted_case17.cnf',
-                 'blasted_case23.cnf', 'or-50-10-7-UC-20.cnf', 'or-60-10-9-UC-20.cnf', 'or-60-20-9-UC-20.cnf',
-                 'or-50-5-2-UC-20.cnf', 'or-50-20-1-UC-20.cnf', 'or-50-20-10-UC-20.cnf', 'or-60-10-1-UC-30.cnf',
-                 'or-60-20-3-UC-30.cnf', 'or-70-5-1-UC-20.cnf', 'or-100-20-8-UC-60.cnf', 'or-50-20-6-UC-20.cnf',
-                 'or-50-20-8-UC-20.cnf', 'or-60-5-7-UC-20.cnf', 'or-60-10-6-UC-20.cnf', 'or-60-10-7-UC-20.cnf',
-                 'or-60-20-6-UC-40.cnf', 'or-70-10-8-UC-20.cnf', 'or-70-10-9-UC-30.cnf', 'or-50-10-4-UC-20.cnf',
-                 'or-50-10-5-UC-30.cnf', 'or-50-20-2-UC-30.cnf', 'or-50-5-9-UC-20.cnf', 'or-60-10-5-UC-20.cnf',
-                 'or-60-20-8-UC-20.cnf', 'or-70-20-10-UC-40.cnf', 'or-100-5-7-UC-40.cnf', 'or-100-10-3-UC-40.cnf',
-                 'or-50-5-5-UC-20.cnf', 'or-50-10-8-UC-10.cnf', 'or-50-20-4-UC-30.cnf', 'or-70-20-2-UC-40.cnf',
-                 'or-70-20-3-UC-40.cnf', 'or-70-20-4-UC-30.cnf', 'or-100-10-6-UC-40.cnf', 'or-100-20-4-UC-60.cnf',
-                 'or-60-5-2-UC-30.cnf', 'or-60-20-5-UC-40.cnf', 'or-50-10-2-UC-10.cnf', 'or-50-10-3-UC-20.cnf',
-                 'or-70-20-1-UC-40.cnf', 'or-100-20-5-UC-50.cnf',
-                 'or-50-5-10-UC-10.cnf', 'or-50-10-10-UC-10.cnf', 'or-100-10-5-UC-50.cnf', 'or-50-10-5-UC-20.cnf',
-                 'or-50-10-9-UC-20.cnf', 'or-50-20-4-UC-20.cnf', 'or-50-20-5-UC-20.cnf', 'or-60-5-1-UC-20.cnf',
-                 'or-70-10-1-UC-30.cnf', 'or-100-5-4-UC-40.cnf', 'or-100-10-9-UC-50.cnf', 'or-100-20-9-UC-40.cnf',
-                  'or-50-20-8-UC-10.cnf', 'or-60-10-3-UC-30.cnf', 'or-60-10-4-UC-20.cnf',
-                 'or-70-10-7-UC-30.cnf', 'or-70-20-7-UC-30.cnf', 'or-70-5-9-UC-20.cnf',
-                 'or-60-20-3-UC-20.cnf', 'or-70-10-4-UC-40.cnf',  'or-50-10-6-UC-10.cnf',
-                 'or-100-5-6-UC-30.cnf', 'or-50-20-10-UC-10.cnf', 'or-60-10-8-UC-20.cnf', 'or-60-20-4-UC-40.cnf',
-                 'or-50-10-3-UC-10.cnf', 'or-50-10-5-UC-10.cnf', 'or-50-5-9-UC-10.cnf', 'or-60-5-10-UC-20.cnf',
-                 'or-60-20-6-UC-30.cnf', 'or-70-5-3-UC-10.cnf', 'or-70-20-5-UC-40.cnf', 'or-100-5-2-UC-40.cnf',
-                 'or-50-10-4-UC-10.cnf', 'or-70-20-9-UC-20.cnf', 'or-100-5-3-UC-40.cnf',
-                 'or-100-5-5-UC-40.cnf', 'or-50-20-4-UC-10.cnf', 'or-50-20-7-UC-10.cnf',
-                 'or-50-5-8-UC-10.cnf', 'or-60-5-2-UC-20.cnf', 'or-60-10-2-UC-20.cnf', 'or-60-10-8-UC-10.cnf',
-                 'or-60-20-7-UC-30.cnf', 'or-70-5-4-UC-30.cnf', 'or-100-10-8-UC-50.cnf', 'or-100-20-8-UC-50.cnf',
-                 'or-50-5-4-UC-20.cnf', 'or-50-20-5-UC-10.cnf', 'or-50-20-9-UC-10.cnf', 'or-60-20-1-UC-20.cnf',
-                 'or-60-20-10-UC-30.cnf', 'or-70-20-8-UC-40.cnf', 'or-50-10-1-UC-10.cnf', 'or-100-10-2-UC-40.cnf',
-                 'or-60-20-4-UC-30.cnf', 'or-70-10-9-UC-20.cnf', 'or-50-5-2-UC-10.cnf', 'or-50-10-9-UC-10.cnf',
-                 'or-50-20-2-UC-20.cnf', 'or-50-20-6-UC-10.cnf', 'or-60-5-4-UC-10.cnf', 'or-60-10-3-UC-20.cnf',
-                 'or-70-10-2-UC-30.cnf', 'or-100-5-10-UC-30.cnf', 'blasted_case59.cnf', 'blasted_case59_1.cnf',
-                 'blasted_case64.cnf', 'or-50-5-7-UC-10.cnf', 'or-60-5-7-UC-10.cnf', 'or-60-10-10-UC-20.cnf',
-                 'or-60-20-2-UC-20.cnf', 'or-70-10-1-UC-20.cnf', 'or-70-5-10-UC-30.cnf', 'or-50-20-3-UC-10.cnf',
-                 'or-50-5-1-UC-10.cnf', 'or-60-20-5-UC-30.cnf', 'or-60-5-1-UC-10.cnf', 'or-100-20-2-UC-40.cnf',
-                 'or-100-20-4-UC-50.cnf', 'or-50-20-1-UC-10.cnf', 'or-60-5-10-UC-10.cnf', 'or-60-10-9-UC-10.cnf',
-                 'or-100-5-9-UC-30.cnf', 'or-100-10-4-UC-40.cnf', 'blasted_case58.cnf', 'blasted_case63.cnf',
-                 'or-70-20-1-UC-30.cnf', 'or-70-20-2-UC-30.cnf', 'or-100-20-7-UC-50.cnf', 'or-50-5-5-UC-10.cnf',
-                 'or-60-10-1-UC-20.cnf', 'or-50-10-7-UC-10.cnf', 'or-60-5-3-UC-20.cnf', 'or-70-10-3-UC-20.cnf',
-                 'or-60-20-6-UC-20.cnf', 'or-100-10-7-UC-40.cnf', 'or-50-5-4-UC-10.cnf', 'or-60-20-3-UC-10.cnf',
-                 'or-100-20-6-UC-50.cnf', 'or-70-5-8-UC-20.cnf', 'blasted_case4.cnf', 'or-70-10-10-UC-20.cnf',
-                 'or-70-20-1-UC-20.cnf', 'or-60-10-5-UC-10.cnf', 'or-100-20-10-UC-50.cnf', '2bitcomp_5.cnf',
-                 'blasted_case21.cnf', 'blasted_case22.cnf', 'or-60-5-6-UC-10.cnf', 'or-60-20-7-UC-20.cnf',
-                 'or-60-5-9-UC-10.cnf', 'or-100-5-3-UC-30.cnf', 'countdump7.cnf', 'or-60-10-7-UC-10.cnf',
-                 'or-60-20-10-UC-20.cnf', 'or-70-10-5-UC-20.cnf', 'or-70-5-2-UC-20.cnf', 'or-50-5-6.cnf',
-                 'or-50-20-5.cnf', 'or-60-10-4-UC-10.cnf', 'or-60-20-4-UC-20.cnf', 'or-70-5-6-UC-20.cnf',
-                 'or-70-20-3-UC-30.cnf', 'or-70-20-8-UC-30.cnf', 'or-50-5-3.cnf', 'or-50-10-5.cnf', 'or-50-10-9.cnf',
-                 'or-50-20-1.cnf', 'or-50-20-2-UC-10.cnf', 'or-50-20-9.cnf', 'or-60-5-5-UC-10.cnf',
-                 'or-70-20-2-UC-20.cnf', 'or-70-20-6-UC-20.cnf', 'or-100-10-1-UC-30.cnf', 'or-50-5-5.cnf',
-                 'or-50-10-4.cnf', 'or-50-10-8.cnf', 'or-50-5-7.cnf', 'or-50-5-9.cnf', 'or-50-20-4.cnf',
-                 'or-60-20-9-UC-10.cnf', 'or-70-5-5-UC-20.cnf', 'or-70-10-6-UC-20.cnf', 'or-70-20-7-UC-20.cnf',
-                 'or-50-10-10.cnf', 'or-50-10-2.cnf', 'or-50-5-4.cnf', 'or-50-5-1.cnf', 'or-50-5-10.cnf',
-                 'or-50-5-2.cnf', 'or-50-10-3.cnf', 'or-50-10-6.cnf', 'or-50-10-7.cnf', 'or-50-20-10.cnf',
-                 'or-50-20-2.cnf', 'or-50-20-3.cnf', 'or-50-20-6.cnf', 'or-50-20-7.cnf', 'or-50-20-8.cnf',
-                 'or-50-5-8.cnf', 'or-60-5-2-UC-10.cnf', 'or-70-5-10-UC-20.cnf', 'or-70-20-10-UC-30.cnf',
-                 'or-50-10-1.cnf', 'or-70-5-9-UC-10.cnf', 'blasted_case11.cnf', 'or-100-5-8-UC-30.cnf',
-                 'or-100-10-8-UC-40.cnf', 'or-70-5-7-UC-20.cnf', 'or-100-10-10-UC-30.cnf', 'or-60-10-2-UC-10.cnf',
-                 'or-70-10-4-UC-30.cnf', 'or-100-10-9-UC-40.cnf', 'or-60-10-1-UC-10.cnf', 'or-60-5-8-UC-10.cnf',
-                 'or-100-5-4-UC-30.cnf', 'or-70-10-7-UC-20.cnf', 'or-100-5-7-UC-30.cnf', 'or-100-10-5-UC-40.cnf',
-                 'or-100-20-6-UC-40.cnf', 'or-60-20-8-UC-10.cnf', 'or-70-20-9-UC-10.cnf', 'or-100-5-3-UC-20.cnf',
-                 'or-100-20-1-UC-40.cnf', 'or-60-20-5-UC-20.cnf', 'or-70-10-2-UC-20.cnf', 'or-70-5-4-UC-20.cnf',
-                 'or-70-20-5-UC-30.cnf', 'or-100-20-5-UC-40.cnf', 'or-60-10-6-UC-10.cnf', 'or-70-10-9-UC-10.cnf',
-                 'or-100-10-6-UC-30.cnf', 'or-100-5-1-UC-20.cnf', 'or-60-5-3-UC-10.cnf', 'or-60-20-7-UC-10.cnf',
-                 'or-70-10-3-UC-10.cnf', 'or-70-10-8-UC-10.cnf', 'or-70-20-1-UC-10.cnf', 'or-70-5-8-UC-10.cnf',
-                 'or-60-10-10-UC-10.cnf', 'or-60-20-10-UC-10.cnf', 'or-60-20-2-UC-10.cnf', 'or-60-20-4-UC-10.cnf',
-                 'or-60-20-6-UC-10.cnf', 'or-70-5-5-UC-10.cnf', 'or-70-20-3-UC-20.cnf', 'sat-grid-pbl-0010.cnf',
-                 'or-60-10-3-UC-10.cnf', 'or-70-5-10-UC-10.cnf', 'or-60-20-1-UC-10.cnf', 'or-70-10-1-UC-10.cnf',
-                 'or-60-20-5-UC-10.cnf', 'or-100-5-5-UC-30.cnf', 'or-100-10-7-UC-30.cnf', 'or-100-20-4-UC-40.cnf',
-                 'ais8.cnf', 'blasted_case43.cnf', 'blasted_case45.cnf', 'blasted_case7.cnf', 'or-70-20-5-UC-20.cnf',
-                 'or-100-5-6-UC-20.cnf', 'blasted_case47.cnf', 'or-70-10-4-UC-20.cnf', 'or-70-5-2-UC-10.cnf',
-                 'or-70-20-4-UC-20.cnf', 'or-70-5-1-UC-10.cnf', 'or-70-20-2-UC-10.cnf', 'or-60-5-4.cnf',
-                 'or-70-20-10-UC-20.cnf', 'or-100-10-3-UC-30.cnf', 'or-60-10-8.cnf', 'or-60-10-9.cnf',
-                 'or-100-20-10-UC-40.cnf', 'or-100-20-8-UC-40.cnf', 'or-60-5-3.cnf', 'or-60-5-7.cnf', 'or-60-10-5.cnf',
-                 'or-60-10-7.cnf', 'or-60-20-1.cnf', 'or-60-20-4.cnf', 'or-70-20-8-UC-20.cnf', 'or-60-5-8.cnf',
-                 'or-100-5-2-UC-30.cnf', 'or-70-5-7-UC-10.cnf', 'or-100-20-3-UC-40.cnf', 'or-60-5-10.cnf',
-                 'or-60-5-5.cnf', 'or-60-5-6.cnf', 'or-60-10-1.cnf', 'or-60-10-3.cnf', 'or-60-10-6.cnf',
-                 'or-60-20-8.cnf', 'or-70-10-6-UC-10.cnf', 'or-70-10-7-UC-10.cnf', 'or-70-20-10-UC-10.cnf',
-                 'or-100-10-4-UC-30.cnf', 'or-100-20-2-UC-60.cnf', 'or-100-20-6-UC-30.cnf', 'or-60-5-2.cnf',
-                 'or-60-10-10.cnf', 'or-60-10-2.cnf', 'or-60-10-4.cnf', 'or-60-20-10.cnf', 'or-60-20-3.cnf',
-                 'or-60-20-5.cnf', 'or-60-20-6.cnf', 'or-60-20-7.cnf', 'or-60-20-9.cnf', 'or-60-5-9.cnf',
-                 'or-70-10-10-UC-10.cnf', 'or-70-10-5-UC-10.cnf', 'or-70-20-6-UC-10.cnf', 'or-70-20-7-UC-10.cnf',
-                 'or-60-20-2.cnf', 'or-60-5-1.cnf', 'or-100-20-7-UC-40.cnf', 'or-100-10-1-UC-20.cnf',
-                 'or-70-5-4-UC-10.cnf', 'or-100-10-5-UC-30.cnf', 'or-100-10-10-UC-20.cnf', 'or-100-10-2-UC-30.cnf',
-                 'or-70-5-6-UC-10.cnf', 'or-100-20-2-UC-30.cnf', 'nocountdump13.cnf', 'nocountdump16.cnf',
-                 'nocountdump26.cnf', 'nocountdump27.cnf', 'nocountdump28.cnf', 'nocountdump29.cnf', 'nocountdump5.cnf',
-                 'or-70-20-5-UC-10.cnf', 'or-100-10-9-UC-30.cnf', 'or-70-20-4-UC-10.cnf', 'or-70-20-8-UC-10.cnf',
-                 'or-100-20-10-UC-30.cnf', 'or-70-10-2-UC-10.cnf', 'or-70-10-4-UC-10.cnf', 'or-100-5-10-UC-20.cnf',
-                 'blasted_case51.cnf', 'blasted_case52.cnf', 'blasted_case53.cnf', 'blasted_case124.cnf', 'C250_FV.cnf',
-                 'C250_FW.cnf', 'or-70-20-3-UC-10.cnf', 'or-100-5-9-UC-20.cnf', 'or-100-10-8-UC-30.cnf',
-                 'or-100-20-2-UC-50.cnf', 'or-100-20-7-UC-30.cnf', 'or-100-20-9-UC-30.cnf', 'or-100-10-7-UC-20.cnf',
-                 'or-100-20-8-UC-30.cnf', 'blasted_case112.cnf', 'or-100-5-7-UC-20.cnf', 'or-100-5-8-UC-20.cnf',
-                 'or-100-10-2-UC-20.cnf', 'or-70-10-8.cnf', 'or-100-5-5-UC-20.cnf', 'or-70-10-5.cnf', 'or-70-5-3.cnf',
-                 'or-70-10-6.cnf', 'or-70-5-1.cnf', 'or-70-5-10.cnf', 'or-70-5-2.cnf', 'or-70-20-2.cnf',
-                 'or-70-20-6.cnf', 'or-70-20-7.cnf', 'or-70-20-8.cnf', 'or-70-5-8.cnf', 'or-70-5-9.cnf',
-                 'or-70-10-1.cnf', 'or-70-5-5.cnf', 'or-70-10-7.cnf', 'or-70-10-9.cnf', 'or-70-20-1.cnf',
-                 'or-70-20-10.cnf', 'or-70-20-3.cnf', 'or-70-20-4.cnf', 'or-70-20-5.cnf', 'or-70-10-3.cnf',
-                 'or-70-5-6.cnf', 'or-100-20-3-UC-30.cnf', 'or-100-20-4-UC-20.cnf', 'or-100-20-4-UC-30.cnf',
-                 'or-100-20-5-UC-30.cnf', 'or-70-5-7.cnf', 'blasted_case38.cnf', 'or-70-10-10.cnf', 'or-70-10-2.cnf',
-                 'or-70-5-4.cnf', 'or-70-10-4.cnf', 'or-70-20-9.cnf', 'or-100-5-2-UC-20.cnf', 'or-100-10-8-UC-20.cnf',
-                 'or-100-10-5-UC-20.cnf', 'or-100-10-6-UC-20.cnf', 'or-100-10-4-UC-20.cnf', 'or-100-20-8-UC-20.cnf',
-                 '4step.cnf', 'or-100-5-3-UC-10.cnf', 'or-100-5-6-UC-10.cnf', 'or-100-10-3-UC-20.cnf',
-                 'blasted_case55.cnf', 'or-100-20-2-UC-20.cnf', 'or-100-20-7-UC-20.cnf', 'or-100-10-9-UC-20.cnf',
-                 'or-100-20-10-UC-20.cnf', 'or-100-20-9-UC-20.cnf', 'or-100-5-1-UC-10.cnf', 'or-100-5-9-UC-10.cnf',
-                  'or-100-20-5-UC-20.cnf', 'or-100-5-4-UC-20.cnf',  'or-100-20-1-UC-30.cnf',
-                 'or-100-20-6-UC-20.cnf', 'blasted_case8.cnf',
-                 'or-100-5-7-UC-10.cnf',  '5step.cnf', 'or-100-10-7-UC-10.cnf', 'or-100-20-1-UC-20.cnf',
-                 'or-100-5-10-UC-10.cnf', 'or-100-20-2-UC-10.cnf', 'or-100-10-1-UC-10.cnf',
-                 'or-100-20-7-UC-10.cnf', 'blasted_case105.cnf', 'or-100-10-8-UC-10.cnf', 'or-100-20-4-UC-10.cnf',
-                 'par32-1.cnf', 'par32-4.cnf', 'or-100-5-4-UC-10.cnf', 'or-100-5-2-UC-10.cnf', 'qg1-07.cnf',
-                 'or-100-10-3-UC-10.cnf', 'blasted_case44.cnf', 'or-100-10-4-UC-10.cnf', 'or-100-20-5-UC-10.cnf',
-                 'or-100-20-3-UC-20.cnf', 'or-100-20-9-UC-10.cnf', 'blasted_case46.cnf', 'blasted_case5.cnf',
-                 'blasted_case68.cnf', 'or-100-10-10-UC-10.cnf', 'or-100-5-8-UC-10.cnf', 'or-100-10-5-UC-10.cnf',
-                 'or-100-20-8-UC-10.cnf', 'or-100-10-2-UC-10.cnf', 'or-100-20-1-UC-10.cnf', 'or-100-20-10-UC-10.cnf',
-                 'blasted_case1.cnf', 'or-100-5-5-UC-10.cnf', 'or-100-10-6-UC-10.cnf', 'or-100-20-6-UC-10.cnf',
-                 'or-100-10-9-UC-10.cnf', 'qg2-07.cnf', 'ais10.cnf', 'nocountdump12.cnf', 'nocountdump30.cnf',
-                 'blasted_case108.cnf', 'or-100-20-3-UC-10.cnf', 's400.bench.cnf', '20_rd_r45.cnf', 'nocountdump11.cnf',
-                 'blasted_case54.cnf', 'blasted_case56.cnf', '2bitmax_6.cnf', 'par16-1-c.cnf', 's344_3_2.cnf',
-                 's349_3_2.cnf', 'c432.isc.cnf', 'or-100-5-3.cnf', 'or-100-5-1.cnf', 'blasted_case201.cnf',
-                 'blasted_case202.cnf', 'or-100-5-8.cnf', 'or-100-10-7.cnf', 'or-100-20-5.cnf', 'or-100-5-2.cnf',
-                 'or-100-5-5.cnf', 'or-100-5-7.cnf', 'or-100-5-9.cnf', 'or-100-5-10.cnf', 'or-100-10-3.cnf',
-                 'or-100-10-5.cnf', 'or-100-10-9.cnf', 'or-100-20-1.cnf', 'or-100-20-8.cnf', 'or-100-20-9.cnf',
-                 'or-100-10-1.cnf', 'or-100-10-10.cnf', 'or-100-5-6.cnf', 'or-100-10-2.cnf', 'or-100-10-4.cnf',
-                 'or-100-10-6.cnf', 'or-100-20-2.cnf', 'or-100-20-4.cnf', 'or-100-20-6.cnf', 'or-100-20-7.cnf',
-                 'blasted_case106.cnf', 'fphp-010-020.cnf', 'or-100-5-4.cnf', 'or-100-10-8.cnf', 'or-100-20-10.cnf',
-                 'or-100-20-3.cnf', 'par16-4-c.cnf', 's298_3_2.cnf', 's444.bench.cnf', 'blasted_case136.cnf',
-                 'blasted_case133.cnf', 's344_7_4.cnf', 's349_7_4.cnf', 'par16-3-c.cnf', 'blasted_case203.cnf',
-                 'blasted_case204.cnf', 'blasted_case205.cnf', 'blasted_case145.cnf', 'blasted_case146.cnf',
-                 's298_7_4.cnf', 'par16-5-c.cnf', 's526.bench.cnf', 's526n.bench.cnf', 'nocountdump10.cnf',
-                 'blasted_case109.cnf', '84.sk_4_77.cnf', 'blasted_case_1_b14_1.cnf', 'blasted_case_2_b14_1.cnf',
-                 'blasted_case_3_b14_1.cnf', 'par16-2-c.cnf', 'blasted_case132.cnf', 'blasted_case135.cnf',
-                 'registerlesSwap.sk_3_10.cnf', 's510.bench.cnf', 'blasted_case_3_b14_2.cnf',
-                 'blasted_case_1_b14_2.cnf', 'blasted_case_2_b14_2.cnf', 'sat-grid-pbl-0015.cnf', 'blasted_case41.cnf',
-                 'blasted_case39.cnf', 'blasted_case40.cnf', 'c499.isc.cnf', 'blasted_case14.cnf',
-                 'polynomial.sk_7_25.cnf', 'blasted_case61.cnf', 'C211_FS.cnf', 'nocountdump14.cnf',
-                 'nocountdump15.cnf', 'uf250-017.cnf', 'uf250-033.cnf', 'uf250-05.cnf', 'uf250-066.cnf',
-                 'uf250-082.cnf', 'uf250-01.cnf', 'uf250-010.cnf', 'uf250-0100.cnf', 'uf250-011.cnf', 'uf250-012.cnf',
-                 'uf250-013.cnf', 'uf250-014.cnf', 'uf250-015.cnf', 'uf250-016.cnf', 'uf250-018.cnf', 'uf250-019.cnf',
-                 'uf250-02.cnf', 'uf250-020.cnf', 'uf250-021.cnf', 'uf250-022.cnf', 'uf250-023.cnf', 'uf250-024.cnf',
-                 'uf250-025.cnf', 'uf250-026.cnf', 'uf250-027.cnf', 'uf250-028.cnf', 'uf250-029.cnf', 'uf250-03.cnf',
-                 'uf250-030.cnf', 'uf250-031.cnf', 'uf250-032.cnf', 'uf250-034.cnf', 'uf250-035.cnf', 'uf250-036.cnf',
-                 'uf250-037.cnf', 'uf250-038.cnf', 'uf250-039.cnf', 'uf250-04.cnf', 'uf250-040.cnf', 'uf250-041.cnf',
-                 'uf250-042.cnf', 'uf250-043.cnf', 'uf250-044.cnf', 'uf250-045.cnf', 'uf250-046.cnf', 'uf250-047.cnf',
-                 'uf250-048.cnf', 'uf250-049.cnf', 'uf250-050.cnf', 'uf250-051.cnf', 'uf250-052.cnf', 'uf250-053.cnf',
-                 'uf250-054.cnf', 'uf250-055.cnf', 'uf250-056.cnf', 'uf250-057.cnf', 'uf250-058.cnf', 'uf250-059.cnf',
-                 'uf250-06.cnf', 'uf250-060.cnf', 'uf250-061.cnf', 'uf250-062.cnf', 'uf250-063.cnf', 'uf250-064.cnf',
-                 'uf250-065.cnf', 'uf250-067.cnf', 'uf250-068.cnf', 'uf250-069.cnf', 'uf250-07.cnf', 'uf250-070.cnf',
-                 'uf250-071.cnf', 'uf250-072.cnf', 'uf250-073.cnf', 'uf250-074.cnf', 'uf250-075.cnf', 'uf250-076.cnf',
-                 'uf250-077.cnf', 'uf250-078.cnf', 'uf250-079.cnf', 'uf250-08.cnf', 'uf250-080.cnf', 'uf250-081.cnf',
-                 'uf250-083.cnf', 'uf250-084.cnf', 'uf250-085.cnf', 'uf250-086.cnf', 'uf250-087.cnf', 'uf250-088.cnf',
-                 'uf250-089.cnf', 'uf250-09.cnf', 'uf250-090.cnf', 'uf250-091.cnf', 'uf250-092.cnf', 'uf250-093.cnf',
-                 'uf250-094.cnf', 'uf250-095.cnf', 'uf250-096.cnf', 'uf250-097.cnf', 'uf250-098.cnf', 'uf250-099.cnf',
-                 'binsearch.16.pp.cnf', 'binsearch.32.pp.cnf', 's420.1.bench.cnf', '23_rd_r45.cnf',
-                 'blasted_case119.cnf', 'blasted_case9.cnf', 'blasted_case_1_b14_3.cnf', 'blasted_case_2_b14_3.cnf',
-                 'blasted_case_3_b14_3.cnf', 's382_3_2.cnf', 'blasted_case123.cnf', 'ais12.cnf', 's344_15_7.cnf',
-                 'blasted_case120.cnf', 's349_15_7.cnf', 'qg3-08.cnf', 's382_7_4.cnf', 's298_15_7.cnf',
-                 'blasted_case2.cnf', 'blasted_case3.cnf', 'qg1-08.cnf', '3blocks.cnf', 'blasted_case110.cnf',
-                 'blasted_case57.cnf', 's444_3_2.cnf', 'blasted_case121.cnf', 'blasted_case62.cnf', 's420_3_2.cnf',
-                 's420_new1_3_2.cnf', 's420_new_3_2.cnf', 'blasted_case15.cnf', 's510_3_2.cnf',
-                 'blasted_case_0_b11_1.cnf', 'blasted_case_1_b11_1.cnf', 'qg2-08.cnf', 'blasted_case126.cnf',
-                 'fphp-015-020.cnf', 'ls8-normalized.cnf', 's444_7_4.cnf', 'blasted_case111.cnf', 's420_new1_7_4.cnf',
-                 's420_7_4.cnf', 's420_new_7_4.cnf', 'blasted_case113.cnf', 'blasted_case117.cnf',
-                 'blasted_case118.cnf', 'blasted_case10.cnf', 'mixdup.cnf', 's510_7_4.cnf', 's832.bench.cnf',
-                 'blasted_case122.cnf', 'nocountdump7.cnf', 's820.bench.cnf', 'blasted_case6.cnf', 's510_15_7.cnf',
-                 'qg7-09.cnf', 's382_15_7.cnf', 's420_new_15_7.cnf', 'tire-1.cnf', 'C211_FW.cnf', 's420_15_7.cnf',
-                 's420_new1_15_7.cnf', 'blasted_case_0_b12_1.cnf', 'blasted_case_1_b12_1.cnf',
-                 'blasted_case_2_b12_1.cnf', '10.sk_1_46.cnf', 's526_3_2.cnf', 's444_15_7.cnf', '2bitadd_11.cnf',
-                 's526a_3_2.cnf', 'nocountdump6.cnf', 'nocountdump18.cnf', 'nocountdump19.cnf', 's526_7_4.cnf',
-                 's526a_7_4.cnf', 'blasted_case19.cnf', 'blasted_case20.cnf', 'blasted_case125.cnf', 'qg6-09.cnf',
-                 'blasted_case143.cnf', '2bitadd_12.cnf', 'blasted_case35.cnf', 'blasted_case34.cnf', '4blocksb.cnf',
-                 'c880.isc.cnf', 's953.bench.cnf', 'nocountdump21.cnf', 'nocountdump23.cnf', 'sat-grid-pbl-0020.cnf',
-                 'blasted_case114.cnf', 'blasted_case115.cnf', 'blasted_case131.cnf', 's641.bench.cnf',
-                 '27.sk_3_32.cnf', 'blasted_case116.cnf', 'nocountdump20.cnf', 'qg4-09.cnf', 's526_15_7.cnf',
-                 's526a_15_7.cnf', 's713.bench.cnf', 'C171_FR.cnf', 'C638_FVK.cnf', 'ls9-normalized.cnf',
-                 'bw_large.a.cnf', 'huge.cnf', 'nocountdump22.cnf', 'blasted_case140.cnf', 'C140_FC.cnf',
-                 '5_100_sd_schur.cnf', 'lang12.cnf', 's641_3_2.cnf', 'nocountdump9.cnf', '35.sk_3_52.cnf',
-                 's953a_3_2.cnf', 'blasted_squaring51.cnf', 'C210_FVF.cnf', 'C215_FC.cnf', 'blasted_squaring50.cnf',
-                 's641_7_4.cnf', 's953a_7_4.cnf', 'C638_FKB.cnf', 's713_3_2.cnf', 's838.1.bench.cnf', 'C230_FR.cnf',
-                 'C209_FA.cnf', 's713_7_4.cnf', 'C638_FKA.cnf', 'tire-2.cnf', 's1238.bench.cnf', 'hanoi4.cnf',
-                 'C140_FW.cnf', 'C170_FR.cnf', 'c1355.isc.cnf', 'C140_FV.cnf', 'tire-3.cnf', 's1196.bench.cnf',
-                 's641_15_7.cnf', 's953a_15_7.cnf', 'C163_FW.cnf', 'C203_FCL.cnf', 'C209_FC.cnf', 'C129_FR.cnf',
-                 'blasted_case18.cnf', '10random.cnf', 's713_15_7.cnf', 'C220_FW.cnf', 's820a_3_2.cnf', 's838_3_2.cnf',
-                 'C220_FV.cnf', 'nocountdump1.cnf', 'nocountdump3.cnf', 's832a_3_2.cnf', 'blasted_case107.cnf',
-                 's820a_7_4.cnf', 's838_7_4.cnf', 'nocountdump17.cnf', 'GuidanceService2.sk_2_27.cnf', 's832a_7_4.cnf',
-                 'C203_FS.cnf', 'blasted_case130.cnf', 'blasted_case_0_b12_2.cnf', 'blasted_case_1_b12_2.cnf',
-                 'blasted_case_2_b12_2.cnf', 'C208_FA.cnf', 'sum.32.cnf', 'blasted_case213.cnf', 'blasted_case214.cnf',
-                 'sat-grid-pbl-0025.cnf', 'C208_FC.cnf', 'C168_FW.cnf', 'ls10-normalized.cnf', 's1494.bench.cnf',
-                 'C203_FW.cnf', 's1488.bench.cnf', 's820a_15_7.cnf', 's838_15_7.cnf', 'nocountdump2.cnf',
-                 's832a_15_7.cnf', 's1238a_3_2.cnf', '5_140_sd_schur.cnf', 's1196a_3_2.cnf', 'blasted_squaring22.cnf',
-                 'blasted_squaring24.cnf', 'blasted_squaring20.cnf', 'blasted_squaring21.cnf', 's1238a_7_4.cnf',
-                 'C202_FS.cnf', 's1196a_7_4.cnf', 'blasted_case12.cnf', 'blasted_squaring23.cnf',
-                 'scenarios_tree_delete3.sb.pl.sk_2_32.cnf', 'blasted_case144.cnf', 'cnt06.shuffled.cnf', 'C210_FS.cnf',
-                 'C202_FW.cnf', 's1423.bench.cnf', 'c1908.isc.cnf', 's1238a_15_7.cnf', '4blocks.cnf', 's1196a_15_7.cnf',
-                 's1423a_3_2.cnf', 'C210_FW.cnf', 'log-1.cnf', 'prob001.pddl.cnf', 'tire-4.cnf', 's1423a_7_4.cnf',
-                 'blasted_case_0_b14_1.cnf', 'countdump6.cnf', 'blasted_case207.cnf', 'blasted_case208.cnf',
-                 'qg5-11.cnf', 'logistics.a.cnf', 'blasted_squaring27.cnf', 'blasted_case50.cnf', 'blasted_case138.cnf',
-                 'blasted_case139.cnf', 'blasted_squaring25.cnf', 'logistics.b.cnf', 's1423a_15_7.cnf', 's1488_3_2.cnf',
-                 'blasted_case210.cnf', 'blasted_case211.cnf', 's1488_7_4.cnf', 'lang15.cnf', 'lang16.cnf',
-                 'GuidanceService.sk_4_27.cnf', '107.sk_3_90.cnf', 'blasted_squaring70.cnf', 'blasted_squaring2.cnf',
-                 'blasted_squaring3.cnf', 'blasted_squaring5.cnf', 'blasted_squaring6.cnf', 'blasted_squaring1.cnf',
-                 'blasted_squaring4.cnf', 'blasted_squaring26.cnf', 'blasted_case42.cnf', 'ls11-normalized.cnf',
-                 'blasted_case_1_ptb_1.cnf', 'blasted_case_2_ptb_1.cnf', 's1488_15_7.cnf', 'par32-2-c.cnf',
-                 'sat-grid-pbl-0030.cnf', 'par32-1-c.cnf', 'par32-3-c.cnf', 'par32-4-c.cnf', 'blasted_squaring11.cnf',
-                 '32.sk_4_38.cnf', 'par32-5-c.cnf', '79.sk_4_40.cnf', 'nocountdump24.cnf', 'blasted_squaring30.cnf',
-                 'blockmap_05_01.net.cnf', 'blasted_squaring28.cnf', 'blasted_case37.cnf', 'bw_large.b.cnf',
-                 '55.sk_3_46.cnf', 'blasted_squaring10.cnf', 'blasted_squaring8.cnf', 'nocountdump4.cnf',
-                 'blasted_case_1_b14_even.cnf', 'blasted_case3_b14_even3.cnf', 'blasted_case_2_b14_even.cnf',
-                 'blasted_case1_b14_even3.cnf', 'blasted_TR_device_1_linear.cnf', 'bmc-ibm-2.cnf',
-                 'blasted_squaring29.cnf', 'logistics.c.cnf', 'IssueServiceImpl.sk_8_30.cnf', 'c2670.isc.cnf',
-                 '111.sk_2_36.cnf', 'nocountdump31.cnf', 'nocountdump8.cnf', 'blasted_case209.cnf',
-                 'blasted_case212.cnf', 'rb.cnf', 'ls12-normalized.cnf', 'nocountdump25.cnf',
-                 'blasted_TR_b14_1_linear.cnf', 'lang19.cnf', 'ra.cnf', 'UserServiceImpl.sk_8_32.cnf', 'log-2.cnf',
-                 'prob002.pddl.cnf', 'blasted_case_1_4_b14_even.cnf', 'blasted_case_3_4_b14_even.cnf',
-                 'blockmap_05_02.net.cnf', 'lang20.cnf', 'log-3.cnf', 'prob003.pddl.cnf',
-                 'scenarios_aig_insertion1.sb.pl.sk_3_60.cnf', 'qg7-13.cnf', 'blasted_squaring9.cnf',
-                 'blasted_TR_b14_2_linear.cnf', 'blasted_squaring14.cnf', 'blasted_case_0_ptb_1.cnf',
-                 'ActivityService.sk_11_27.cnf', '53.sk_4_32.cnf', 'hanoi5.cnf', 'blasted_squaring12.cnf',
-                 'blasted_case49.cnf', 'PhaseService.sk_14_27.cnf', 'ls13-normalized.cnf', 'blasted_squaring16.cnf',
-                 'blasted_squaring7.cnf', 'blockmap_05_03.net.cnf', 'blasted_TR_b12_1_linear.cnf',
-                 'blasted_TR_b14_3_linear.cnf', 'cnt07.shuffled.cnf', '109.sk_4_36.cnf', 'prob004-log-a.cnf',
-                 'IterationService.sk_12_27.cnf', '51.sk_4_38.cnf', 'lang23.cnf', 'countdump8.cnf',
-                 'ActivityService2.sk_10_27.cnf', '56.sk_6_38.cnf', 'blasted_TR_ptb_1_linear.cnf', 'rc.cnf',
-                 'binsearch.16.cnf', 'lang24.cnf', 'ls14-normalized.cnf', 'blasted_TR_device_1_even_linear.cnf',
-                 'blasted_TR_b12_2_linear.cnf', 'log-4.cnf', 'prob004.pddl.cnf', 'prob012.pddl.cnf',
-                 'scenarios_aig_insertion2.sb.pl.sk_3_60.cnf', 'ConcreteActivityService.sk_13_28.cnf',
-                 'blasted_case_0_b12_even2.cnf', 'blasted_case_1_b12_even2.cnf', 'blasted_case_2_b12_even2.cnf',
-                 'blasted_case_0_b12_even1.cnf', 'blasted_case_1_b12_even1.cnf', 'blasted_case_2_b12_even1.cnf',
-                 'blasted_case142.cnf', 'lang27.cnf', 'ls15-normalized.cnf', 'log-5.cnf', 'prob005.pddl.cnf',
-                 'blasted_case_1_ptb_2.cnf', 'blasted_case_2_ptb_2.cnf', 'lang28.cnf', 'ProjectService3.sk_12_55.cnf',
-                 'bw_large.c.cnf', '57.sk_4_64.cnf', 'ls16-normalized.cnf', 'c7552.isc.cnf',
-                 'NotificationServiceImpl2.sk_10_36.cnf', 'blasted_case_0_ptb_2.cnf', 'ProcessBean.sk_8_64.cnf',
-                 'fs-07.net.cnf', '71.sk_3_65.cnf', 'mastermind_05_08_03.net.cnf', 'blasted_case104.cnf',
-                 'blasted_TR_ptb_2_linear.cnf', 's5378a_3_2.cnf', 's5378a_7_4.cnf', 's5378a_15_7.cnf',
-                 'blasted_case141.cnf', 'bmc-ibm-7.cnf', 'blasted_case_0_b12_even3.cnf', 'blasted_case_1_b12_even3.cnf',
-                 'blasted_case_2_b12_even3.cnf', 'mastermind_06_08_03.net.cnf', '70.sk_3_40.cnf', 'cnt08.shuffled.cnf',
-                 'alu2_gr_rcs_w8.shuffled.cnf', 'blasted_squaring40.cnf', 'blasted_squaring42.cnf',
-                 'blasted_squaring41.cnf', '80.sk_2_48.cnf', '3bitadd_31.cnf', 'countdump3.cnf', 'countdump5.cnf',
-                 'countdump4.cnf', 'binsearch.32.cnf', '3bitadd_32.cnf', 'c880_gr_rcs_w7.shuffled.cnf',
-                 'logistics.d.cnf', 'mastermind_03_08_04.net.cnf', '77.sk_3_44.cnf', 'bmc-ibm-5.cnf',
-                 'blasted_squaring60.cnf', 'scenarios_tree_delete.sb.pl.sk_3_30.cnf', '7.sk_4_50.cnf',
-                 'scenarios_tree_insert_insert.sb.pl.sk_3_68.cnf', 'mastermind_04_08_04.net.cnf', '36.sk_3_77.cnf',
-                 'mastermind_10_08_03.net.cnf', '63.sk_3_64.cnf', '17.sk_3_45.cnf', 's9234a_3_2.cnf', 's9234a_7_4.cnf',
-                 'bw_large.d.cnf', 's9234a_15_7.cnf', '19.sk_3_48.cnf', 'doublyLinkedList.sk_8_37.cnf',
-                 'LoginService.sk_20_34.cnf', 'bmc-ibm-1.cnf', 'mastermind_03_08_05.net.cnf', 'Pollard.sk_1_10.cnf',
-                 '29.sk_3_45.cnf', 'blasted_TR_b14_even3_linear.cnf', 'blasted_TR_b14_even_linear.cnf',
-                 'blasted_TR_b12_even2_linear.cnf', 'blasted_TR_b12_even3_linear.cnf',
-                 'blasted_TR_b12_even7_linear.cnf', '81.sk_5_51.cnf', 'blockmap_10_01.net.cnf', 'cnt09.shuffled.cnf',
-                 's13207a_3_2.cnf', 'isolateRightmost.sk_7_481.cnf', 's13207a_7_4.cnf', 'fs-10.net.cnf',
-                 's13207a_15_7.cnf', 'blasted_TR_b14_even2_linear.cnf', 'blockmap_10_02.net.cnf', '20.sk_1_51.cnf',
-                 'LoginService2.sk_23_36.cnf', 'bmc-ibm-13.cnf', 's15850a_3_2.cnf', 's15850a_7_4.cnf',
-                 's15850a_15_7.cnf', 'sort.sk_8_52.cnf', 'blockmap_10_03.net.cnf',
-                 'scenarios_tree_delete4.sb.pl.sk_4_114.cnf', 'bmc-ibm-3.cnf', 'tutorial2.sk_3_4.cnf',
-                 'parity.sk_11_11.cnf', 'bmc-ibm-4.cnf', '110.sk_3_88.cnf', 'enqueueSeqSK.sk_10_42.cnf',
-                 'scenarios_tree_delete2.sb.pl.sk_8_114.cnf', 's35932_3_2.cnf', 's35932_7_4.cnf', 's35932_15_7.cnf',
-                 'karatsuba.sk_7_41.cnf', 'logcount.sk_16_86.cnf', '54.sk_12_97.cnf', 'cnt10.shuffled.cnf',
-                 'fs-13.net.cnf', '30.sk_5_76.cnf', 's38584_3_2.cnf', 's38584_7_4.cnf', 's38584_15_7.cnf',
-                 'signedAvg.sk_8_1020.cnf', 'scenarios_treemax.sb.pl.sk_7_19.cnf', 's38417_3_2.cnf', 's38417_7_4.cnf',
-                 's38417_15_7.cnf', 'scenarios_treemin.sb.pl.sk_9_19.cnf']
     labels = ["static", "dynamic"]  # ,  "random_selection_1234" ]
     folders = ["./results/Benchmark_preproc2_WMC/", "./results/Benchmark_preproc2_wscore_half/",
                     "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
@@ -4337,7 +4042,6 @@ def write_inits():
     alg_types = [  "dynamic"]# , "static"]
     FOLDER = "Dataset_preproc"
     result_folder = "./results_aaai/"
-    from statistics import variance
     expr_folders = [result_folder + FOLDER+"_wscore_estimate/" ]#,  result_folder + FOLDER+"_WMC/",result_folder + FOLDER + "_hybrid_wmc/"  ]
     columns = [ "p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
     init_exprs = {}
@@ -4382,6 +4086,8 @@ def write_inits():
 def plot_percentage_experiments(percent=8):
     #look at exprs that have an init compilation, are present in the list of the dynamic_p_ stats file - and have a line for it -  and have a non zero value for compilation
     #read in init data
+
+
     medium_instances = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf',
                         '04_iscas89_s1196_bench.cnf',
                         '04_iscas89_s1238_bench.cnf', '04_iscas89_s1423_bench.cnf', '04_iscas89_s1488_bench.cnf',
@@ -4458,6 +4164,22 @@ def plot_percentage_experiments(percent=8):
                         '16_uts_k2_p_t9.cnf', '16_uts_k3_p_t2.cnf',
                         '16_uts_k3_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k4_p_t1.cnf', '16_uts_k4_p_t2.cnf',
                         '16_uts_k5_p_t1.cnf']
+                        
+    medium_part2 = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf', '05_iscas93_s1269_bench.cnf',
+                    '06_iscas99_b04.cnf', '06_iscas99_b11.cnf', '07_blocks_right_3_p_t5.cnf', '07_blocks_right_4_p_t3.cnf',
+                    '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf',
+                    '09_coins_p01_p_t5.cnf', '09_coins_p02_p_t5.cnf',
+                    '09_coins_p03_p_t5.cnf', '09_coins_p04_p_t5.cnf', '09_coins_p05_p_t5.cnf', '09_coins_p10_p_t2.cnf',
+                    '11_emptyroom_d8_g4_p_t10.cnf', '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t7.cnf', '13_ring2_r6_p_t8.cnf',
+                    '13_ring2_r6_p_t9.cnf', '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t6.cnf', '13_ring2_r8_p_t7.cnf', '13_ring2_r8_p_t8.cnf',
+                    '13_ring2_r8_p_t9.cnf', '13_ring_4_p_t10.cnf', '13_ring_5_p_t10.cnf', '13_ring_5_p_t8.cnf', '13_ring_5_p_t9.cnf',
+                    '15_sort_num_s_4_p_t4.cnf', '15_sort_num_s_4_p_t5.cnf', '15_sort_num_s_4_p_t6.cnf', '15_sort_num_s_4_p_t7.cnf',
+                    '15_sort_num_s_4_p_t8.cnf', '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_5_p_t3.cnf',
+                    '15_sort_num_s_5_p_t4.cnf', '15_sort_num_s_6_p_t1.cnf', '15_sort_num_s_6_p_t2.cnf', '15_sort_num_s_7_p_t1.cnf',
+                    '16_uts_k2_p_t5.cnf', '16_uts_k2_p_t6.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf', '16_uts_k2_p_t9.cnf',
+                    '16_uts_k3_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k4_p_t2.cnf']
+
+
 
     large_instances = ['05_iscas93_s3271_bench.cnf', '05_iscas93_s3330_bench.cnf', '05_iscas93_s3384_bench.cnf',
                        '05_iscas93_s4863_bench.cnf', '06_iscas99_b05.cnf',
@@ -4515,6 +4237,8 @@ def plot_percentage_experiments(percent=8):
                        '11_emptyroom_d28_g14_corners_p_t7.cnf', '11_emptyroom_d28_g14_corners_p_t8.cnf',
                        '11_emptyroom_d28_g14_corners_p_t9.cnf', '14_safe_safe_30_p_t10.cnf',
                        '15_sort_num_s_4_p_t10.cnf', '16_uts_k2_p_t10.cnf']
+    
+
 
     f = open("./results_aaai2/" + "init_compilations.csv", "r")
     init_compilations = {}
@@ -4541,10 +4265,9 @@ def plot_percentage_experiments(percent=8):
     for e in init_compilations:
         if e not in medium_instances:
             c+=1
-    print(c)
-    exit(1)
 
-    f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + str(percent)+"percent_compilations.csv", "r")
+    # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + str(percent)+"percent_compilations.csv", "r")
+    f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_medium_nofullsb.csv", "r")
     # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + "8percent_compilations.csv", "r")
     percent_compilations = {}
     while True:
@@ -4595,50 +4318,55 @@ def plot_percentage_experiments(percent=8):
     compilation_zero_expr = []
     plotted_expr_ratios = {}
     plotted_expr_nb_count = {}
-    for expr in lines.keys():
+    # for expr in lines.keys():
+    for expr in percent_compilations:
         if expr in init_compilations:
-            if expr in percent_compilations and expr in medium_instances :
-                if percent_compilations[expr][wmc_index] > 0 and  percent_compilations[expr][size_index] > 0 :
-                    print(expr, init_compilations[expr][wmc_index],  init_compilations[expr][size_index],  percent_compilations[expr][wmc_index] , percent_compilations[expr][size_index])
-                    init_ratio = init_compilations[expr][wmc_index] /  init_compilations[expr][size_index]
-                    current_ratio = percent_compilations[expr][wmc_index] /  percent_compilations[expr][size_index]
-                    ar = current_ratio / init_ratio
-                    if ar >= 1:
-                        count_compact += 1
-                    else:
-                        print("not compact: ", ar)
-                        count_not_compact += 1
-                    init_ratios[expr] = init_ratio
-                    # ars[expr] = ar
-                    y.append(ar)
-                    plotted_expr_ratios[expr] = ar
-                    plotted_expr_nb_count[expr] = percent_expr_data.all_expr_data[expr][0][nb_vars_index]
+            if expr in percent_compilations:
+                if  expr in  medium_part2:
+                    if percent_compilations[expr][wmc_index] > 0 and  percent_compilations[expr][size_index] > 0 :
+                        print(expr, init_compilations[expr][wmc_index],  init_compilations[expr][size_index],  percent_compilations[expr][wmc_index] , percent_compilations[expr][size_index])
+                        init_ratio = init_compilations[expr][wmc_index] /  init_compilations[expr][size_index]
+                        current_ratio = percent_compilations[expr][wmc_index] /  percent_compilations[expr][size_index]
+                        ar = current_ratio / init_ratio
+                        if ar >= 1:
+                            count_compact += 1
+                        else:
+                            print("not compact: ", ar)
+                            count_not_compact += 1
+                        init_ratios[expr] = init_ratio
+                        # ars[expr] = ar
+                        y.append(ar)
+                        plotted_expr_ratios[expr] = ar
+                        # plotted_expr_nb_count[expr] = percent_expr_data.all_expr_data[expr][0][nb_vars_index]
 
-                    init_times[expr] = init_compilations[expr][time_index]
-                    sb_times[expr] = lines[expr][time_index]
-                    sb_compilation_times[expr] = percent_compilations[expr][time_index]
-                    nb_expr += 1
-                else:
-                    compilation_zero += 1
-                    compilation_zero_expr.append(expr)
+                        init_times[expr] = init_compilations[expr][time_index]
+                        # sb_times[expr] = lines[expr][time_index]
+                        # sb_compilation_times[expr] = percent_compilations[expr][time_index]
+                        nb_expr += 1
+            else:
+                compilation_zero += 1
+                compilation_zero_expr.append(expr)
         else:
             print(expr)
             no_init_compilation += 1
 
-    sorted_exprs = dict(sorted(plotted_expr_nb_count.items(), key=lambda kv: kv[1]))
-    instance_sizes = list(sorted_exprs.values())
-    y = []
-    for e in sorted_exprs.keys():
-        y.append(plotted_expr_ratios[e])
-
+    # sorted_exprs = dict(sorted(plotted_expr_nb_count.items(), key=lambda kv: kv[1]))
+    # instance_sizes = list(sorted_exprs.values())
+    # y = []
+    # for e in sorted_exprs.keys():
+    #     y.append(plotted_expr_ratios[e])
+    #
     print(statistics.median(y))
-    exit(9)
+    print(len(y), len(medium_part2))
 
     fig = plt.figure(figsize=(10, 7))
     ax1 = fig.add_subplot(111)
     x = [i for i in range(nb_expr)]
-    ax1.scatter(instance_sizes, y)
-    ax1.plot(instance_sizes, y)
+    ax1.scatter(x, y)
+    ax1.plot(x, y)
+
+    # ax1.scatter(instance_sizes, y)
+    # ax1.plot(instance_sizes, y)
     handles, labels = ax1.get_legend_handles_labels()
     ax1.legend(handles, labels)
     # fig.tight_layout()
@@ -4647,29 +4375,32 @@ def plot_percentage_experiments(percent=8):
     # plt.ylim((float(6.931164793584654e-21), 280.37139126615557))
     plt.yscale("log")
     plt.grid()
-    # plt.show()
+    plt.show()
     # plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_log.png")
+    exit(9)
 
 
     #plot time
-    init_y = []
-    sb_y = []
-    sb_comp_y = []
-    for e in sorted_exprs.keys():
-        init_y.append(init_times[e])
-        sb_y.append(sb_times[e])
-        sb_comp_y.append(sb_compilation_times[e])
-    fig = plt.figure(figsize=(10, 7))
-    ax1 = fig.add_subplot(111)
+    # init_y = []
+    # sb_y = []
+    # sb_comp_y = []
+    # for e in sorted_exprs.keys():
+    #     init_y.append(init_times[e])
+    #     sb_y.append(sb_times[e])
+    #     sb_comp_y.append(sb_compilation_times[e])
+    # fig = plt.figure(figsize=(10, 7))
+    # ax1 = fig.add_subplot(111)
+    #----------
 
-    ax1.scatter(instance_sizes, init_y, color="r")
-    ax1.plot(instance_sizes, init_y, color = "r", label="init compilation time")
+    # ax1.scatter(instance_sizes, init_y, color="r")
+    # ax1.plot(instance_sizes, init_y, color = "r", label="init compilation time")
+    #
+    ax1.scatter(instance_sizes, sb_y, color="green")
+    ax1.plot(instance_sizes, sb_y, color="green", label=str(percent)+" var percent SB")
+    #
+    # ax1.scatter(instance_sizes, sb_comp_y, color="cyan")
+    # ax1.plot(instance_sizes, sb_comp_y, color="cyan", label=str(percent) + " var percent compilation")
 
-    # ax1.scatter(instance_sizes, sb_y, color="green")
-    # ax1.plot(instance_sizes, sb_y, color="green", label=str(percent)+" var percent SB")
-
-    ax1.scatter(instance_sizes, sb_comp_y, color="cyan")
-    ax1.plot(instance_sizes, sb_comp_y, color="cyan", label=str(percent) + " var percent compilation")
     handles, labels = ax1.get_legend_handles_labels()
     ax1.legend(handles, labels)
     # fig.tight_layout()
@@ -4691,34 +4422,34 @@ def plot_percentage_experiments(percent=8):
     print("no_init_compilation", no_init_compilation)
     print(len(medium_instances))
     print(y)
-    count_medium = 0
-    count_large = 0
-    diff_count = 0
-    for expr in percent_expr_data.all_expr_data.keys():
-        # print(expr, plotted_expr_nb_count[expr], plotted_expr_ratios[expr] )
-        if expr in medium_instances:
-            count_medium+=1
-        elif expr in large_instances:
-            count_large +=1
-        else:
-            diff_count += 1
-            print(expr)
-    print("count_medium: ", count_medium, "count_large: ", count_large, len(medium_instances), len(large_instances), len(percent_expr_data.all_expr_data), diff_count)
-
-    count = 0
-    no_sb = []
-    for expr in medium_instances:
-        if expr not in plotted_expr_ratios:
-            if expr in compilation_zero_expr:
-                print("zero compilation ", expr)
-            else:
-                print(" ---------------------- not in plotted :", expr)
-            count += 1
-        if expr not in percent_compilations:
-            print("no sb within an hour: ", expr)
-            no_sb.append(expr)
-    print(count, len(medium_instances), len(plotted_expr_ratios), len(no_sb))
-    print(no_sb)
+    # count_medium = 0
+    # count_large = 0
+    # diff_count = 0
+    # for expr in percent_expr_data.all_expr_data.keys():
+    #     # print(expr, plotted_expr_nb_count[expr], plotted_expr_ratios[expr] )
+    #     if expr in medium_instances:
+    #         count_medium+=1
+    #     elif expr in large_instances:
+    #         count_large +=1
+    #     else:
+    #         diff_count += 1
+    #         print(expr)
+    # print("count_medium: ", count_medium, "count_large: ", count_large, len(medium_instances), len(large_instances), len(percent_expr_data.all_expr_data), diff_count)
+    #
+    # count = 0
+    # no_sb = []
+    # for expr in medium_instances:
+    #     if expr not in plotted_expr_ratios:
+    #         if expr in compilation_zero_expr:
+    #             print("zero compilation ", expr)
+    #         else:
+    #             print(" ---------------------- not in plotted :", expr)
+    #         count += 1
+    #     if expr not in percent_compilations:
+    #         print("no sb within an hour: ", expr)
+    #         no_sb.append(expr)
+    # print(count, len(medium_instances), len(plotted_expr_ratios), len(no_sb))
+    # print(no_sb)
 
     # count = 0
     # for expr in large_instances:
@@ -5096,416 +4827,3 @@ if __name__ == "__main__":
         create_average_ratio_plot([exp_folder], exp_folder+type+"_avg_ratio", title, labels, 1, columns)
         evaluate_folder( exp_folder, labels, columns)
 
-
-    #use this code to convert past csv expr results to new ones
-    # exprs = [
-    #     # "./aaai_data/output/Planning/blocks/",
-    #     #       "./aaai_data/output/Planning/bomb/","./aaai_data/output/Planning/coins/",
-    #     #       "./aaai_data/output/Planning/comm/", "./aaai_data/output/Planning/emptyroom/",
-    #     # "./aaai_data/output/Planning/flip/",
-    #          "./aaai_data/output/Planning/ring/", "./aaai_data/output/Planning/safe/",
-    #          "./aaai_data/output/Planning/sort/", "./aaai_data/output/Planning/uts/",
-    #     "./aaai_data/output/DatasetA/", "./aaai_data/output/DatasetB/",
-    #       "./aaai_data/output/iscas/iscas89/", "./aaai_data/output/iscas/iscas93/",
-    #           "./aaai_data/output/iscas/iscas99/" ]
-    # for folder in exprs:
-    #     print(folder)
-    #     stats_file = folder + "dataset_stats_static_opp.csv"
-    #     columns = ["p", "var", "value", "opp", 'time', "MC", "dag_size", "compilation_time"]
-    #     columns = ["p", "var", "value", "nb_vars", "nb_cls", "obj", 'time', "MC", "dag_size", "compilation_time"]
-    #
-    #     expr_data = ExprData(columns)
-    #     expr_data.read_stats_file(stats_file)
-    #     exp_names = expr_data.exprs
-    #
-    #     # stats_file = folder + "dataset_stats_" + type + "_reorder.csv"
-    #     stats_file = folder + "dataset_stats_dynamic_reorder.csv"
-    #     columns2 = ["p", "var", "value", "MC", "BDD len", 'n_vars', 'n_nodes', 'n_reorderings', 'dag_size', 'time']
-    #
-    #     expr_data2 = ExprData(columns2)
-    #     expr_data2.read_stats_file(stats_file)
-    #     expr_data2.convert_to_columns(columns, exp_names)
-    #     print(expr_data.all_expr_data)
-    #
-    #
-    #
-    #     stats_file = folder + "dataset_stats_random_ratio_selection_1234_reorder.csv"
-    #     expr_data2 = ExprData(columns2)
-    #     expr_data2.read_stats_file(stats_file)
-    #     print("------------------------------------")
-    #     print(exp_names)
-    #     print(expr_data.exprs)
-    #     if len(exp_names) < len(expr_data2.exprs):
-    #         expr_data2.exprs = expr_data2.exprs[:-1]
-    #     print(exp_names)
-    #     print(expr_data.exprs)
-    #     print("------------------------------------")
-    #     expr_data2.convert_to_columns(columns, exp_names)
-    #     print(expr_data.all_expr_data)
-    #
-    #     stats_file = folder + "dataset_stats_dynamic_ratio_reorder.csv"
-    #     expr_data2 = ExprData(columns2)
-    #     expr_data2.read_stats_file(stats_file)
-    #     print("------------------------------------")
-    #     print(exp_names)
-    #     print(expr_data.exprs)
-    #     if len(exp_names) < len(expr_data2.exprs):
-    #         expr_data2.exprs = expr_data2.exprs[:-1]
-    #     print(exp_names)
-    #     print(expr_data.exprs)
-    #     print("------------------------------------")
-    #     expr_data2.convert_to_columns(columns, exp_names)
-    #     print(expr_data.all_expr_data)
-
-    cutoff = {'half/': {
-       'static': {'01_istance_K3_N15_M45_01.cnf': 6.0, '01_istance_K3_N15_M45_02.cnf': 3.0,
-                   '01_istance_K3_N15_M45_03.cnf': 10.0, '01_istance_K3_N15_M45_04.cnf': 2.0,
-                   '01_istance_K3_N15_M45_05.cnf': 5.0, '01_istance_K3_N15_M45_06.cnf': 6.0,
-                   '01_istance_K3_N15_M45_07.cnf': 7.0, '01_istance_K3_N15_M45_08.cnf': 7.0,
-                   '01_istance_K3_N15_M45_09.cnf': 9.0, '01_istance_K3_N15_M45_10.cnf': 5.0,
-                   '02_instance_K3_N30_M90_01.cnf': 10.0, '02_instance_K3_N30_M90_02.cnf': 5.0,
-                   '02_instance_K3_N30_M90_03.cnf': 8.0, '02_instance_K3_N30_M90_04.cnf': 8.0,
-                   '02_instance_K3_N30_M90_05.cnf': 12.0, '02_instance_K3_N30_M90_06.cnf': 13.0,
-                   '02_instance_K3_N30_M90_07.cnf': 8.0, '02_instance_K3_N30_M90_08.cnf': 6.0,
-                   '02_instance_K3_N30_M90_09.cnf': 12.0, '02_instance_K3_N30_M90_10.cnf': 4.0,
-                   '04_iscas89_s400_bench.cnf': 6.0, '04_iscas89_s420_1_bench.cnf': 8.0,
-                   '04_iscas89_s444_bench.cnf': 12.0, '04_iscas89_s526_bench.cnf': 12.0,
-                   '04_iscas89_s526n_bench.cnf': 4.0, '05_iscas93_s344_bench.cnf': 7.0,
-                   '05_iscas93_s499_bench.cnf': 3.0, '06_iscas99_b01.cnf': 4.0, '06_iscas99_b02.cnf': 5.0,
-                   '06_iscas99_b03.cnf': 9.0, '06_iscas99_b06.cnf': 6.0, '06_iscas99_b08.cnf': 9.0,
-                   '06_iscas99_b09.cnf': 8.0, '06_iscas99_b10.cnf': 3.0, '07_blocks_right_2_p_t1.cnf': 3.0,
-                   '07_blocks_right_2_p_t2.cnf': 6.0, '07_blocks_right_2_p_t3.cnf': 2.0,
-                   '07_blocks_right_2_p_t4.cnf': 7.0, '07_blocks_right_2_p_t5.cnf': 9.0,
-                   '07_blocks_right_3_p_t1.cnf': 3.0, '07_blocks_right_3_p_t2.cnf': 3.0,
-                   '07_blocks_right_4_p_t1.cnf': 2.0, '08_bomb_b10_t5_p_t1.cnf': 18.0, '08_bomb_b5_t1_p_t1.cnf': 16.0,
-                   '08_bomb_b5_t1_p_t2.cnf': 6.0, '08_bomb_b5_t1_p_t3.cnf': 12.0, '08_bomb_b5_t1_p_t4.cnf': 8.0,
-                   '08_bomb_b5_t1_p_t5.cnf': 10.0, '08_bomb_b5_t5_p_t1.cnf': 13.0, '08_bomb_b5_t5_p_t2.cnf': 10.0,
-                   '09_coins_p01_p_t1.cnf': 13.0, '09_coins_p02_p_t1.cnf': 13.0, '09_coins_p03_p_t1.cnf': 13.0,
-                   '09_coins_p04_p_t1.cnf': 13.0, '09_coins_p05_p_t1.cnf': 13.0, '09_coins_p05_p_t2.cnf': 16.0,
-                   '09_coins_p10_p_t1.cnf': 13.0, '10_comm_p01_p_t1.cnf': 9.0, '10_comm_p01_p_t2.cnf': 8.0,
-                   '10_comm_p02_p_t1.cnf': 12.0, '10_comm_p03_p_t1.cnf': 13.0, '11_emptyroom_d12_g6_p_t1.cnf': 4.0,
-                   '11_emptyroom_d12_g6_p_t2.cnf': 3.0, '11_emptyroom_d16_g8_p_t1.cnf': 4.0,
-                   '11_emptyroom_d16_g8_p_t2.cnf': 7.0, '11_emptyroom_d20_g10_corners_p_t1.cnf': 7.0,
-                   '11_emptyroom_d24_g12_p_t1.cnf': 6.0, '11_emptyroom_d28_g14_corners_p_t1.cnf': 7.0,
-                   '11_emptyroom_d4_g2_p_t10.cnf': 10.0, '11_emptyroom_d4_g2_p_t1.cnf': 5.0,
-                   '11_emptyroom_d4_g2_p_t2.cnf': 4.0, '11_emptyroom_d4_g2_p_t3.cnf': 6.0,
-                   '11_emptyroom_d4_g2_p_t4.cnf': 3.0, '11_emptyroom_d4_g2_p_t5.cnf': 4.0,
-                   '11_emptyroom_d4_g2_p_t6.cnf': 10.0, '11_emptyroom_d4_g2_p_t7.cnf': 7.0,
-                   '11_emptyroom_d4_g2_p_t8.cnf': 6.0, '11_emptyroom_d4_g2_p_t9.cnf': 5.0,
-                   '11_emptyroom_d8_g4_p_t1.cnf': 2.0, '11_emptyroom_d8_g4_p_t2.cnf': 4.0,
-                   '11_emptyroom_d8_g4_p_t3.cnf': 7.0, '11_emptyroom_d8_g4_p_t4.cnf': 9.0, '12_flip_1_p_t10.cnf': 11.0,
-                   '12_flip_1_p_t1.cnf': 3.0, '12_flip_1_p_t2.cnf': 3.0, '12_flip_1_p_t3.cnf': 4.0,
-                   '12_flip_1_p_t4.cnf': 6.0, '12_flip_1_p_t5.cnf': 8.0, '12_flip_1_p_t6.cnf': 10.0,
-                   '12_flip_1_p_t7.cnf': 12.0, '12_flip_1_p_t8.cnf': 10.0, '12_flip_1_p_t9.cnf': 10.0,
-                   '12_flip_no_action_1_p_t10.cnf': 7.0, '12_flip_no_action_1_p_t1.cnf': 3.0,
-                   '12_flip_no_action_1_p_t2.cnf': 5.0, '12_flip_no_action_1_p_t3.cnf': 4.0,
-                   '12_flip_no_action_1_p_t4.cnf': 8.0, '12_flip_no_action_1_p_t5.cnf': 4.0,
-                   '12_flip_no_action_1_p_t6.cnf': 2.0, '12_flip_no_action_1_p_t7.cnf': 4.0,
-                   '12_flip_no_action_1_p_t8.cnf': 5.0, '12_flip_no_action_1_p_t9.cnf': 6.0,
-                   '13_ring2_r6_p_t1.cnf': 3.0, '13_ring2_r6_p_t2.cnf': 4.0, '13_ring2_r6_p_t3.cnf': 4.0,
-                   '13_ring2_r8_p_t1.cnf': 4.0, '13_ring2_r8_p_t2.cnf': 3.0, '13_ring2_r8_p_t3.cnf': 6.0,
-                   '13_ring_3_p_t1.cnf': 2.0, '13_ring_3_p_t2.cnf': 7.0, '13_ring_3_p_t3.cnf': 8.0,
-                   '13_ring_3_p_t4.cnf': 16.0, '13_ring_4_p_t1.cnf': 18.0, '13_ring_4_p_t2.cnf': 7.0,
-                   '13_ring_4_p_t3.cnf': 8.0, '13_ring_5_p_t1.cnf': 7.0, '13_ring_5_p_t2.cnf': 13.0,
-                   '13_ring_5_p_t3.cnf': 3.0, '14_safe_safe_10_p_t10.cnf': 4.0, '14_safe_safe_10_p_t1.cnf': 7.0,
-                   '14_safe_safe_10_p_t2.cnf': 2.0, '14_safe_safe_10_p_t3.cnf': 4.0, '14_safe_safe_10_p_t4.cnf': 4.0,
-                   '14_safe_safe_10_p_t5.cnf': 4.0, '14_safe_safe_10_p_t6.cnf': 4.0, '14_safe_safe_10_p_t7.cnf': 7.0,
-                   '14_safe_safe_10_p_t8.cnf': 7.0, '14_safe_safe_10_p_t9.cnf': 11.0, '14_safe_safe_30_p_t1.cnf': 6.0,
-                   '14_safe_safe_30_p_t2.cnf': 5.0, '14_safe_safe_30_p_t3.cnf': 3.0, '14_safe_safe_30_p_t4.cnf': 4.0,
-                   '14_safe_safe_30_p_t5.cnf': 5.0, '14_safe_safe_30_p_t6.cnf': 6.0, '14_safe_safe_5_p_t10.cnf': 8.0,
-                   '14_safe_safe_5_p_t1.cnf': 4.0, '14_safe_safe_5_p_t2.cnf': 9.0, '14_safe_safe_5_p_t3.cnf': 4.0,
-                   '14_safe_safe_5_p_t4.cnf': 2.0, '14_safe_safe_5_p_t5.cnf': 3.0, '14_safe_safe_5_p_t6.cnf': 6.0,
-                   '14_safe_safe_5_p_t7.cnf': 6.0, '14_safe_safe_5_p_t8.cnf': 4.0, '14_safe_safe_5_p_t9.cnf': 8.0,
-                   '15_sort_num_s_3_p_t10.cnf': 6.0, '15_sort_num_s_3_p_t1.cnf': 3.0, '15_sort_num_s_3_p_t2.cnf': 2.0,
-                   '15_sort_num_s_3_p_t3.cnf': 2.0, '15_sort_num_s_3_p_t4.cnf': 9.0, '15_sort_num_s_3_p_t5.cnf': 4.0,
-                   '15_sort_num_s_3_p_t6.cnf': 4.0, '15_sort_num_s_3_p_t7.cnf': 6.0, '15_sort_num_s_3_p_t8.cnf': 7.0,
-                   '15_sort_num_s_3_p_t9.cnf': 8.0, '15_sort_num_s_4_p_t1.cnf': 4.0, '16_uts_k1_p_t10.cnf': 3.0,
-                   '16_uts_k1_p_t1.cnf': 4.0, '16_uts_k1_p_t2.cnf': 1.0, '16_uts_k1_p_t3.cnf': 4.0,
-                   '16_uts_k1_p_t4.cnf': 4.0, '16_uts_k1_p_t5.cnf': 4.0, '16_uts_k1_p_t6.cnf': 3.0,
-                   '16_uts_k1_p_t7.cnf': 3.0, '16_uts_k1_p_t8.cnf': 9.0, '16_uts_k1_p_t9.cnf': 8.0,
-                   '16_uts_k2_p_t1.cnf': 6.0, '16_uts_k2_p_t2.cnf': 7.0, '16_uts_k3_p_t1.cnf': 4.0},
-        'dynamic': {'01_istance_K3_N15_M45_01.cnf': 15.0, '01_istance_K3_N15_M45_02.cnf': 5.0,
-                    '01_istance_K3_N15_M45_03.cnf': 15.0, '01_istance_K3_N15_M45_04.cnf': 2.0,
-                    '01_istance_K3_N15_M45_05.cnf': 15.0, '01_istance_K3_N15_M45_06.cnf': 15.0,
-                    '01_istance_K3_N15_M45_07.cnf': 13.0, '01_istance_K3_N15_M45_08.cnf': 9.0,
-                    '01_istance_K3_N15_M45_09.cnf': 15.0, '01_istance_K3_N15_M45_10.cnf': 7.0,
-                    '02_instance_K3_N30_M90_01.cnf': 30.0, '02_instance_K3_N30_M90_02.cnf': 7.0,
-                    '02_instance_K3_N30_M90_03.cnf': 30.0, '02_instance_K3_N30_M90_04.cnf': 24.0,
-                    '02_instance_K3_N30_M90_05.cnf': 30.0, '02_instance_K3_N30_M90_06.cnf': 30.0,
-                    '02_instance_K3_N30_M90_07.cnf': 30.0, '02_instance_K3_N30_M90_08.cnf': 15.0,
-                    '02_instance_K3_N30_M90_09.cnf': 30.0, '02_instance_K3_N30_M90_10.cnf': 5.0,
-                    '04_iscas89_s400_bench.cnf': 44.0, '04_iscas89_s420_1_bench.cnf': 252.0,
-                    '04_iscas89_s444_bench.cnf': 205.0, '04_iscas89_s526_bench.cnf': 217.0,
-                    '04_iscas89_s526n_bench.cnf': 218.0, '05_iscas93_s344_bench.cnf': 184.0,
-                    '05_iscas93_s499_bench.cnf': 175.0, '06_iscas99_b01.cnf': 45.0, '06_iscas99_b02.cnf': 26.0,
-                    '06_iscas99_b03.cnf': 156.0, '06_iscas99_b06.cnf': 44.0, '06_iscas99_b08.cnf': 46.0,
-                    '06_iscas99_b09.cnf': 169.0, '06_iscas99_b10.cnf': 201.0, '07_blocks_right_2_p_t1.cnf': 90.0,
-                    '07_blocks_right_2_p_t2.cnf': 169.0, '07_blocks_right_2_p_t3.cnf': 2.0,
-                    '07_blocks_right_2_p_t4.cnf': 170.0, '07_blocks_right_2_p_t5.cnf': 221.0,
-                    '07_blocks_right_3_p_t1.cnf': 176.0, '07_blocks_right_3_p_t2.cnf': 8.0,
-                    '07_blocks_right_4_p_t1.cnf': 2.0, '08_bomb_b10_t5_p_t1.cnf': 268.0,
-                    '08_bomb_b5_t1_p_t1.cnf': 120.0, '08_bomb_b5_t1_p_t2.cnf': 23.0, '08_bomb_b5_t1_p_t3.cnf': 254.0,
-                    '08_bomb_b5_t1_p_t4.cnf': 241.0, '08_bomb_b5_t1_p_t5.cnf': 103.0, '08_bomb_b5_t5_p_t1.cnf': 280.0,
-                    '08_bomb_b5_t5_p_t2.cnf': 51.0, '09_coins_p01_p_t1.cnf': 175.0, '09_coins_p02_p_t1.cnf': 175.0,
-                    '09_coins_p03_p_t1.cnf': 175.0, '09_coins_p04_p_t1.cnf': 175.0, '09_coins_p05_p_t1.cnf': 175.0,
-                    '09_coins_p05_p_t2.cnf': 194.0, '09_coins_p10_p_t1.cnf': 101.0, '10_comm_p01_p_t1.cnf': 170.0,
-                    '10_comm_p01_p_t2.cnf': 145.0, '10_comm_p02_p_t1.cnf': 282.0, '10_comm_p03_p_t1.cnf': 270.0,
-                    '11_emptyroom_d12_g6_p_t1.cnf': 73.0, '11_emptyroom_d12_g6_p_t2.cnf': 37.0,
-                    '11_emptyroom_d16_g8_p_t1.cnf': 188.0, '11_emptyroom_d16_g8_p_t2.cnf': 173.0,
-                    '11_emptyroom_d20_g10_corners_p_t1.cnf': 108.0, '11_emptyroom_d24_g12_p_t1.cnf': 284.0,
-                    '11_emptyroom_d28_g14_corners_p_t1.cnf': 298.0, '11_emptyroom_d4_g2_p_t10.cnf': 228.0,
-                    '11_emptyroom_d4_g2_p_t1.cnf': 25.0, '11_emptyroom_d4_g2_p_t2.cnf': 53.0,
-                    '11_emptyroom_d4_g2_p_t3.cnf': 84.0, '11_emptyroom_d4_g2_p_t4.cnf': 18.0,
-                    '11_emptyroom_d4_g2_p_t5.cnf': 31.0, '11_emptyroom_d4_g2_p_t6.cnf': 83.0,
-                    '11_emptyroom_d4_g2_p_t7.cnf': 94.0, '11_emptyroom_d4_g2_p_t8.cnf': 45.0,
-                    '11_emptyroom_d4_g2_p_t9.cnf': 105.0, '11_emptyroom_d8_g4_p_t1.cnf': 92.0,
-                    '11_emptyroom_d8_g4_p_t2.cnf': 46.0, '11_emptyroom_d8_g4_p_t3.cnf': 65.0,
-                    '11_emptyroom_d8_g4_p_t4.cnf': 47.0, '12_flip_1_p_t10.cnf': 29.0, '12_flip_1_p_t1.cnf': 5.0,
-                    '12_flip_1_p_t2.cnf': 3.0, '12_flip_1_p_t3.cnf': 13.0, '12_flip_1_p_t4.cnf': 13.0,
-                    '12_flip_1_p_t5.cnf': 21.0, '12_flip_1_p_t6.cnf': 19.0, '12_flip_1_p_t7.cnf': 29.0,
-                    '12_flip_1_p_t8.cnf': 22.0, '12_flip_1_p_t9.cnf': 26.0, '12_flip_no_action_1_p_t10.cnf': 71.0,
-                    '12_flip_no_action_1_p_t1.cnf': 8.0, '12_flip_no_action_1_p_t2.cnf': 15.0,
-                    '12_flip_no_action_1_p_t3.cnf': 22.0, '12_flip_no_action_1_p_t4.cnf': 29.0,
-                    '12_flip_no_action_1_p_t5.cnf': 36.0, '12_flip_no_action_1_p_t6.cnf': 43.0,
-                    '12_flip_no_action_1_p_t7.cnf': 28.0, '12_flip_no_action_1_p_t8.cnf': 57.0,
-                    '12_flip_no_action_1_p_t9.cnf': 64.0, '13_ring2_r6_p_t1.cnf': 76.0, '13_ring2_r6_p_t2.cnf': 8.0,
-                    '13_ring2_r6_p_t3.cnf': 44.0, '13_ring2_r8_p_t1.cnf': 100.0, '13_ring2_r8_p_t2.cnf': 34.0,
-                    '13_ring2_r8_p_t3.cnf': 58.0, '13_ring_3_p_t1.cnf': 2.0, '13_ring_3_p_t2.cnf': 116.0,
-                    '13_ring_3_p_t3.cnf': 36.0, '13_ring_3_p_t4.cnf': 208.0, '13_ring_4_p_t1.cnf': 92.0,
-                    '13_ring_4_p_t2.cnf': 13.0, '13_ring_4_p_t3.cnf': 212.0, '13_ring_5_p_t1.cnf': 114.0,
-                    '13_ring_5_p_t2.cnf': 188.0, '13_ring_5_p_t3.cnf': 14.0, '14_safe_safe_10_p_t10.cnf': 321.0,
-                    '14_safe_safe_10_p_t1.cnf': 42.0, '14_safe_safe_10_p_t2.cnf': 73.0,
-                    '14_safe_safe_10_p_t3.cnf': 104.0, '14_safe_safe_10_p_t4.cnf': 135.0,
-                    '14_safe_safe_10_p_t5.cnf': 166.0, '14_safe_safe_10_p_t6.cnf': 197.0,
-                    '14_safe_safe_10_p_t7.cnf': 228.0, '14_safe_safe_10_p_t8.cnf': 259.0,
-                    '14_safe_safe_10_p_t9.cnf': 290.0, '14_safe_safe_30_p_t1.cnf': 122.0,
-                    '14_safe_safe_30_p_t2.cnf': 213.0, '14_safe_safe_30_p_t3.cnf': 304.0,
-                    '14_safe_safe_30_p_t4.cnf': 395.0, '14_safe_safe_30_p_t5.cnf': 486.0,
-                    '14_safe_safe_30_p_t6.cnf': 577.0, '14_safe_safe_5_p_t10.cnf': 166.0,
-                    '14_safe_safe_5_p_t1.cnf': 22.0, '14_safe_safe_5_p_t2.cnf': 38.0, '14_safe_safe_5_p_t3.cnf': 54.0,
-                    '14_safe_safe_5_p_t4.cnf': 70.0, '14_safe_safe_5_p_t5.cnf': 86.0, '14_safe_safe_5_p_t6.cnf': 102.0,
-                    '14_safe_safe_5_p_t7.cnf': 118.0, '14_safe_safe_5_p_t8.cnf': 134.0,
-                    '14_safe_safe_5_p_t9.cnf': 150.0, '15_sort_num_s_3_p_t10.cnf': 177.0,
-                    '15_sort_num_s_3_p_t1.cnf': 39.0, '15_sort_num_s_3_p_t2.cnf': 18.0,
-                    '15_sort_num_s_3_p_t3.cnf': 99.0, '15_sort_num_s_3_p_t4.cnf': 129.0,
-                    '15_sort_num_s_3_p_t5.cnf': 100.0, '15_sort_num_s_3_p_t6.cnf': 189.0,
-                    '15_sort_num_s_3_p_t7.cnf': 94.0, '15_sort_num_s_3_p_t8.cnf': 149.0,
-                    '15_sort_num_s_3_p_t9.cnf': 93.0, '15_sort_num_s_4_p_t1.cnf': 110.0, '16_uts_k1_p_t10.cnf': 3.0,
-                    '16_uts_k1_p_t1.cnf': 36.0, '16_uts_k1_p_t2.cnf': 1.0, '16_uts_k1_p_t3.cnf': 42.0,
-                    '16_uts_k1_p_t4.cnf': 24.0, '16_uts_k1_p_t5.cnf': 49.0, '16_uts_k1_p_t6.cnf': 31.0,
-                    '16_uts_k1_p_t7.cnf': 50.0, '16_uts_k1_p_t8.cnf': 176.0, '16_uts_k1_p_t9.cnf': 56.0,
-                    '16_uts_k2_p_t1.cnf': 102.0, '16_uts_k2_p_t2.cnf': 191.0, '16_uts_k3_p_t1.cnf': 200.0}},
-     'estimate/': {
-         'static': {'01_istance_K3_N15_M45_01.cnf': 15.0, '01_istance_K3_N15_M45_02.cnf': 13.0,
-                    '01_istance_K3_N15_M45_03.cnf': 15.0, '01_istance_K3_N15_M45_04.cnf': 9.0,
-                    '01_istance_K3_N15_M45_05.cnf': 14.0, '01_istance_K3_N15_M45_06.cnf': 15.0,
-                    '01_istance_K3_N15_M45_07.cnf': 14.0, '01_istance_K3_N15_M45_08.cnf': 12.0,
-                    '01_istance_K3_N15_M45_09.cnf': 15.0, '01_istance_K3_N15_M45_10.cnf': 10.0,
-                    '02_instance_K3_N30_M90_01.cnf': 22.0, '02_instance_K3_N30_M90_02.cnf': 15.0,
-                    '02_instance_K3_N30_M90_03.cnf': 24.0, '02_instance_K3_N30_M90_04.cnf': 27.0,
-                    '02_instance_K3_N30_M90_05.cnf': 17.0, '02_instance_K3_N30_M90_06.cnf': 17.0,
-                    '02_instance_K3_N30_M90_07.cnf': 21.0, '02_instance_K3_N30_M90_08.cnf': 24.0,
-                    '02_instance_K3_N30_M90_09.cnf': 18.0, '02_instance_K3_N30_M90_10.cnf': 8.0,
-                    '04_iscas89_s400_bench.cnf': 36.0, '04_iscas89_s420_1_bench.cnf': 19.0,
-                    '04_iscas89_s444_bench.cnf': 19.0, '04_iscas89_s526_bench.cnf': 31.0,
-                    '04_iscas89_s526n_bench.cnf': 45.0, '05_iscas93_s344_bench.cnf': 9.0,
-                    '05_iscas93_s499_bench.cnf': 7.0, '06_iscas99_b01.cnf': 9.0, '06_iscas99_b02.cnf': 7.0,
-                    '06_iscas99_b03.cnf': 5.0, '06_iscas99_b06.cnf': 6.0, '06_iscas99_b08.cnf': 8.0,
-                    '06_iscas99_b09.cnf': 8.0, '06_iscas99_b10.cnf': 18.0, '07_blocks_right_2_p_t1.cnf': 30.0,
-                    '07_blocks_right_2_p_t2.cnf': 38.0, '07_blocks_right_2_p_t3.cnf': 14.0,
-                    '07_blocks_right_2_p_t4.cnf': 26.0, '07_blocks_right_2_p_t5.cnf': 10.0,
-                    '07_blocks_right_3_p_t1.cnf': 31.0, '07_blocks_right_3_p_t2.cnf': 26.0,
-                    '07_blocks_right_4_p_t1.cnf': 68.0, '08_bomb_b10_t5_p_t1.cnf': 99.0, '08_bomb_b5_t1_p_t1.cnf': 52.0,
-                    '08_bomb_b5_t1_p_t2.cnf': 52.0, '08_bomb_b5_t1_p_t3.cnf': 55.0, '08_bomb_b5_t1_p_t4.cnf': 79.0,
-                    '08_bomb_b5_t1_p_t5.cnf': 158.0, '08_bomb_b5_t5_p_t1.cnf': 52.0, '08_bomb_b5_t5_p_t2.cnf': 52.0,
-                    '09_coins_p01_p_t1.cnf': 22.0, '09_coins_p02_p_t1.cnf': 22.0, '09_coins_p03_p_t1.cnf': 22.0,
-                    '09_coins_p04_p_t1.cnf': 22.0, '09_coins_p05_p_t1.cnf': 22.0, '09_coins_p05_p_t2.cnf': 51.0,
-                    '09_coins_p10_p_t1.cnf': 117.0, '10_comm_p01_p_t1.cnf': 54.0, '10_comm_p01_p_t2.cnf': 88.0,
-                    '10_comm_p02_p_t1.cnf': 52.0, '10_comm_p03_p_t1.cnf': 83.0, '11_emptyroom_d12_g6_p_t1.cnf': 39.0,
-                    '11_emptyroom_d12_g6_p_t2.cnf': 37.0, '11_emptyroom_d16_g8_p_t1.cnf': 62.0,
-                    '11_emptyroom_d16_g8_p_t2.cnf': 56.0, '11_emptyroom_d20_g10_corners_p_t1.cnf': 27.0,
-                    '11_emptyroom_d24_g12_p_t1.cnf': 82.0, '11_emptyroom_d28_g14_corners_p_t1.cnf': 11.0,
-                    '11_emptyroom_d4_g2_p_t10.cnf': 67.0, '11_emptyroom_d4_g2_p_t1.cnf': 13.0,
-                    '11_emptyroom_d4_g2_p_t2.cnf': 28.0, '11_emptyroom_d4_g2_p_t3.cnf': 20.0,
-                    '11_emptyroom_d4_g2_p_t4.cnf': 25.0, '11_emptyroom_d4_g2_p_t5.cnf': 25.0,
-                    '11_emptyroom_d4_g2_p_t6.cnf': 29.0, '11_emptyroom_d4_g2_p_t7.cnf': 31.0,
-                    '11_emptyroom_d4_g2_p_t8.cnf': 43.0, '11_emptyroom_d4_g2_p_t9.cnf': 53.0,
-                    '11_emptyroom_d8_g4_p_t1.cnf': 16.0, '11_emptyroom_d8_g4_p_t2.cnf': 19.0,
-                    '11_emptyroom_d8_g4_p_t3.cnf': 21.0, '11_emptyroom_d8_g4_p_t4.cnf': 44.0,
-                    '12_flip_1_p_t10.cnf': 18.0, '12_flip_1_p_t1.cnf': 3.0, '12_flip_1_p_t2.cnf': 5.0,
-                    '12_flip_1_p_t3.cnf': 5.0, '12_flip_1_p_t4.cnf': 15.0, '12_flip_1_p_t5.cnf': 12.0,
-                    '12_flip_1_p_t6.cnf': 11.0, '12_flip_1_p_t7.cnf': 10.0, '12_flip_1_p_t8.cnf': 15.0,
-                    '12_flip_1_p_t9.cnf': 16.0, '12_flip_no_action_1_p_t10.cnf': 30.0,
-                    '12_flip_no_action_1_p_t1.cnf': 4.0, '12_flip_no_action_1_p_t2.cnf': 9.0,
-                    '12_flip_no_action_1_p_t3.cnf': 12.0, '12_flip_no_action_1_p_t4.cnf': 18.0,
-                    '12_flip_no_action_1_p_t5.cnf': 22.0, '12_flip_no_action_1_p_t6.cnf': 17.0,
-                    '12_flip_no_action_1_p_t7.cnf': 21.0, '12_flip_no_action_1_p_t8.cnf': 25.0,
-                    '12_flip_no_action_1_p_t9.cnf': 26.0, '13_ring2_r6_p_t1.cnf': 21.0, '13_ring2_r6_p_t2.cnf': 22.0,
-                    '13_ring2_r6_p_t3.cnf': 45.0, '13_ring2_r8_p_t1.cnf': 31.0, '13_ring2_r8_p_t2.cnf': 18.0,
-                    '13_ring2_r8_p_t3.cnf': 34.0, '13_ring_3_p_t1.cnf': 7.0, '13_ring_3_p_t2.cnf': 17.0,
-                    '13_ring_3_p_t3.cnf': 19.0, '13_ring_3_p_t4.cnf': 23.0, '13_ring_4_p_t1.cnf': 28.0,
-                    '13_ring_4_p_t2.cnf': 19.0, '13_ring_4_p_t3.cnf': 16.0, '13_ring_5_p_t1.cnf': 21.0,
-                    '13_ring_5_p_t2.cnf': 21.0, '13_ring_5_p_t3.cnf': 16.0, '14_safe_safe_10_p_t10.cnf': 41.0,
-                    '14_safe_safe_10_p_t1.cnf': 20.0, '14_safe_safe_10_p_t2.cnf': 13.0,
-                    '14_safe_safe_10_p_t3.cnf': 19.0, '14_safe_safe_10_p_t4.cnf': 20.0,
-                    '14_safe_safe_10_p_t5.cnf': 22.0, '14_safe_safe_10_p_t6.cnf': 34.0,
-                    '14_safe_safe_10_p_t7.cnf': 36.0, '14_safe_safe_10_p_t8.cnf': 37.0,
-                    '14_safe_safe_10_p_t9.cnf': 45.0, '14_safe_safe_30_p_t1.cnf': 32.0,
-                    '14_safe_safe_30_p_t2.cnf': 30.0, '14_safe_safe_30_p_t3.cnf': 37.0,
-                    '14_safe_safe_30_p_t4.cnf': 54.0, '14_safe_safe_30_p_t5.cnf': 59.0,
-                    '14_safe_safe_30_p_t6.cnf': 66.0, '14_safe_safe_5_p_t10.cnf': 26.0, '14_safe_safe_5_p_t1.cnf': 11.0,
-                    '14_safe_safe_5_p_t2.cnf': 13.0, '14_safe_safe_5_p_t3.cnf': 18.0, '14_safe_safe_5_p_t4.cnf': 13.0,
-                    '14_safe_safe_5_p_t5.cnf': 14.0, '14_safe_safe_5_p_t6.cnf': 21.0, '14_safe_safe_5_p_t7.cnf': 22.0,
-                    '14_safe_safe_5_p_t8.cnf': 21.0, '14_safe_safe_5_p_t9.cnf': 18.0, '15_sort_num_s_3_p_t10.cnf': 37.0,
-                    '15_sort_num_s_3_p_t1.cnf': 11.0, '15_sort_num_s_3_p_t2.cnf': 25.0,
-                    '15_sort_num_s_3_p_t3.cnf': 19.0, '15_sort_num_s_3_p_t4.cnf': 31.0,
-                    '15_sort_num_s_3_p_t5.cnf': 31.0, '15_sort_num_s_3_p_t6.cnf': 31.0,
-                    '15_sort_num_s_3_p_t7.cnf': 38.0, '15_sort_num_s_3_p_t8.cnf': 46.0,
-                    '15_sort_num_s_3_p_t9.cnf': 68.0, '15_sort_num_s_4_p_t1.cnf': 19.0, '16_uts_k1_p_t10.cnf': 10.0,
-                    '16_uts_k1_p_t1.cnf': 20.0, '16_uts_k1_p_t2.cnf': 10.0, '16_uts_k1_p_t3.cnf': 5.0,
-                    '16_uts_k1_p_t4.cnf': 19.0, '16_uts_k1_p_t5.cnf': 28.0, '16_uts_k1_p_t6.cnf': 43.0,
-                    '16_uts_k1_p_t7.cnf': 61.0, '16_uts_k1_p_t8.cnf': 54.0, '16_uts_k1_p_t9.cnf': 19.0,
-                    '16_uts_k2_p_t1.cnf': 46.0, '16_uts_k2_p_t2.cnf': 31.0, '16_uts_k3_p_t1.cnf': 95.0},
-         'dynamic': {'01_istance_K3_N15_M45_01.cnf': 15.0, '01_istance_K3_N15_M45_02.cnf': 15.0,
-                     '01_istance_K3_N15_M45_03.cnf': 15.0, '01_istance_K3_N15_M45_04.cnf': 15.0,
-                     '01_istance_K3_N15_M45_05.cnf': 11.0, '01_istance_K3_N15_M45_06.cnf': 15.0,
-                     '01_istance_K3_N15_M45_07.cnf': 15.0, '01_istance_K3_N15_M45_08.cnf': 15.0,
-                     '01_istance_K3_N15_M45_09.cnf': 15.0, '01_istance_K3_N15_M45_10.cnf': 15.0,
-                     '02_instance_K3_N30_M90_01.cnf': 30.0, '02_instance_K3_N30_M90_02.cnf': 15.0,
-                     '02_instance_K3_N30_M90_03.cnf': 30.0, '02_instance_K3_N30_M90_04.cnf': 30.0,
-                     '02_instance_K3_N30_M90_05.cnf': 30.0, '02_instance_K3_N30_M90_06.cnf': 30.0,
-                     '02_instance_K3_N30_M90_07.cnf': 30.0, '02_instance_K3_N30_M90_08.cnf': 30.0,
-                     '02_instance_K3_N30_M90_09.cnf': 30.0, '02_instance_K3_N30_M90_10.cnf': 30.0,
-                     '04_iscas89_s400_bench.cnf': 189.0, '04_iscas89_s420_1_bench.cnf': 252.0,
-                     '04_iscas89_s444_bench.cnf': 57.0, '04_iscas89_s526_bench.cnf': 99.0,
-                     '04_iscas89_s526n_bench.cnf': 218.0, '05_iscas93_s344_bench.cnf': 184.0,
-                     '05_iscas93_s499_bench.cnf': 18.0, '06_iscas99_b01.cnf': 45.0, '06_iscas99_b02.cnf': 26.0,
-                     '06_iscas99_b03.cnf': 156.0, '06_iscas99_b06.cnf': 44.0, '06_iscas99_b08.cnf': 180.0,
-                     '06_iscas99_b09.cnf': 169.0, '06_iscas99_b10.cnf': 18.0, '07_blocks_right_2_p_t1.cnf': 90.0,
-                     '07_blocks_right_2_p_t2.cnf': 169.0, '07_blocks_right_2_p_t3.cnf': 102.0,
-                     '07_blocks_right_2_p_t4.cnf': 52.0, '07_blocks_right_2_p_t5.cnf': 20.0,
-                     '07_blocks_right_3_p_t1.cnf': 176.0, '07_blocks_right_3_p_t2.cnf': 240.0,
-                     '07_blocks_right_4_p_t1.cnf': 290.0, '08_bomb_b10_t5_p_t1.cnf': 570.0,
-                     '08_bomb_b5_t1_p_t1.cnf': 120.0, '08_bomb_b5_t1_p_t2.cnf': 222.0, '08_bomb_b5_t1_p_t3.cnf': 150.0,
-                     '08_bomb_b5_t1_p_t4.cnf': 426.0, '08_bomb_b5_t1_p_t5.cnf': 528.0, '08_bomb_b5_t5_p_t1.cnf': 280.0,
-                     '08_bomb_b5_t5_p_t2.cnf': 530.0, '09_coins_p01_p_t1.cnf': 175.0, '09_coins_p02_p_t1.cnf': 175.0,
-                     '09_coins_p03_p_t1.cnf': 175.0, '09_coins_p04_p_t1.cnf': 175.0, '09_coins_p05_p_t1.cnf': 175.0,
-                     '09_coins_p05_p_t2.cnf': 178.0, '09_coins_p10_p_t1.cnf': 349.0, '10_comm_p01_p_t1.cnf': 170.0,
-                     '10_comm_p01_p_t2.cnf': 299.0, '10_comm_p02_p_t1.cnf': 282.0, '10_comm_p03_p_t1.cnf': 418.0,
-                     '11_emptyroom_d12_g6_p_t1.cnf': 140.0, '11_emptyroom_d12_g6_p_t2.cnf': 256.0,
-                     '11_emptyroom_d16_g8_p_t1.cnf': 188.0, '11_emptyroom_d16_g8_p_t2.cnf': 344.0,
-                     '11_emptyroom_d20_g10_corners_p_t1.cnf': 236.0, '11_emptyroom_d24_g12_p_t1.cnf': 214.0,
-                     '11_emptyroom_d28_g14_corners_p_t1.cnf': 332.0, '11_emptyroom_d4_g2_p_t10.cnf': 78.0,
-                     '11_emptyroom_d4_g2_p_t1.cnf': 44.0, '11_emptyroom_d4_g2_p_t2.cnf': 80.0,
-                     '11_emptyroom_d4_g2_p_t3.cnf': 116.0, '11_emptyroom_d4_g2_p_t4.cnf': 118.0,
-                     '11_emptyroom_d4_g2_p_t5.cnf': 54.0, '11_emptyroom_d4_g2_p_t6.cnf': 65.0,
-                     '11_emptyroom_d4_g2_p_t7.cnf': 67.0, '11_emptyroom_d4_g2_p_t8.cnf': 253.0,
-                     '11_emptyroom_d4_g2_p_t9.cnf': 78.0, '11_emptyroom_d8_g4_p_t1.cnf': 92.0,
-                     '11_emptyroom_d8_g4_p_t2.cnf': 168.0, '11_emptyroom_d8_g4_p_t3.cnf': 244.0,
-                     '11_emptyroom_d8_g4_p_t4.cnf': 206.0, '12_flip_1_p_t10.cnf': 41.0, '12_flip_1_p_t1.cnf': 5.0,
-                     '12_flip_1_p_t2.cnf': 9.0, '12_flip_1_p_t3.cnf': 13.0, '12_flip_1_p_t4.cnf': 17.0,
-                     '12_flip_1_p_t5.cnf': 21.0, '12_flip_1_p_t6.cnf': 25.0, '12_flip_1_p_t7.cnf': 29.0,
-                     '12_flip_1_p_t8.cnf': 33.0, '12_flip_1_p_t9.cnf': 37.0, '12_flip_no_action_1_p_t10.cnf': 71.0,
-                     '12_flip_no_action_1_p_t1.cnf': 8.0, '12_flip_no_action_1_p_t2.cnf': 15.0,
-                     '12_flip_no_action_1_p_t3.cnf': 22.0, '12_flip_no_action_1_p_t4.cnf': 29.0,
-                     '12_flip_no_action_1_p_t5.cnf': 36.0, '12_flip_no_action_1_p_t6.cnf': 30.0,
-                     '12_flip_no_action_1_p_t7.cnf': 50.0, '12_flip_no_action_1_p_t8.cnf': 52.0,
-                     '12_flip_no_action_1_p_t9.cnf': 55.0, '13_ring2_r6_p_t1.cnf': 76.0, '13_ring2_r6_p_t2.cnf': 134.0,
-                     '13_ring2_r6_p_t3.cnf': 192.0, '13_ring2_r8_p_t1.cnf': 100.0, '13_ring2_r8_p_t2.cnf': 63.0,
-                     '13_ring2_r8_p_t3.cnf': 136.0, '13_ring_3_p_t1.cnf': 70.0, '13_ring_3_p_t2.cnf': 58.0,
-                     '13_ring_3_p_t3.cnf': 162.0, '13_ring_3_p_t4.cnf': 208.0, '13_ring_4_p_t1.cnf': 92.0,
-                     '13_ring_4_p_t2.cnf': 85.0, '13_ring_4_p_t3.cnf': 26.0, '13_ring_5_p_t1.cnf': 114.0,
-                     '13_ring_5_p_t2.cnf': 188.0, '13_ring_5_p_t3.cnf': 45.0, '14_safe_safe_10_p_t10.cnf': 321.0,
-                     '14_safe_safe_10_p_t1.cnf': 42.0, '14_safe_safe_10_p_t2.cnf': 73.0,
-                     '14_safe_safe_10_p_t3.cnf': 104.0, '14_safe_safe_10_p_t4.cnf': 135.0,
-                     '14_safe_safe_10_p_t5.cnf': 166.0, '14_safe_safe_10_p_t6.cnf': 197.0,
-                     '14_safe_safe_10_p_t7.cnf': 228.0, '14_safe_safe_10_p_t8.cnf': 259.0,
-                     '14_safe_safe_10_p_t9.cnf': 290.0, '14_safe_safe_30_p_t1.cnf': 122.0,
-                     '14_safe_safe_30_p_t2.cnf': 213.0, '14_safe_safe_30_p_t3.cnf': 304.0,
-                     '14_safe_safe_30_p_t4.cnf': 395.0, '14_safe_safe_30_p_t5.cnf': 486.0,
-                     '14_safe_safe_30_p_t6.cnf': 577.0, '14_safe_safe_5_p_t10.cnf': 166.0,
-                     '14_safe_safe_5_p_t1.cnf': 22.0, '14_safe_safe_5_p_t2.cnf': 38.0, '14_safe_safe_5_p_t3.cnf': 54.0,
-                     '14_safe_safe_5_p_t4.cnf': 70.0, '14_safe_safe_5_p_t5.cnf': 86.0, '14_safe_safe_5_p_t6.cnf': 102.0,
-                     '14_safe_safe_5_p_t7.cnf': 118.0, '14_safe_safe_5_p_t8.cnf': 134.0,
-                     '14_safe_safe_5_p_t9.cnf': 150.0, '15_sort_num_s_3_p_t10.cnf': 309.0,
-                     '15_sort_num_s_3_p_t1.cnf': 39.0, '15_sort_num_s_3_p_t2.cnf': 69.0,
-                     '15_sort_num_s_3_p_t3.cnf': 99.0, '15_sort_num_s_3_p_t4.cnf': 129.0,
-                     '15_sort_num_s_3_p_t5.cnf': 159.0, '15_sort_num_s_3_p_t6.cnf': 189.0,
-                     '15_sort_num_s_3_p_t7.cnf': 219.0, '15_sort_num_s_3_p_t8.cnf': 249.0,
-                     '15_sort_num_s_3_p_t9.cnf': 190.0, '15_sort_num_s_4_p_t1.cnf': 110.0, '16_uts_k1_p_t10.cnf': 26.0,
-                     '16_uts_k1_p_t1.cnf': 36.0, '16_uts_k1_p_t2.cnf': 65.0, '16_uts_k1_p_t3.cnf': 8.0,
-                     '16_uts_k1_p_t4.cnf': 123.0, '16_uts_k1_p_t5.cnf': 62.0, '16_uts_k1_p_t6.cnf': 153.0,
-                     '16_uts_k1_p_t7.cnf': 152.0, '16_uts_k1_p_t8.cnf': 167.0, '16_uts_k1_p_t9.cnf': 67.0,
-                     '16_uts_k2_p_t1.cnf': 102.0, '16_uts_k2_p_t2.cnf': 54.0, '16_uts_k3_p_t1.cnf': 168.0}},
-     'dynamic/': {
-         'dynamic': {'01_istance_K3_N15_M45_01.cnf': 3.0, '01_istance_K3_N15_M45_02.cnf': 15.0,
-                     '01_istance_K3_N15_M45_03.cnf': 15.0, '01_istance_K3_N15_M45_04.cnf': 15.0,
-                     '01_istance_K3_N15_M45_05.cnf': 15.0, '01_istance_K3_N15_M45_06.cnf': 15.0,
-                     '01_istance_K3_N15_M45_07.cnf': 5.0, '01_istance_K3_N15_M45_08.cnf': 15.0,
-                     '01_istance_K3_N15_M45_09.cnf': 6.0, '01_istance_K3_N15_M45_10.cnf': 15.0,
-                     '02_instance_K3_N30_M90_01.cnf': 30.0, '02_instance_K3_N30_M90_02.cnf': 30.0,
-                     '02_instance_K3_N30_M90_03.cnf': 30.0, '02_instance_K3_N30_M90_04.cnf': 30.0,
-                     '02_instance_K3_N30_M90_05.cnf': 23.0, '02_instance_K3_N30_M90_06.cnf': 30.0,
-                     '02_instance_K3_N30_M90_07.cnf': 19.0, '02_instance_K3_N30_M90_08.cnf': 30.0,
-                     '02_instance_K3_N30_M90_09.cnf': 25.0, '02_instance_K3_N30_M90_10.cnf': 10.0,
-                     '04_iscas89_s400_bench.cnf': 157.0, '04_iscas89_s420_1_bench.cnf': 5.0,
-                     '04_iscas89_s444_bench.cnf': 205.0, '04_iscas89_s526_bench.cnf': 217.0,
-                     '04_iscas89_s526n_bench.cnf': 218.0, '05_iscas93_s344_bench.cnf': 184.0,
-                     '05_iscas93_s499_bench.cnf': 175.0, '06_iscas99_b01.cnf': 45.0, '06_iscas99_b02.cnf': 8.0,
-                     '06_iscas99_b03.cnf': 40.0, '06_iscas99_b06.cnf': 44.0, '06_iscas99_b08.cnf': 180.0,
-                     '06_iscas99_b09.cnf': 169.0, '06_iscas99_b10.cnf': 201.0, '07_blocks_right_2_p_t1.cnf': 90.0,
-                     '07_blocks_right_2_p_t2.cnf': 169.0, '07_blocks_right_2_p_t3.cnf': 8.0,
-                     '07_blocks_right_2_p_t4.cnf': 231.0, '07_blocks_right_2_p_t5.cnf': 7.0,
-                     '07_blocks_right_3_p_t1.cnf': 1.0, '07_blocks_right_3_p_t2.cnf': 333.0,
-                     '07_blocks_right_4_p_t1.cnf': 290.0, '08_bomb_b10_t5_p_t1.cnf': 570.0,
-                     '08_bomb_b5_t1_p_t1.cnf': 120.0, '08_bomb_b5_t1_p_t2.cnf': 142.0, '08_bomb_b5_t1_p_t3.cnf': 238.0,
-                     '08_bomb_b5_t1_p_t4.cnf': 161.0, '08_bomb_b5_t1_p_t5.cnf': 209.0, '08_bomb_b5_t5_p_t1.cnf': 280.0,
-                     '08_bomb_b5_t5_p_t2.cnf': 303.0, '09_coins_p01_p_t1.cnf': 143.0, '09_coins_p02_p_t1.cnf': 143.0,
-                     '09_coins_p03_p_t1.cnf': 158.0, '09_coins_p04_p_t1.cnf': 143.0, '09_coins_p05_p_t1.cnf': 124.0,
-                     '09_coins_p05_p_t2.cnf': 323.0, '09_coins_p10_p_t1.cnf': 75.0, '10_comm_p01_p_t1.cnf': 104.0,
-                     '10_comm_p01_p_t2.cnf': 299.0, '10_comm_p02_p_t1.cnf': 57.0, '10_comm_p03_p_t1.cnf': 121.0,
-                     '11_emptyroom_d12_g6_p_t1.cnf': 2.0, '11_emptyroom_d12_g6_p_t2.cnf': 121.0,
-                     '11_emptyroom_d16_g8_p_t1.cnf': 188.0, '11_emptyroom_d16_g8_p_t2.cnf': 44.0,
-                     '11_emptyroom_d20_g10_corners_p_t1.cnf': 53.0, '11_emptyroom_d24_g12_p_t1.cnf': 284.0,
-                     '11_emptyroom_d28_g14_corners_p_t1.cnf': 332.0, '11_emptyroom_d4_g2_p_t10.cnf': 217.0,
-                     '11_emptyroom_d4_g2_p_t1.cnf': 26.0, '11_emptyroom_d4_g2_p_t2.cnf': 80.0,
-                     '11_emptyroom_d4_g2_p_t3.cnf': 92.0, '11_emptyroom_d4_g2_p_t4.cnf': 63.0,
-                     '11_emptyroom_d4_g2_p_t5.cnf': 80.0, '11_emptyroom_d4_g2_p_t6.cnf': 71.0,
-                     '11_emptyroom_d4_g2_p_t7.cnf': 92.0, '11_emptyroom_d4_g2_p_t8.cnf': 88.0,
-                     '11_emptyroom_d4_g2_p_t9.cnf': 146.0, '11_emptyroom_d8_g4_p_t1.cnf': 92.0,
-                     '11_emptyroom_d8_g4_p_t2.cnf': 90.0, '11_emptyroom_d8_g4_p_t3.cnf': 102.0,
-                     '11_emptyroom_d8_g4_p_t4.cnf': 60.0, '12_flip_1_p_t10.cnf': 41.0, '12_flip_1_p_t1.cnf': 5.0,
-                     '12_flip_1_p_t2.cnf': 9.0, '12_flip_1_p_t3.cnf': 13.0, '12_flip_1_p_t4.cnf': 17.0,
-                     '12_flip_1_p_t5.cnf': 21.0, '12_flip_1_p_t6.cnf': 25.0, '12_flip_1_p_t7.cnf': 29.0,
-                     '12_flip_1_p_t8.cnf': 33.0, '12_flip_1_p_t9.cnf': 37.0, '12_flip_no_action_1_p_t10.cnf': 51.0,
-                     '12_flip_no_action_1_p_t1.cnf': 8.0, '12_flip_no_action_1_p_t2.cnf': 15.0,
-                     '12_flip_no_action_1_p_t3.cnf': 22.0, '12_flip_no_action_1_p_t4.cnf': 29.0,
-                     '12_flip_no_action_1_p_t5.cnf': 36.0, '12_flip_no_action_1_p_t6.cnf': 43.0,
-                     '12_flip_no_action_1_p_t7.cnf': 50.0, '12_flip_no_action_1_p_t8.cnf': 57.0,
-                     '12_flip_no_action_1_p_t9.cnf': 64.0, '13_ring2_r6_p_t1.cnf': 2.0, '13_ring2_r6_p_t2.cnf': 7.0,
-                     '13_ring2_r6_p_t3.cnf': 36.0, '13_ring2_r8_p_t1.cnf': 100.0, '13_ring2_r8_p_t2.cnf': 34.0,
-                     '13_ring2_r8_p_t3.cnf': 47.0, '13_ring_3_p_t1.cnf': 70.0, '13_ring_3_p_t2.cnf': 116.0,
-                     '13_ring_3_p_t3.cnf': 74.0, '13_ring_3_p_t4.cnf': 208.0, '13_ring_4_p_t1.cnf': 92.0,
-                     '13_ring_4_p_t2.cnf': 152.0, '13_ring_4_p_t3.cnf': 10.0, '13_ring_5_p_t1.cnf': 114.0,
-                     '13_ring_5_p_t2.cnf': 188.0, '13_ring_5_p_t3.cnf': 262.0, '14_safe_safe_10_p_t10.cnf': 321.0,
-                     '14_safe_safe_10_p_t1.cnf': 42.0, '14_safe_safe_10_p_t2.cnf': 73.0,
-                     '14_safe_safe_10_p_t3.cnf': 104.0, '14_safe_safe_10_p_t4.cnf': 135.0,
-                     '14_safe_safe_10_p_t5.cnf': 166.0, '14_safe_safe_10_p_t6.cnf': 197.0,
-                     '14_safe_safe_10_p_t7.cnf': 228.0, '14_safe_safe_10_p_t8.cnf': 259.0,
-                     '14_safe_safe_10_p_t9.cnf': 290.0, '14_safe_safe_30_p_t1.cnf': 122.0,
-                     '14_safe_safe_30_p_t2.cnf': 213.0, '14_safe_safe_30_p_t3.cnf': 304.0,
-                     '14_safe_safe_30_p_t4.cnf': 395.0, '14_safe_safe_30_p_t5.cnf': 486.0,
-                     '14_safe_safe_30_p_t6.cnf': 577.0, '14_safe_safe_5_p_t10.cnf': 166.0,
-                     '14_safe_safe_5_p_t1.cnf': 22.0, '14_safe_safe_5_p_t2.cnf': 38.0, '14_safe_safe_5_p_t3.cnf': 54.0,
-                     '14_safe_safe_5_p_t4.cnf': 70.0, '14_safe_safe_5_p_t5.cnf': 86.0, '14_safe_safe_5_p_t6.cnf': 102.0,
-                     '14_safe_safe_5_p_t7.cnf': 118.0, '14_safe_safe_5_p_t8.cnf': 134.0,
-                     '14_safe_safe_5_p_t9.cnf': 150.0, '15_sort_num_s_3_p_t10.cnf': 309.0,
-                     '15_sort_num_s_3_p_t1.cnf': 39.0, '15_sort_num_s_3_p_t2.cnf': 5.0,
-                     '15_sort_num_s_3_p_t3.cnf': 99.0, '15_sort_num_s_3_p_t4.cnf': 103.0,
-                     '15_sort_num_s_3_p_t5.cnf': 159.0, '15_sort_num_s_3_p_t6.cnf': 110.0,
-                     '15_sort_num_s_3_p_t7.cnf': 35.0, '15_sort_num_s_3_p_t8.cnf': 166.0,
-                     '15_sort_num_s_3_p_t9.cnf': 133.0, '15_sort_num_s_4_p_t1.cnf': 16.0, '16_uts_k1_p_t10.cnf': 73.0,
-                     '16_uts_k1_p_t1.cnf': 4.0, '16_uts_k1_p_t2.cnf': 65.0, '16_uts_k1_p_t3.cnf': 55.0,
-                     '16_uts_k1_p_t4.cnf': 48.0, '16_uts_k1_p_t5.cnf': 5.0, '16_uts_k1_p_t6.cnf': 1.0,
-                     '16_uts_k1_p_t7.cnf': 25.0, '16_uts_k1_p_t8.cnf': 102.0, '16_uts_k1_p_t9.cnf': 2.0,
-                     '16_uts_k2_p_t1.cnf': 102.0, '16_uts_k2_p_t2.cnf': 37.0, '16_uts_k3_p_t1.cnf': 200.0}}}
