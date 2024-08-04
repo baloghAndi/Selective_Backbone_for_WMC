@@ -42,6 +42,11 @@ class Logger:
         self.writer.writerow(row)
         self.expr_data.data.append(row)
         self.f.flush()
+
+    def log_error(self, message):
+        for m in message:
+            self.writer.writerow(m)
+        self.f.flush()
     def close(self):
         if len(self.expr_data.data) > 0:
             self.expr_data.all_expr_data[self.expr_data.exprs[-1]] = self.expr_data.data.copy()

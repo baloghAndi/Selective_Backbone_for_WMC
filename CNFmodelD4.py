@@ -231,6 +231,7 @@ class WCNF:
         output = res.stdout
         output = output.split("\n")
         solve_time = -1
+        wmc = -1
         for line in output:
             if line.startswith("s "):
                 scaled_wmc = float(line.split(" ")[-1].strip())
@@ -242,7 +243,8 @@ class WCNF:
                 #     wmc = scaled_wmc / math.pow(2, self.n)
             elif "Final time:" in line:
                 solve_time = float(line.split(" ")[-1].strip())
-
+        if wmc == -1:
+            self.logger.log_error(output)
         return  wmc, solve_time
 
     def compile_d4_wmc(self, cnf_file, weights_file):
