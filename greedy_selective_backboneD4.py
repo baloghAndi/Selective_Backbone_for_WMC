@@ -247,6 +247,9 @@ def dynamic_greedy_pWSB_at_variable_percent(csp, max_p, obj_type,logger, NO_COMP
 
         best_variable, best_value, best_cost, best_size, best_node_count, mc, wmc = get_best_assignment(csp,obj_type, NO_COMPILE,logger)
         print("assign ",p , best_variable, best_value, best_cost, wmc, mc)
+        elapsed = logger.get_time_elapsed()
+        log_line = [p, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, wmc, -1, best_cost]
+        logger.log(log_line)
 
         csp.extend_assignment( best_variable,best_value, abs(best_cost), propagate=True )
 
