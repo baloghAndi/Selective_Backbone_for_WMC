@@ -36,3 +36,6 @@ p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
 ./input/Dataset_preproc/15_sort_num_s_7_p_t1.cnf
 p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
 0,-1,-1,749,3038,-1,-1,-1,0.02158234268426895,-1,-1,-1
+./input/Dataset_preproc/15_sort_num_s_7_p_t1.cnf
+p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
+0,-1,-1,749,3038,-1,-1,-1,0.023292100988328457,-1,-1,-1
