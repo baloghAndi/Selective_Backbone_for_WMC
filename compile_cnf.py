@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     cnf_file =  sys.argv[1]
     #part = sys.argv[2]
-    stats_file = "./22percent_compilations_medium2.csv"
+    stats_file = "./22percent_compilations_medium2_final.csv"
 
     f = open(stats_file, "a+")
     writer = csv.writer(f, delimiter=',')
