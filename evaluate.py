@@ -347,7 +347,7 @@ class ExprData:
             if len(remove_expr) > 0:
                 print("---------------------------REMOVE EXPRS----------------------")
                 print(self.filename, remove_expr)
-                self.remove_expr = remove_expr
+                self.remove_expr = remove_expr.copy()
                 # exit(12345678)
 
         if padding:
@@ -4366,7 +4366,10 @@ def read_compilation_file(fname):
             if math.isinf(x_val):
                 x_val = np.float128(x.strip('"'))
             data_row.append(x_val)
-        ename = line1.split(",")[0].split("_temphybrid")[0].split("/")[-1] + ".cnf"
+        if "_temphybrid" in line1:
+            ename = line1.split(",")[0].split("_temphybrid")[0].split("/")[-1] + ".cnf"
+        else:
+            ename = line1.split(",")[0].strip()
         if ename.count(".") > 1:
             ename = ename.strip("\n").replace(".", "_", ename.count(
                 ".") - 1)  # actually first . will always be ./input so should skipp tha
@@ -4554,45 +4557,33 @@ def read_medium2():
     percent= 22
     percent_expr_data = ExprData(columns)
     stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p22_details.csv"
-    # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p" + str(percent) + ".csv"
-    # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "dataset_stats_p8_dynamic.csv"
     percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
                                       filter_timeout=False,
                                       filter_conflict=False)
     selective_backbone_line = percent_expr_data.get_line(-1)
+
+    percent_expr_data_m1 = ExprData(columns)
+    stats_file_m1 = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p22_dynamic.csv"
+    percent_expr_data_m1.read_stats_file(stats_file_m1, full_expr_only=False, min_nb_expr=1, padding=False,
+                                      filter_timeout=False,
+                                      filter_conflict=False)
+    selective_backbone_line_m1 = percent_expr_data_m1.get_line(1)
+
     #filter to only exprs in medium2
     #check if nb assignments reached 22%
     compfile = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_allmedium_compilations.csv"
-    # compfile_medium2 = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_medium2.csv"
+    # compfile_medium2 = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_medium2_final.csv"
     # comp_medium2 = read_compilation_file(compfile_medium2)
     comp_medium_all = read_compilation_file(compfile)
-    print(len(medium_part2))
-    f = open(compfile, "a+")
+    print(len(medium_part2), len(comp_medium_all), len(medium_instances))
+    # f = open(compfile, "a+")
+    medium_part3 = []
     for expr in medium_part2:
-        if expr not in selective_backbone_line or expr not in percent_expr_data.remove_expr:
-            print("weird ", expr)
-        # if expr in selective_backbone_line and expr in comp_medium2:
-        #     f.write(expr + "\n")
-        #     f.write(",".join([str(x) for x in comp_medium2[expr]])+"\n")
-        #     f.flush()
-        # if expr in selective_backbone_line:
-        #     if expr in compilation_data:
-        #         print("expr finished ", expr)
-        #     else:
-        #         print("expr not in compilation", expr)
-        # else:
-        #     if expr in percent_expr_data.remove_expr:
-        #         print("expr removed ", expr)
-        #
-        #     if expr in compilation_data :
-        #         print("expr compiled ", expr)
-        #     else:
-        #         print("expr not in compilation or stats", expr)
-        # else:
-    #         f.write(expr+"\n")
-    #         f.write(",".join([str(x) for x in compilation_data[expr]])+"\n")
-    #         f.flush()
-    f.close()
+        if expr not in comp_medium_all:
+            medium_part3.append(expr)
+            print("not finished SB ", expr)
+    print(len(medium_part3))
+    print(medium_part3)
 
 
 
