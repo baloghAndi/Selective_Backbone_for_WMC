@@ -4,6 +4,7 @@ import os
 import re
 import statistics
 import time
+from itertools import count
 
 import matplotlib.colors as mcolors
 import matplotlib.pylab as pl
@@ -1327,9 +1328,12 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
     if subfolder != "":
         outputfile = outputfile + subfolder
         title = title + subfolder
+    else:
+        outputfile = outputfile + "_ALL"
+        title = title + " all"
     for folder in folders:
         for type in labels:
-            if 'rand_dynamic' in folder and type == 'static' :
+            if ('rand_dynamic' in folder and type == 'static' ) or  ('hybrid' in folder and type == 'static' ):
             # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
                 continue
             nb_exps +=1
@@ -1390,7 +1394,7 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
     for f in folders:
         for l in labels:
             # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
-            if 'rand_dynamic' in f and l == 'static' :
+            if ('rand_dynamic' in f and l == 'static') or  ('hybrid' in f and l == 'static' ):
                 continue
             wmc_to_average = []
             size_to_average = []
@@ -1645,10 +1649,13 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
     if subfolder != "":
         outputfile = outputfile + subfolder
         title = title + subfolder
+    else:
+        outputfile = outputfile + "_ALL"
+        title = title + " all"
     for folder in folders:
         for type in labels:
             # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
-            if 'rand_dynamic' in folder and type == 'static' :
+            if ('rand_dynamic' in folder and type == 'static') or  ('hybrid' in folder and type == 'static' ) :
                 continue
             nb_exprs+=1
             stats_file = folder + "dataset_stats_" + type + ".csv"
@@ -1695,7 +1702,7 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
     for f in folders:
         for l in labels:
             # if ('rand_dynamic' in f or 'wscore_half' in f or 'wscore_estimate' in f ) and l == 'static' :
-            if 'rand_dynamic' in f and l == 'static' :
+            if ('rand_dynamic' in f and l == 'static') or  ('hybrid' in f and l == 'static' ):
                 continue
             writer.writerow([f,l])
             ratio_to_average = []
@@ -1728,7 +1735,7 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
     ax1.legend(handles, labels)
     fig.tight_layout()
     plt.grid()
-    ax1.yticks([i for i in range(26)])
+    # plt.yticks([i for i in range(26)])
 
     outputfile = outputfile + "_pad" + str(padding)
     print(outputfile)
@@ -3992,28 +3999,47 @@ def get_best_variable_percentage(sample_size = 50):
     stats_file = folder + "dataset_stats_" + type + ".csv" #-for init compilations
     expr_data = ExprData(columns)
     expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False, filter_timeout=False, filter_conflict=False)
+    init_wmc_per_expr, smallest_n = expr_data.get_metric_wrt_initial_per_expr(metric="WMC", obj="WMC")
+    init_mc_per_expr, smallest_n = expr_data.get_metric_wrt_initial_per_expr(metric="MC", obj="MC")
     init_ratios_per_expr, smallest_n = expr_data.get_metric_wrt_initial_per_expr(metric="ratio", obj="WMC")
     print("data set len, ", len(expr_data.all_expr_data))
     dont_consider = []
+    conflict_exprs = []
     nb_vars = columns.index("nb_vars")
     for e in init_ratios_per_expr.keys():
-        if len(init_ratios_per_expr[e]) < sample_size+1 or expr_data.all_expr_data[e][0][nb_vars] < 50 :
+        if expr_data.all_expr_data[e][0][nb_vars] < 50: # or len(init_ratios_per_expr[e]) < sample_size+1 :
+            print(e, len(init_ratios_per_expr[e]), expr_data.all_expr_data[e][0][nb_vars])
             dont_consider.append(e)
+        elif len(init_ratios_per_expr[e]) < sample_size + 1:
+            conflict_exprs.append(e)
+    print(len(dont_consider))
+    print("conflict_exprs" ,len(conflict_exprs))
+    for e in conflict_exprs:
+        print(e, len(init_ratios_per_expr[e]))
+
     nb_compact_ars = [0 for i in  range(1, sample_size+1)]
     lbs = [100000 for i in  range(1, sample_size+1)]
     all_compact_ars = [[] for i in  range(1, sample_size+1)]
     all_ars = [[] for i in  range(1, sample_size+1)]
     # print("dont consider ", len(dont_consider) )
+    count_exp = []
     for index in range(1, sample_size+1):
         for e in init_ratios_per_expr.keys():
             if e not in dont_consider:
-                current_ar = init_ratios_per_expr[e][index]
-                all_ars[index-1].append(current_ar)
-                if current_ar >= 1.5 :
-                    nb_compact_ars[index-1] += 1
-                    all_compact_ars[index-1].append(current_ar)
-                    if current_ar < lbs[index-1]:
-                        lbs[index - 1] = current_ar
+                if e not in count_exp:
+                    count_exp.append(e)
+                if index < len(init_ratios_per_expr[e]):
+
+                    current_ar = init_ratios_per_expr[e][index]
+                    all_ars[index-1].append(current_ar)
+                    # if current_ar >= 1 and init_wmc_per_expr[e][index] >= 0.5:
+                    if current_ar >= 1.5 :
+                        nb_compact_ars[index-1] += 1
+                        all_compact_ars[index-1].append(current_ar)
+                        if current_ar < lbs[index-1]:
+                            lbs[index - 1] = current_ar
+                else:
+                    all_ars[index - 1].append(0)
     best_var_percentage = 0
     best_var_percentage_index = 0
     for i, ar in enumerate(nb_compact_ars):
@@ -4026,8 +4052,9 @@ def get_best_variable_percentage(sample_size = 50):
                 best_var_percentage_index = i
 
 
+    print("nb_compact_ars", len(nb_compact_ars), len(count_exp), len(dont_consider), len(init_ratios_per_expr))
     print(nb_compact_ars)
-    print(best_var_percentage_index, best_var_percentage)
+    print("best_var_percentage_index: ", best_var_percentage_index, best_var_percentage)
     print("lbs: ", lbs)
     print("all")
     # for ar in all_ars:
@@ -4041,7 +4068,12 @@ def get_best_variable_percentage(sample_size = 50):
         median = statistics.median(adjusted_ratio_at_index)
         medians.append(median)
     print("max avg: ", max(avgs), np.argmax(avgs))
-    print("medians avg: ", max(medians), np.argmax(medians))
+    print("max medians : ", max(medians), np.argmax(medians))
+    print(len(all_ars))
+    print(len(dont_consider))
+    # for e in count_exp:
+    #     if 11 < len(init_ratios_per_expr[e]):
+    #         print(e, round(100* init_wmc_per_expr[e][11], 26),round(100* init_mc_per_expr[e][11], 26) )
 
 def write_inits():
     alg_types = [  "dynamic"]# , "static"]
@@ -4469,6 +4501,246 @@ def plot_percentage_experiments(percent=8):
     # print("compilation_zero:", compilation_zero)
 
 
+def log_plot_percentage_experiment(percent=22):
+    """
+     the instances are sorted by adjusted ratio (so maybe a bar plot instead of having the number of variables as the X axis)
+    - the Y axis starts at 10^-2
+    """
+    medium_instances = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf',
+                        '04_iscas89_s1196_bench.cnf',
+                        '04_iscas89_s1238_bench.cnf', '04_iscas89_s1423_bench.cnf', '04_iscas89_s1488_bench.cnf',
+                        '04_iscas89_s1494_bench.cnf',
+                        '04_iscas89_s641_bench.cnf', '04_iscas89_s713_bench.cnf', '04_iscas89_s820_bench.cnf',
+                        '04_iscas89_s832_bench.cnf',
+                        '04_iscas89_s838_1_bench.cnf', '04_iscas89_s953_bench.cnf', '05_iscas93_s1196_bench.cnf',
+                        '05_iscas93_s1269_bench.cnf',
+                        '05_iscas93_s1512_bench.cnf', '05_iscas93_s635_bench.cnf', '05_iscas93_s938_bench.cnf',
+                        '05_iscas93_s967_bench.cnf',
+                        '05_iscas93_s991_bench.cnf', '06_iscas99_b04.cnf', '06_iscas99_b07.cnf', '06_iscas99_b11.cnf',
+                        '06_iscas99_b13.cnf',
+                        '07_blocks_right_2_p_t4.cnf', '07_blocks_right_2_p_t5.cnf', '07_blocks_right_3_p_t2.cnf',
+                        '08_bomb_b10_t5_p_t1.cnf',
+                        '08_bomb_b5_t1_p_t3.cnf', '08_bomb_b5_t1_p_t4.cnf', '08_bomb_b5_t1_p_t5.cnf',
+                        '08_bomb_b5_t5_p_t2.cnf', '09_coins_p05_p_t2.cnf',
+                        '09_coins_p10_p_t1.cnf', '10_comm_p03_p_t1.cnf', '11_emptyroom_d16_g8_p_t2.cnf',
+                        '11_emptyroom_d28_g14_corners_p_t1.cnf',
+                        '11_emptyroom_d4_g2_p_t10.cnf', '11_emptyroom_d4_g2_p_t9.cnf', '11_emptyroom_d8_g4_p_t4.cnf',
+                        '14_safe_safe_10_p_t10.cnf',
+                        '14_safe_safe_30_p_t3.cnf', '14_safe_safe_30_p_t4.cnf', '14_safe_safe_30_p_t5.cnf',
+                        '14_safe_safe_30_p_t6.cnf',
+                        '15_sort_num_s_3_p_t10.cnf', '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t6.cnf',
+                        '07_blocks_right_2_p_t7.cnf',
+                        '07_blocks_right_2_p_t8.cnf', '07_blocks_right_2_p_t9.cnf', '07_blocks_right_3_p_t3.cnf',
+                        '07_blocks_right_3_p_t4.cnf',
+                        '07_blocks_right_3_p_t5.cnf', '07_blocks_right_4_p_t2.cnf', '07_blocks_right_4_p_t3.cnf',
+                        '07_blocks_right_5_p_t1.cnf',
+                        '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf', '08_bomb_b5_t1_p_t6.cnf',
+                        '08_bomb_b5_t1_p_t7.cnf',
+                        '08_bomb_b5_t1_p_t8.cnf', '08_bomb_b5_t5_p_t3.cnf', '09_coins_p01_p_t2.cnf',
+                        '09_coins_p01_p_t3.cnf', '09_coins_p01_p_t4.cnf',
+                        '09_coins_p01_p_t5.cnf', '09_coins_p02_p_t2.cnf', '09_coins_p02_p_t3.cnf',
+                        '09_coins_p02_p_t4.cnf', '09_coins_p02_p_t5.cnf',
+                        '09_coins_p03_p_t2.cnf', '09_coins_p03_p_t3.cnf', '09_coins_p03_p_t4.cnf',
+                        '09_coins_p03_p_t5.cnf', '09_coins_p04_p_t2.cnf',
+                        '09_coins_p04_p_t3.cnf', '09_coins_p04_p_t4.cnf', '09_coins_p04_p_t5.cnf',
+                        '09_coins_p05_p_t3.cnf', '09_coins_p05_p_t4.cnf',
+                        '09_coins_p05_p_t5.cnf', '09_coins_p10_p_t2.cnf', '10_comm_p01_p_t3.cnf',
+                        '10_comm_p01_p_t4.cnf', '10_comm_p01_p_t5.cnf',
+                        '10_comm_p01_p_t6.cnf', '10_comm_p02_p_t2.cnf', '10_comm_p02_p_t3.cnf', '10_comm_p03_p_t2.cnf',
+                        '10_comm_p04_p_t1.cnf',
+                        '10_comm_p05_p_t1.cnf', '11_emptyroom_d12_g6_p_t3.cnf', '11_emptyroom_d12_g6_p_t4.cnf',
+                        '11_emptyroom_d12_g6_p_t5.cnf',
+                        '11_emptyroom_d12_g6_p_t6.cnf', '11_emptyroom_d12_g6_p_t7.cnf', '11_emptyroom_d16_g8_p_t3.cnf',
+                        '11_emptyroom_d16_g8_p_t4.cnf',
+                        '11_emptyroom_d16_g8_p_t5.cnf', '11_emptyroom_d20_g10_corners_p_t2.cnf',
+                        '11_emptyroom_d20_g10_corners_p_t3.cnf',
+                        '11_emptyroom_d20_g10_corners_p_t4.cnf', '11_emptyroom_d24_g12_p_t2.cnf',
+                        '11_emptyroom_d24_g12_p_t3.cnf',
+                        '11_emptyroom_d28_g14_corners_p_t2.cnf', '11_emptyroom_d28_g14_corners_p_t3.cnf',
+                        '11_emptyroom_d8_g4_p_t10.cnf',
+                        '11_emptyroom_d8_g4_p_t5.cnf', '11_emptyroom_d8_g4_p_t6.cnf', '11_emptyroom_d8_g4_p_t7.cnf',
+                        '11_emptyroom_d8_g4_p_t8.cnf',
+                        '11_emptyroom_d8_g4_p_t9.cnf', '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t5.cnf',
+                        '13_ring2_r6_p_t6.cnf', '13_ring2_r6_p_t7.cnf',
+                        '13_ring2_r6_p_t8.cnf', '13_ring2_r6_p_t9.cnf', '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t4.cnf',
+                        '13_ring2_r8_p_t5.cnf',
+                        '13_ring2_r8_p_t6.cnf', '13_ring2_r8_p_t7.cnf', '13_ring2_r8_p_t8.cnf', '13_ring2_r8_p_t9.cnf',
+                        '13_ring_3_p_t10.cnf',
+                        '13_ring_3_p_t7.cnf', '13_ring_3_p_t8.cnf', '13_ring_3_p_t9.cnf', '13_ring_4_p_t10.cnf',
+                        '13_ring_4_p_t5.cnf', '13_ring_4_p_t6.cnf',
+                        '13_ring_4_p_t7.cnf', '13_ring_4_p_t8.cnf', '13_ring_4_p_t9.cnf', '13_ring_5_p_t10.cnf',
+                        '13_ring_5_p_t4.cnf', '13_ring_5_p_t5.cnf',
+                        '13_ring_5_p_t6.cnf', '13_ring_5_p_t7.cnf', '13_ring_5_p_t8.cnf', '13_ring_5_p_t9.cnf',
+                        '14_safe_safe_30_p_t7.cnf',
+                        '14_safe_safe_30_p_t8.cnf', '14_safe_safe_30_p_t9.cnf', '15_sort_num_s_4_p_t4.cnf',
+                        '15_sort_num_s_4_p_t5.cnf', '15_sort_num_s_4_p_t6.cnf',
+                        '15_sort_num_s_4_p_t7.cnf', '15_sort_num_s_4_p_t8.cnf', '15_sort_num_s_4_p_t9.cnf',
+                        '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_5_p_t3.cnf',
+                        '15_sort_num_s_5_p_t4.cnf', '15_sort_num_s_6_p_t1.cnf', '15_sort_num_s_6_p_t2.cnf',
+                        '15_sort_num_s_7_p_t1.cnf', '16_uts_k2_p_t4.cnf',
+                        '16_uts_k2_p_t5.cnf', '16_uts_k2_p_t6.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf',
+                        '16_uts_k2_p_t9.cnf', '16_uts_k3_p_t2.cnf',
+                        '16_uts_k3_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k4_p_t1.cnf', '16_uts_k4_p_t2.cnf',
+                        '16_uts_k5_p_t1.cnf']
+
+    medium_part2 = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf',
+                    '05_iscas93_s1269_bench.cnf',
+                    '06_iscas99_b04.cnf', '06_iscas99_b11.cnf', '07_blocks_right_3_p_t5.cnf',
+                    '07_blocks_right_4_p_t3.cnf',
+                    '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf',
+                    '09_coins_p01_p_t5.cnf', '09_coins_p02_p_t5.cnf',
+                    '09_coins_p03_p_t5.cnf', '09_coins_p04_p_t5.cnf', '09_coins_p05_p_t5.cnf', '09_coins_p10_p_t2.cnf',
+                    '11_emptyroom_d8_g4_p_t10.cnf', '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t7.cnf',
+                    '13_ring2_r6_p_t8.cnf',
+                    '13_ring2_r6_p_t9.cnf', '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t6.cnf', '13_ring2_r8_p_t7.cnf',
+                    '13_ring2_r8_p_t8.cnf',
+                    '13_ring2_r8_p_t9.cnf', '13_ring_4_p_t10.cnf', '13_ring_5_p_t10.cnf', '13_ring_5_p_t8.cnf',
+                    '13_ring_5_p_t9.cnf',
+                    '15_sort_num_s_4_p_t4.cnf', '15_sort_num_s_4_p_t5.cnf', '15_sort_num_s_4_p_t6.cnf',
+                    '15_sort_num_s_4_p_t7.cnf',
+                    '15_sort_num_s_4_p_t8.cnf', '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf',
+                    '15_sort_num_s_5_p_t3.cnf',
+                    '15_sort_num_s_5_p_t4.cnf', '15_sort_num_s_6_p_t1.cnf', '15_sort_num_s_6_p_t2.cnf',
+                    '15_sort_num_s_7_p_t1.cnf',
+                    '16_uts_k2_p_t5.cnf', '16_uts_k2_p_t6.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf',
+                    '16_uts_k2_p_t9.cnf',
+                    '16_uts_k3_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k4_p_t2.cnf']
+
+    f = open("./results_aaai2/" + "init_compilations.csv", "r")
+    init_compilations = {}
+    init_times = {}
+    columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC",
+               "obj"]  # for d4
+
+    while True:
+        line1 = f.readline()
+        line2 = f.readline()
+        if not line2: break  # EOF
+        data_row = []
+        print(line1)
+        print(line2)
+        for x in line2.split(","):  # why do we ignore last column? it might be the empty value after the end line separator
+            print(x)
+            x_val = float(x)
+            if math.isinf(x_val):
+                x_val = np.float128(x)
+            data_row.append(x_val)
+        init_compilations[line1.strip()] = data_row
+    # read compilation file
+    c = 0
+    # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + str(percent)+"percent_compilations.csv", "r")
+    f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_medium_nofullsb.csv", "r")
+    # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + "8percent_sscompilations.csv", "r")
+    percent_compilations = {}
+    while True:
+        line1 = f.readline()
+        line2 = f.readline()
+        if not line2: break  # EOF
+        data_row = []
+        print(line1)
+        print(line2)
+        for x in line2.split(","):
+            print(x, type(x))
+            x_val = float(x.strip('"'))
+            # x_val = float(x.strip())
+            if math.isinf(x_val):
+                x_val = np.float128(x.strip('"'))
+            data_row.append(x_val)
+        ename = line1.split(",")[0].split("_temphybrid")[0].split("/")[-1] + ".cnf"
+        if ename.count(".") > 1:
+            ename = ename.strip("\n").replace(".", "_", ename.count(
+                ".") - 1)  # actually first . will always be ./input so should skipp tha
+        percent_compilations[ename] = data_row
+    # read csv from where we extract if expr shoul have a compilation
+    percent_expr_data = ExprData(columns)
+    # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p" + str(percent) + "_dynamic.csv"
+    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p" + str(percent) + ".csv"
+    # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "dataset_stats_p8_dynamic.csv"
+    percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
+                                      filter_timeout=False,
+                                      filter_conflict=False)
+    lines = percent_expr_data.get_line(1)
+    # print(len(lines))
+    print(len(percent_expr_data.no_data_expr))
+    print(len(percent_expr_data.all_expr_data))
+    # print(len(expr_data.no_data_expr))
+    # no_init_compilation = 0
+
+    ars = {}
+    y = []
+    wmc_index = columns.index("WMC")
+    size_index = columns.index("edge_count")
+    time_index = columns.index("time")
+    nb_vars_index = columns.index("nb_vars")
+    nb_expr = 0
+    sb_times = {}
+    sb_compilation_times = {}
+    init_ratios = {}
+    count_compact = 0
+    count_not_compact = 0
+    no_init_compilation = 0
+    compilation_zero = 0
+    compilation_zero_expr = []
+    plotted_expr_ratios = {}
+    plotted_expr_nb_count = {}
+    # for expr in lines.keys():
+    for expr in percent_compilations:
+        if expr in init_compilations:
+            if expr in percent_compilations:
+                if expr in medium_instances:
+                    if percent_compilations[expr][wmc_index] > 0 and percent_compilations[expr][size_index] > 0:
+                        print(expr, init_compilations[expr][wmc_index], init_compilations[expr][size_index],
+                              percent_compilations[expr][wmc_index], percent_compilations[expr][size_index])
+                        init_ratio = init_compilations[expr][wmc_index] / init_compilations[expr][size_index]
+                        current_ratio = percent_compilations[expr][wmc_index] / percent_compilations[expr][size_index]
+                        ar = current_ratio / init_ratio
+                        if ar >= 1.5:
+                            count_compact += 1
+                        else:
+                            print("not compact: ", ar)
+                            count_not_compact += 1
+                        init_ratios[expr] = init_ratio
+                        # ars[expr] = ar
+                        y.append(ar)
+                        plotted_expr_ratios[expr] = ar
+                        # plotted_expr_nb_count[expr] = percent_expr_data.all_expr_data[expr][0][nb_vars_index]
+
+                        init_times[expr] = init_compilations[expr][time_index]
+                        # sb_times[expr] = lines[expr][time_index]
+                        # sb_compilation_times[expr] = percent_compilations[expr][time_index]
+                        nb_expr += 1
+            else:
+                compilation_zero += 1
+                compilation_zero_expr.append(expr)
+        else:
+            print(expr)
+            no_init_compilation += 1
+
+    sorted_exprs = dict(sorted(plotted_expr_ratios.items(), key=lambda kv: kv[1]))
+        # instance_sizes = list(sorted_exprs.values())
+    y = []
+    for e in sorted_exprs.keys():
+        y.append(plotted_expr_ratios[e])
+        print(e, plotted_expr_ratios[e])
+
+    fig = plt.figure(figsize=(10, 7))
+    ax1 = fig.add_subplot(111)
+    x = [i for i in range(nb_expr)]
+    ax1.bar(x, y)
+    # ax1.plot(x, y)
+
+    # ax1.scatter(instance_sizes, y)
+    # ax1.plot(instance_sizes, y)
+    handles, labels = ax1.get_legend_handles_labels()
+    ax1.legend(handles, labels)
+    # fig.tight_layout()
+    # plt.yticks([i for i in range(300)])
+    # plt.xticks(instance_sizes)
+    plt.ylim(0.01, max(y)+10 )
+    plt.yscale("log")
+    plt.grid()
+    # plt.show()
+    plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_ordered_log_nofullSB.png")
 
 
 def count_hybrid_call():
@@ -4526,7 +4798,8 @@ if __name__ == "__main__":
     # filer_instances()
     # get_best_variable_percentage(50)
     # write_inits()
-    plot_percentage_experiments(22)
+    # plot_percentage_experiments(22)
+    # log_plot_percentage_experiment(22)
     # plot_percentage_experiments(8)
     # count_hybrid_call()
     # exit(8)
@@ -4534,12 +4807,13 @@ if __name__ == "__main__":
 
     # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
-    # alg_types = [ "static", "dynamic"]# ,  "random_selection_1234" ]
-    alg_types = [  "dynamic" ]
+    alg_types = [ "static", "dynamic" ]
+    # alg_types = [  "dynamic" ]
     # alg_types = [  "dynamic" , "static"]
-    FOLDER = "Dataset_preproc"
-    result_folder = "./results_aaai2/"
-    # FOLDER = "Dataset_preproc_final"
+    # FOLDER = "Dataset_preproc"
+    # result_folder = "./results_aaai2/"
+    result_folder = "./results/"
+    FOLDER = "Dataset_preproc_final"
     # FOLDER = "Dataset_preproc_NO_COMPILE_2"
     HEUR_NAMES = {"MC/": "actual_MC", "WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random", "hybrid_wmc/": "hybrid"}
     # FOLDER = "Dataset_preproc_part2"
@@ -4547,8 +4821,8 @@ if __name__ == "__main__":
     # expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_MC/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
-    expr_folders =  [  result_folder+FOLDER+"_hybrid_wmc/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
-    # expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/", result_folder+FOLDER+"_hybrid_wmc/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    # expr_folders =  [  result_folder+FOLDER+"_hybrid_wmc/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+    expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" , result_folder+FOLDER+"_wscore_half/" , result_folder+FOLDER+"_hybrid_wmc/" ,  result_folder+FOLDER+"_rand_dynamic/" ]
     # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
     # expr_folders = [ "./results/Benchmark_preproc2_wscore_half/" ,"./results/Benchmark_preproc2_wscore_estimate/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
