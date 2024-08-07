@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     cnf_file =  sys.argv[1]
     #part = sys.argv[2]
-    stats_file = "./22percent_compilations_medium_nofullsb.csv"
+    stats_file = "./22percent_compilations_medium2.csv"
 
     f = open(stats_file, "a+")
     writer = csv.writer(f, delimiter=',')
@@ -19,10 +19,10 @@ if __name__ == "__main__":
 
     writer.writerow([cnf_file])
     weights_file = cnf_file.replace(".cnf", "_w3.w" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
-    weights_file =  weights_file.replace("./", "../../../input/Dataset_preproc/")   
-    weights_file = weights_file.replace("_temphybrid_wmcdynamic", "" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
-    weights_file = weights_file.replace("temp_sb_comp/", "")
-    res = subprocess.run(["../../../d4", "-dDNNF", cnf_file, "-wFile="+weights_file ], stdout=subprocess.PIPE, text=True)
+    #weights_file =  weights_file.replace("./", "../../../input/Dataset_preproc/")   
+    weights_file = weights_file.replace("_temphybrid_wmcdynamic_22percent_large", "" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
+    #weights_file = weights_file.replace("temp_sb_comp/", "")
+    res = subprocess.run(["./d4", "-dDNNF", cnf_file, "-wFile="+weights_file ], stdout=subprocess.PIPE, text=True)
     output = res.stdout
     print(output)
     output = output.split("\n")
