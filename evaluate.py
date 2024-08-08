@@ -341,13 +341,16 @@ class ExprData:
                     if expr not in remove_expr:
                         remove_expr.append(expr)
         if len(remove_expr) > 0:
+            self.remove_expr = remove_expr.copy()
+            self.removed_expr_data = {}
             for ex in remove_expr:
                 self.exprs.remove(ex)
-                self.all_expr_data.pop(ex)
+                data = self.all_expr_data.pop(ex)
+                self.removed_expr_data[ex] = data
             if len(remove_expr) > 0:
                 print("---------------------------REMOVE EXPRS----------------------")
                 print(self.filename, remove_expr)
-                self.remove_expr = remove_expr.copy()
+
                 # exit(12345678)
 
         if padding:
@@ -4408,23 +4411,25 @@ def log_plot_percentage_experiment(percent=22):
 
 
     # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + str(percent)+"percent_compilations.csv", "r")
-    f = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_medium_compilations.csv"
+    f = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_allmedium_compilations.csv"
+    # f = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_medium_compilations.csv"
     # f = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_medium_nofullsb.csv"
     # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + "8percent_sscompilations.csv", "r")
-    percent_compilations = read_compilation_file(f)
+    sb_compilations = read_compilation_file(f)
+    print("sb_compilations ", len(sb_compilations))
 
-
-    percent_expr_data = ExprData(columns)
-    # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p" + str(percent) + "_dynamic.csv"
-    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p" + str(percent) + ".csv"
-    # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "dataset_stats_p8_dynamic.csv"
-    percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
-                                      filter_timeout=False,
-                                      filter_conflict=False)
-    lines = percent_expr_data.get_line(1)
+    #
+    # percent_expr_data = ExprData(columns)
+    # # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p" + str(percent) + "_dynamic.csv"
+    # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p" + str(percent) + ".csv"
+    # # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "dataset_stats_p8_dynamic.csv"
+    # percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
+    #                                   filter_timeout=False,
+    #                                   filter_conflict=False)
+    # lines = percent_expr_data.get_line(1)
     # print(len(lines))
-    print(len(percent_expr_data.no_data_expr))
-    print(len(percent_expr_data.all_expr_data))
+    # print(len(percent_expr_data.no_data_expr))
+    # print(len(percent_expr_data.all_expr_data))
     # print(len(expr_data.no_data_expr))
     # no_init_compilation = 0
 
@@ -4447,43 +4452,40 @@ def log_plot_percentage_experiment(percent=22):
     plotted_expr_nb_count = {}
     # for expr in lines.keys():
     for expr in medium_instances:
-        if expr in init_compilations:
-            if expr in percent_compilations:
-                if expr in medium_instances:
-                    if percent_compilations[expr][wmc_index] > 0 and percent_compilations[expr][size_index] > 0:
-                        print(expr, init_compilations[expr][wmc_index], init_compilations[expr][size_index],
-                              percent_compilations[expr][wmc_index], percent_compilations[expr][size_index])
-                        init_ratio = init_compilations[expr][wmc_index] / init_compilations[expr][size_index]
-                        current_ratio = percent_compilations[expr][wmc_index] / percent_compilations[expr][size_index]
-                        ar = current_ratio / init_ratio
-                        if ar >= 1.5:
-                            count_compact += 1
-                        else:
-                            print("not compact: ", ar)
-                            count_not_compact += 1
-                        init_ratios[expr] = init_ratio
-                        # ars[expr] = ar
-                        y.append(ar)
-                        plotted_expr_ratios[expr] = ar
+        if expr in init_compilations and expr in sb_compilations:
+            if sb_compilations[expr][wmc_index] > 0 and sb_compilations[expr][size_index] > 0:
+                init_ratio = init_compilations[expr][wmc_index] / init_compilations[expr][size_index]
+                current_ratio = sb_compilations[expr][wmc_index] / sb_compilations[expr][size_index]
+                ar = current_ratio / init_ratio
+                if ar >= 1.5:
+                    count_compact += 1
+                else:
+                    print("not compact: ", ar)
+                    count_not_compact += 1
+                init_ratios[expr] = init_ratio
+                # ars[expr] = ar
+                y.append(ar)
+                plotted_expr_ratios[expr] = ar
                         # plotted_expr_nb_count[expr] = percent_expr_data.all_expr_data[expr][0][nb_vars_index]
 
-                        init_times[expr] = init_compilations[expr][time_index]
-                        # sb_times[expr] = lines[expr][time_index]
-                        # sb_compilation_times[expr] = percent_compilations[expr][time_index]
-                        nb_expr += 1
+                init_times[expr] = init_compilations[expr][time_index]
+                # sb_times[expr] = lines[expr][time_index]
+                # sb_compilation_times[expr] = percent_compilations[expr][time_index]
+                nb_expr += 1
             else:
                 compilation_zero += 1
                 compilation_zero_expr.append(expr)
         else:
-            print(expr)
+            print(expr, "no init and full sb")
             no_init_compilation += 1
-
+    print("----------------no_init_compilation", no_init_compilation)
     sorted_exprs = dict(sorted(plotted_expr_ratios.items(), key=lambda kv: kv[1]))
         # instance_sizes = list(sorted_exprs.values())
     y = []
     for e in sorted_exprs.keys():
         y.append(plotted_expr_ratios[e])
         print(e, plotted_expr_ratios[e])
+
 
     fig = plt.figure(figsize=(10, 7))
     ax1 = fig.add_subplot(111)
@@ -4502,7 +4504,88 @@ def log_plot_percentage_experiment(percent=22):
     plt.yscale("log")
     plt.grid()
     # plt.show()
-    plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_ordered_log_nofullSB.png")
+    # plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_ordered_log.png")
+
+    percent_expr_data = ExprData(columns)
+    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p22_details.csv"
+    percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
+                                      filter_timeout=False,
+                                      filter_conflict=False)
+    selective_backbone_line = percent_expr_data.get_line(-1)
+
+    percent_expr_data_m1 = ExprData(columns)
+    stats_file_m1 = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p22_dynamic.csv"
+    percent_expr_data_m1.read_stats_file(stats_file_m1, full_expr_only=False, min_nb_expr=1, padding=False,
+                                         filter_timeout=False,
+                                         filter_conflict=False)
+    selective_backbone_line_m1 = percent_expr_data_m1.get_line(1)
+
+    saved_expr = []
+    filename = "./results_aaai2/Dataset_preproc_hybrid_wmc/ratio_at_p"+str(percent)+"_ordered_log.csv"
+    f = open(filename, "w+")
+    writer = csv.writer(f, delimiter=',')
+    no_init = 0
+    no_full_sb_count = 0
+
+    for e in medium_instances:
+        if e.count(".") > 1:
+            e = e.strip("\n").replace(".", "_", e.count(".") - 1)
+
+        if (e in percent_expr_data_m1.remove_expr and e not in medium_part2) or e in percent_expr_data.remove_expr:
+            writer.writerow([e])
+            writer.writerow(columns)
+            if e not in init_compilations:
+                empty_row = [-1 for i in range(len(columns))]
+                if e in percent_expr_data_m1.remove_expr:
+                    empty_row[3] = percent_expr_data_m1.removed_expr_data[e][0][3]
+                    empty_row[4] = percent_expr_data_m1.removed_expr_data[e][0][4]
+                elif e in percent_expr_data.remove_expr:
+                    empty_row[3] = percent_expr_data.removed_expr_data[e][0][3]
+                    empty_row[4] = percent_expr_data.removed_expr_data[e][0][4]
+                print("no init: ", e)
+                no_init += 1
+                writer.writerow(empty_row)
+            else:
+                writer.writerow(init_compilations[e])
+            writer.writerow([-1 for i in range(len(columns))])
+        elif e in selective_backbone_line:
+            writer.writerow([e])
+            writer.writerow(columns)
+            writer.writerow(init_compilations[e])
+            if e not in sb_compilations:
+                no_full_sb_count += 1
+                print("no full SB found ", e, (selective_backbone_line[e][0]*100)/init_compilations[e][nb_vars_index], selective_backbone_line[e][0] , init_compilations[e][nb_vars_index])
+                writer.writerow(selective_backbone_line[e])
+            else:
+                comp_row = sb_compilations[e]
+                comp_row[0] = selective_backbone_line[e][0]
+                comp_row[1] = selective_backbone_line[e][1]
+                comp_row[2] = selective_backbone_line[e][2]
+                comp_row[3] = selective_backbone_line[e][3]
+                comp_row[4] = selective_backbone_line[e][4]
+                writer.writerow(comp_row)
+        elif e in selective_backbone_line_m1:
+            writer.writerow([e])
+            writer.writerow(columns)
+            writer.writerow(init_compilations[e])
+            comp_row = sb_compilations[e]
+            comp_row[0] = selective_backbone_line_m1[e][0]
+            comp_row[1] = selective_backbone_line_m1[e][1]
+            comp_row[2] = selective_backbone_line_m1[e][2]
+            comp_row[3] = selective_backbone_line_m1[e][3]
+            comp_row[4] = selective_backbone_line_m1[e][4]
+            writer.writerow(comp_row)
+        else:
+            print("something wrong: ", e)
+
+    f.flush()
+    f.close()
+
+    print("no_full_sb_count: ", no_full_sb_count)
+    print("no_init: ", no_init)
+
+
+
 
 
 def count_hybrid_call():
@@ -4750,12 +4833,12 @@ columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_c
 
 if __name__ == "__main__":
 
-    read_medium2()
+    # read_medium2()
     # filer_instances()
     # get_best_variable_percentage(50)
     # write_inits()
     # plot_percentage_experiments(22)
-    # log_plot_percentage_experiment(22)
+    log_plot_percentage_experiment(22)
     # plot_percentage_experiments(8)
     # count_hybrid_call()
     exit(8)
