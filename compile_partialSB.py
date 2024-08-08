@@ -16,6 +16,7 @@ if __name__ == "__main__":
     for cnf in partial_sb:
 
         cnf_file =  "./input/Dataset_preproc/"+cnf.replace(".cnf", "_temphybrid_wmcdynamic.cnf")
+        print(cnf_file)
         #part = sys.argv[2]
         stats_file = "./22percent_compilations_medium2_partialSB.csv"
 
