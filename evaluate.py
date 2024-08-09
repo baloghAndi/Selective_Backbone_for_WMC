@@ -15,6 +15,7 @@ import pylatex as px
 from shapely.geometry import Polygon
 from shapely.ops import polygonize, unary_union
 from sklearn.metrics.pairwise import euclidean_distances, manhattan_distances
+from torch._C._return_types import sort
 
 import CNFmodelBDD as _cnfBDD
 
@@ -4526,6 +4527,7 @@ def log_plot_percentage_experiment(percent=22):
     writer = csv.writer(f, delimiter=',')
     no_init = 0
     no_full_sb_count = 0
+    expr_count = 0
 
     for e in medium_instances:
         if e.count(".") > 1:
@@ -4547,6 +4549,8 @@ def log_plot_percentage_experiment(percent=22):
                 writer.writerow(empty_row)
             else:
                 writer.writerow(init_compilations[e])
+                no_full_sb_count+=1
+                print("no_full_sb_count: ",no_full_sb_count, e)
             writer.writerow([-1 for i in range(len(columns))])
         elif e in selective_backbone_line:
             writer.writerow([e])
@@ -4557,6 +4561,7 @@ def log_plot_percentage_experiment(percent=22):
                 print("no full SB found ", e, (selective_backbone_line[e][0]*100)/init_compilations[e][nb_vars_index], selective_backbone_line[e][0] , init_compilations[e][nb_vars_index])
                 writer.writerow(selective_backbone_line[e])
             else:
+                expr_count+=1
                 comp_row = sb_compilations[e]
                 comp_row[0] = selective_backbone_line[e][0]
                 comp_row[1] = selective_backbone_line[e][1]
@@ -4565,6 +4570,7 @@ def log_plot_percentage_experiment(percent=22):
                 comp_row[4] = selective_backbone_line[e][4]
                 writer.writerow(comp_row)
         elif e in selective_backbone_line_m1:
+            expr_count+=1
             writer.writerow([e])
             writer.writerow(columns)
             writer.writerow(init_compilations[e])
@@ -4583,8 +4589,92 @@ def log_plot_percentage_experiment(percent=22):
 
     print("no_full_sb_count: ", no_full_sb_count)
     print("no_init: ", no_init)
+    print("expr_count: ", expr_count)
 
 
+def evaluate_prediction():
+    fname = "./results_aaai2/Dataset_preproc_hybrid_wmc/ratio_at_p22_allmedium.csv"
+    f = open(fname, "r")
+    percent_compilations = {}
+    all_sb_compilation = {}
+    all_init_compilation = {}
+    expr_full_sb = []
+    expr_no_init = []
+    expr_partial_sb = []
+    nb_vars_index = columns.index("nb_vars")
+    wmc_index = columns.index("WMC")
+    size_index = columns.index("edge_count")
+    while True:
+        expr_name = f.readline().strip()
+        cols = f.readline()
+        temp_init_compilation = f.readline()
+        temp_sb_compilation = f.readline()
+        if not temp_sb_compilation: break  # EOF
+        sb_compilation = []
+        init_compilation = []
+        for x in temp_sb_compilation.split(","):
+            x_val = float(x.strip('"'))
+            if math.isinf(x_val):
+                x_val = np.float128(x.strip('"'))
+            sb_compilation.append(x_val)
+        all_sb_compilation[expr_name] = sb_compilation.copy()
+        for x in temp_init_compilation.split(","):
+            x_val = float(x.strip('"'))
+            if math.isinf(x_val):
+                x_val = np.float128(x.strip('"'))
+            init_compilation.append(x_val)
+        all_init_compilation[expr_name] = init_compilation.copy()
+
+        if init_compilation[wmc_index] == -1:
+            expr_no_init.append(expr_name)
+        if sb_compilation[wmc_index] > -1 and round( (sb_compilation[0]*100)/sb_compilation[nb_vars_index]) == 22:
+            expr_full_sb.append(expr_name)
+        else:
+            expr_partial_sb.append(expr_name)
+            if sb_compilation[0] == -1:
+                print("no compilation at all: ", expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
+                if expr_name in medium_part2:
+                    print("second part")
+            else:
+                print(expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
+
+
+    ratios={}
+    conflict_expr_fullSB = 0
+    for e in expr_full_sb:
+        init_ratio = all_init_compilation[e][wmc_index] / all_init_compilation[e][size_index]
+        if all_sb_compilation[e][size_index] == 0:
+            print(e, "is 0 size , expr finished but reached conflic SB", all_init_compilation[e][nb_vars_index])
+            if e in medium_part2:
+                print("part 2")
+            current_ratio = 0
+            conflict_expr_fullSB += 1
+        else:
+            current_ratio = all_sb_compilation[e][wmc_index] / all_sb_compilation[e][size_index]
+        ar = current_ratio / init_ratio
+        ratios[e]=ar
+    print(len(expr_no_init), len(expr_partial_sb), len(expr_full_sb), conflict_expr_fullSB)
+    sorted_exprs = dict(sorted(ratios.items(), key=lambda kv: kv[1]))
+    nb_expr= len(sorted_exprs)
+    y = [sorted_exprs[k] for k in sorted_exprs]
+    fig = plt.figure(figsize=(10, 7))
+    ax1 = fig.add_subplot(111)
+    x = [i for i in range(nb_expr)]
+    ax1.bar(x, y)
+    # ax1.plot(x, y)
+
+    # ax1.scatter(instance_sizes, y)
+    # ax1.plot(instance_sizes, y)
+    handles, labels = ax1.get_legend_handles_labels()
+    ax1.legend(handles, labels)
+    # fig.tight_layout()
+    # plt.yticks([i for i in range(300)])
+    # plt.xticks(instance_sizes)
+    plt.ylim(0.01, max(y) + 10)
+    plt.yscale("log")
+    plt.grid()
+    plt.show()
+    # plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_ordered_log.png")
 
 
 
@@ -4832,13 +4922,13 @@ columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_c
            "obj"]  # for d4
 
 if __name__ == "__main__":
-
+    evaluate_prediction()
     # read_medium2()
     # filer_instances()
     # get_best_variable_percentage(50)
     # write_inits()
     # plot_percentage_experiments(22)
-    log_plot_percentage_experiment(22)
+    # log_plot_percentage_experiment(22)
     # plot_percentage_experiments(8)
     # count_hybrid_call()
     exit(8)
