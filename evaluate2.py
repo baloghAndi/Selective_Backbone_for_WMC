@@ -570,17 +570,15 @@ def write_inits():
     alg_types = [  "dynamic"]# , "static"]
     FOLDER = "Dataset_preproc"
     result_folder = "./results_aaai/"
-    expr_folders = [result_folder + FOLDER+"_wscore_estimate/" ]#,  result_folder + FOLDER+"_WMC/",result_folder + FOLDER + "_hybrid_wmc/"  ]
+    # expr_folders = [result_folder + FOLDER+"_wscore_estimate/" ]#,  result_folder + FOLDER+"_WMC/",result_folder + FOLDER + "_hybrid_wmc/"  ]
+    expr_folders = [result_folder + FOLDER+"_WMC/" ]#,  result_folder + FOLDER+"_WMC/",result_folder + FOLDER + "_hybrid_wmc/"  ]
     columns = [ "p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
     init_exprs = {}
     no_compiling_expr = []
     i = 0
     for folder in expr_folders:
         for type in alg_types:
-            if 'rand_dynamic' in folder and type == 'static' :
-                # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
-                continue
-            i +=1
+
             stats_file = folder + "dataset_stats_" + type + ".csv"
             expr_data = ExprData(columns)
             expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False, filter_timeout=False, filter_conflict=False)
@@ -588,27 +586,26 @@ def write_inits():
             for e in inits.keys():
                 if e not in init_exprs:
                     init_exprs[e] = inits[e]
-                    if i > 1:
-                        print("+++++++++++++++++++++++++++++++++++++++++++++++++++++", e, folder, type)
-                        # exit(9)
                 else:
-                    init_exprs[e].append(inits[e])
+                    print("duplicate/ ", e)
             # for e in expr_data.no_data_expr:
             #     if e not in no_compiling_expr:
             #         no_compiling_expr.append(e)
     # for e in init_exprs:
     #     print(e, [t[5] for t in init_exprs[e]])
         # print(e, variance([t[5] for t in init_exprs[e]]), variance([t[6] for t in init_exprs[e]]), len([t[5] for t in init_exprs[e]]))
-    print(len(init_exprs))
+    print(len(init_exprs), len(inits))
+    print("no_data_expr: ",len(expr_data.no_data_expr))
     print(len(no_compiling_expr))
     print(no_compiling_expr)
-    f = open(result_folder+"init_compilations2.csv", "w+")
-    writer = csv.writer(f, delimiter=',')
-    for e in init_exprs:
-        writer.writerow([e])
-        writer.writerow(list(init_exprs[e]))
-    f.flush()
-    f.close()
+    # f = open("./init_compilations.csv", "w+")
+    # writer = csv.writer(f, delimiter=',')
+    # for e in init_exprs:
+    #     writer.writerow([e])
+    #     writer.writerow(list(init_exprs[e]))
+    # f.flush()
+    # f.close()
+    return init_exprs
 
 
 def plot_percentage_experiments(percent=8):
@@ -999,6 +996,15 @@ def log_plot_percentage_experiment(percent=22):
                                       filter_timeout=False,
                                       filter_conflict=False)
     selective_backbone_line = percent_expr_data.get_line(-1)
+    time_index = columns.index("time")
+    longest_time = 0
+    for e in selective_backbone_line:
+        if e in init_compilations and e in sb_compilations:
+            print(e, selective_backbone_line[e][time_index])
+            if float(selective_backbone_line[e][time_index]) > longest_time:
+                    longest_time=float(selective_backbone_line[e][time_index])
+    print("longest_time", longest_time)
+    exit(9)
 
     percent_expr_data_m1 = ExprData(columns)
     stats_file_m1 = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p22_dynamic.csv"
@@ -1119,27 +1125,42 @@ def evaluate_prediction():
             expr_partial_sb.append(expr_name)
             if sb_compilation[0] == -1:
                 print("no compilation at all: ", expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
-                if expr_name in medium_part2:
-                    print("second part")
+                # if expr_name in medium_part2:
+                #     print("second part")
             else:
                 print(expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
 
 
     ratios={}
     conflict_expr_fullSB = 0
+    medium3 = []
+    for e in expr_partial_sb+expr_partial_sb+expr_no_init:
+        if e in medium_instances:
+            print(e)
+            if e not in medium3:
+                medium3.append(e)
+        else:
+            print("---------------------",e)
     for e in expr_full_sb:
         init_ratio = all_init_compilation[e][wmc_index] / all_init_compilation[e][size_index]
         if all_sb_compilation[e][size_index] == 0:
             print(e, "is 0 size , expr finished but reached conflic SB", all_init_compilation[e][nb_vars_index])
-            if e in medium_part2:
-                print("part 2")
+            # if e in medium_part2:
+            #     print("part 2")
             current_ratio = 0
             conflict_expr_fullSB += 1
+            if e in medium_instances:
+                if e not in medium3:
+                    medium3.append(e)
         else:
             current_ratio = all_sb_compilation[e][wmc_index] / all_sb_compilation[e][size_index]
+
         ar = current_ratio / init_ratio
         ratios[e]=ar
-    print(len(expr_no_init), len(expr_partial_sb), len(expr_full_sb), conflict_expr_fullSB)
+    print("m3", len(medium3), sorted(medium3))
+
+    # print(len(expr_no_init), len(expr_partial_sb), len(expr_full_sb), conflict_expr_fullSB)
+    exit(6)
     sorted_exprs = dict(sorted(ratios.items(), key=lambda kv: kv[1]))
     nb_expr= len(sorted_exprs)
     y = [sorted_exprs[k] for k in sorted_exprs]
@@ -1213,138 +1234,37 @@ def count_hybrid_call():
             print(e, "-" ,sb_lines[e][3], "-" , sb_lines[e][4], "-", total_d4_callcount[e], "-", iteration_len , "-",  max(percentages), "-", percentages,  "-", iteration_d4_callcount[e])
     print(len(total_d4_callcount))
 
-def read_medium2():
-    percent= 22
-    percent_expr_data = ExprData(columns)
-    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p22_details.csv"
-    percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
-                                      filter_timeout=False,
-                                      filter_conflict=False)
-    selective_backbone_line = percent_expr_data.get_line(-1)
 
-    percent_expr_data_m1 = ExprData(columns)
-    stats_file_m1 = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p22_dynamic.csv"
-    percent_expr_data_m1.read_stats_file(stats_file_m1, full_expr_only=False, min_nb_expr=1, padding=False,
-                                      filter_timeout=False,
-                                      filter_conflict=False)
-    selective_backbone_line_m1 = percent_expr_data_m1.get_line(1)
+medium_instances = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880.isc.cnf', '04_iscas89_s1196.bench.cnf', '04_iscas89_s1238.bench.cnf',
+                    '04_iscas89_s1423.bench.cnf', '04_iscas89_s1488.bench.cnf', '04_iscas89_s1494.bench.cnf', '04_iscas89_s641.bench.cnf', '04_iscas89_s713.bench.cnf',
+                    '04_iscas89_s820.bench.cnf', '04_iscas89_s832.bench.cnf', '04_iscas89_s838.1.bench.cnf', '04_iscas89_s953.bench.cnf', '05_iscas93_s1196.bench.cnf',
+                    '05_iscas93_s1269_bench.cnf', '05_iscas93_s1512.bench.cnf', '05_iscas93_s635.bench.cnf', '05_iscas93_s938.bench.cnf', '05_iscas93_s967.bench.cnf',
+                    '05_iscas93_s991.bench.cnf', '06_iscas99_b04.cnf', '06_iscas99_b07.cnf', '06_iscas99_b11.cnf', '06_iscas99_b13.cnf', '07_blocks_right_2_p_t10.cnf',
+                    '07_blocks_right_2_p_t4.cnf', '07_blocks_right_2_p_t5.cnf', '07_blocks_right_2_p_t6.cnf', '07_blocks_right_2_p_t7.cnf', '07_blocks_right_2_p_t8.cnf',
+                    '07_blocks_right_2_p_t9.cnf', '07_blocks_right_3_p_t2.cnf', '07_blocks_right_3_p_t3.cnf', '07_blocks_right_3_p_t4.cnf', '07_blocks_right_3_p_t5.cnf',
+                    '07_blocks_right_4_p_t2.cnf', '07_blocks_right_4_p_t3.cnf', '07_blocks_right_5_p_t1.cnf', '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf',
+                    '08_bomb_b10_t5_p_t1.cnf', '08_bomb_b5_t1_p_t3.cnf', '08_bomb_b5_t1_p_t4.cnf', '08_bomb_b5_t1_p_t5.cnf', '08_bomb_b5_t1_p_t6.cnf', '08_bomb_b5_t1_p_t7.cnf',
+                    '08_bomb_b5_t1_p_t8.cnf', '08_bomb_b5_t5_p_t2.cnf', '08_bomb_b5_t5_p_t3.cnf', '09_coins_p01_p_t2.cnf', '09_coins_p01_p_t3.cnf', '09_coins_p01_p_t4.cnf',
+                    '09_coins_p01_p_t5.cnf', '09_coins_p02_p_t2.cnf', '09_coins_p02_p_t3.cnf', '09_coins_p02_p_t4.cnf', '09_coins_p02_p_t5.cnf', '09_coins_p03_p_t2.cnf',
+                    '09_coins_p03_p_t3.cnf', '09_coins_p03_p_t4.cnf', '09_coins_p03_p_t5.cnf', '09_coins_p04_p_t2.cnf', '09_coins_p04_p_t3.cnf', '09_coins_p04_p_t4.cnf',
+                    '09_coins_p04_p_t5.cnf', '09_coins_p05_p_t2.cnf', '09_coins_p05_p_t3.cnf', '09_coins_p05_p_t4.cnf', '09_coins_p05_p_t5.cnf', '09_coins_p10_p_t1.cnf',
+                    '09_coins_p10_p_t2.cnf', '10_comm_p01_p_t3.cnf', '10_comm_p01_p_t4.cnf', '10_comm_p01_p_t5.cnf', '10_comm_p01_p_t6.cnf', '10_comm_p02_p_t2.cnf',
+                    '10_comm_p02_p_t3.cnf', '10_comm_p03_p_t1.cnf', '10_comm_p03_p_t2.cnf', '10_comm_p04_p_t1.cnf', '10_comm_p05_p_t1.cnf', '11_emptyroom_d12_g6_p_t3.cnf',
+                    '11_emptyroom_d12_g6_p_t4.cnf', '11_emptyroom_d12_g6_p_t5.cnf', '11_emptyroom_d12_g6_p_t6.cnf', '11_emptyroom_d12_g6_p_t7.cnf', '11_emptyroom_d16_g8_p_t2.cnf',
+                    '11_emptyroom_d16_g8_p_t3.cnf', '11_emptyroom_d16_g8_p_t4.cnf', '11_emptyroom_d16_g8_p_t5.cnf', '11_emptyroom_d20_g10_corners_p_t2.cnf', '11_emptyroom_d20_g10_corners_p_t3.cnf',
+                    '11_emptyroom_d20_g10_corners_p_t4.cnf', '11_emptyroom_d24_g12_p_t2.cnf', '11_emptyroom_d24_g12_p_t3.cnf', '11_emptyroom_d28_g14_corners_p_t1.cnf',
+                    '11_emptyroom_d28_g14_corners_p_t2.cnf', '11_emptyroom_d28_g14_corners_p_t3.cnf', '11_emptyroom_d4_g2_p_t10.cnf', '11_emptyroom_d4_g2_p_t9.cnf', '11_emptyroom_d8_g4_p_t10.cnf',
+                    '11_emptyroom_d8_g4_p_t4.cnf', '11_emptyroom_d8_g4_p_t5.cnf', '11_emptyroom_d8_g4_p_t6.cnf', '11_emptyroom_d8_g4_p_t7.cnf', '11_emptyroom_d8_g4_p_t8.cnf',
+                    '11_emptyroom_d8_g4_p_t9.cnf', '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t5.cnf', '13_ring2_r6_p_t6.cnf', '13_ring2_r6_p_t7.cnf', '13_ring2_r6_p_t8.cnf', '13_ring2_r6_p_t9.cnf',
+                    '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t4.cnf', '13_ring2_r8_p_t5.cnf', '13_ring2_r8_p_t6.cnf', '13_ring2_r8_p_t7.cnf', '13_ring2_r8_p_t8.cnf', '13_ring2_r8_p_t9.cnf',
+                    '13_ring_3_p_t10.cnf', '13_ring_3_p_t7.cnf', '13_ring_3_p_t8.cnf', '13_ring_3_p_t9.cnf', '13_ring_4_p_t10.cnf', '13_ring_4_p_t5.cnf', '13_ring_4_p_t6.cnf', '13_ring_4_p_t7.cnf',
+                    '13_ring_4_p_t8.cnf', '13_ring_4_p_t9.cnf', '13_ring_5_p_t10.cnf', '13_ring_5_p_t4.cnf', '13_ring_5_p_t5.cnf', '13_ring_5_p_t6.cnf', '13_ring_5_p_t7.cnf', '13_ring_5_p_t8.cnf',
+                    '13_ring_5_p_t9.cnf', '14_safe_safe_10_p_t10.cnf', '14_safe_safe_30_p_t3.cnf', '14_safe_safe_30_p_t4.cnf', '14_safe_safe_30_p_t5.cnf', '14_safe_safe_30_p_t6.cnf',
+                    '14_safe_safe_30_p_t7.cnf', '14_safe_safe_30_p_t8.cnf', '14_safe_safe_30_p_t9.cnf', '15_sort_num_s_3_p_t10.cnf', '15_sort_num_s_4_p_t4.cnf', '15_sort_num_s_4_p_t5.cnf',
+                    '15_sort_num_s_4_p_t6.cnf', '15_sort_num_s_4_p_t7.cnf', '15_sort_num_s_4_p_t8.cnf', '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_6_p_t1.cnf',
+                    '15_sort_num_s_7_p_t1.cnf', '16_uts_k2_p_t4.cnf', '16_uts_k2_p_t5.cnf', '16_uts_k2_p_t6.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf', '16_uts_k3_p_t2.cnf',
+                    '16_uts_k4_p_t1.cnf', '16_uts_k5_p_t1.cnf']
 
-    #filter to only exprs in medium2
-    #check if nb assignments reached 22%
-    compfile = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_allmedium_compilations.csv"
-    # compfile_medium2 = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_medium2_final.csv"
-    # comp_medium2 = read_compilation_file(compfile_medium2)
-    comp_medium_all = read_compilation_file(compfile)
-    print(len(medium_part2), len(comp_medium_all), len(medium_instances))
-    # f = open(compfile, "a+")
-    medium_part3 = []
-    for expr in medium_part2:
-        if expr not in comp_medium_all:
-            medium_part3.append(expr)
-            print("not finished SB ", expr)
-    print(len(medium_part3))
-    print(medium_part3)
-
-
-medium_instances = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf',
-                        '04_iscas89_s1196_bench.cnf',
-                        '04_iscas89_s1238_bench.cnf', '04_iscas89_s1423_bench.cnf', '04_iscas89_s1488_bench.cnf',
-                        '04_iscas89_s1494_bench.cnf',
-                        '04_iscas89_s641_bench.cnf', '04_iscas89_s713_bench.cnf', '04_iscas89_s820_bench.cnf',
-                        '04_iscas89_s832_bench.cnf',
-                        '04_iscas89_s838_1_bench.cnf', '04_iscas89_s953_bench.cnf', '05_iscas93_s1196_bench.cnf',
-                        '05_iscas93_s1269_bench.cnf',
-                        '05_iscas93_s1512_bench.cnf', '05_iscas93_s635_bench.cnf', '05_iscas93_s938_bench.cnf',
-                        '05_iscas93_s967_bench.cnf',
-                        '05_iscas93_s991_bench.cnf', '06_iscas99_b04.cnf', '06_iscas99_b07.cnf', '06_iscas99_b11.cnf',
-                        '06_iscas99_b13.cnf',
-                        '07_blocks_right_2_p_t4.cnf', '07_blocks_right_2_p_t5.cnf', '07_blocks_right_3_p_t2.cnf',
-                        '08_bomb_b10_t5_p_t1.cnf',
-                        '08_bomb_b5_t1_p_t3.cnf', '08_bomb_b5_t1_p_t4.cnf', '08_bomb_b5_t1_p_t5.cnf',
-                        '08_bomb_b5_t5_p_t2.cnf', '09_coins_p05_p_t2.cnf',
-                        '09_coins_p10_p_t1.cnf', '10_comm_p03_p_t1.cnf', '11_emptyroom_d16_g8_p_t2.cnf',
-                        '11_emptyroom_d28_g14_corners_p_t1.cnf',
-                        '11_emptyroom_d4_g2_p_t10.cnf', '11_emptyroom_d4_g2_p_t9.cnf', '11_emptyroom_d8_g4_p_t4.cnf',
-                        '14_safe_safe_10_p_t10.cnf',
-                        '14_safe_safe_30_p_t3.cnf', '14_safe_safe_30_p_t4.cnf', '14_safe_safe_30_p_t5.cnf',
-                        '14_safe_safe_30_p_t6.cnf',
-                        '15_sort_num_s_3_p_t10.cnf', '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t6.cnf',
-                        '07_blocks_right_2_p_t7.cnf',
-                        '07_blocks_right_2_p_t8.cnf', '07_blocks_right_2_p_t9.cnf', '07_blocks_right_3_p_t3.cnf',
-                        '07_blocks_right_3_p_t4.cnf',
-                        '07_blocks_right_3_p_t5.cnf', '07_blocks_right_4_p_t2.cnf', '07_blocks_right_4_p_t3.cnf',
-                        '07_blocks_right_5_p_t1.cnf',
-                        '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf', '08_bomb_b5_t1_p_t6.cnf',
-                        '08_bomb_b5_t1_p_t7.cnf',
-                        '08_bomb_b5_t1_p_t8.cnf', '08_bomb_b5_t5_p_t3.cnf', '09_coins_p01_p_t2.cnf',
-                        '09_coins_p01_p_t3.cnf', '09_coins_p01_p_t4.cnf',
-                        '09_coins_p01_p_t5.cnf', '09_coins_p02_p_t2.cnf', '09_coins_p02_p_t3.cnf',
-                        '09_coins_p02_p_t4.cnf', '09_coins_p02_p_t5.cnf',
-                        '09_coins_p03_p_t2.cnf', '09_coins_p03_p_t3.cnf', '09_coins_p03_p_t4.cnf',
-                        '09_coins_p03_p_t5.cnf', '09_coins_p04_p_t2.cnf',
-                        '09_coins_p04_p_t3.cnf', '09_coins_p04_p_t4.cnf', '09_coins_p04_p_t5.cnf',
-                        '09_coins_p05_p_t3.cnf', '09_coins_p05_p_t4.cnf',
-                        '09_coins_p05_p_t5.cnf', '09_coins_p10_p_t2.cnf', '10_comm_p01_p_t3.cnf',
-                        '10_comm_p01_p_t4.cnf', '10_comm_p01_p_t5.cnf',
-                        '10_comm_p01_p_t6.cnf', '10_comm_p02_p_t2.cnf', '10_comm_p02_p_t3.cnf', '10_comm_p03_p_t2.cnf',
-                        '10_comm_p04_p_t1.cnf',
-                        '10_comm_p05_p_t1.cnf', '11_emptyroom_d12_g6_p_t3.cnf', '11_emptyroom_d12_g6_p_t4.cnf',
-                        '11_emptyroom_d12_g6_p_t5.cnf',
-                        '11_emptyroom_d12_g6_p_t6.cnf', '11_emptyroom_d12_g6_p_t7.cnf', '11_emptyroom_d16_g8_p_t3.cnf',
-                        '11_emptyroom_d16_g8_p_t4.cnf',
-                        '11_emptyroom_d16_g8_p_t5.cnf', '11_emptyroom_d20_g10_corners_p_t2.cnf',
-                        '11_emptyroom_d20_g10_corners_p_t3.cnf',
-                        '11_emptyroom_d20_g10_corners_p_t4.cnf', '11_emptyroom_d24_g12_p_t2.cnf',
-                        '11_emptyroom_d24_g12_p_t3.cnf',
-                        '11_emptyroom_d28_g14_corners_p_t2.cnf', '11_emptyroom_d28_g14_corners_p_t3.cnf',
-                        '11_emptyroom_d8_g4_p_t10.cnf',
-                        '11_emptyroom_d8_g4_p_t5.cnf', '11_emptyroom_d8_g4_p_t6.cnf', '11_emptyroom_d8_g4_p_t7.cnf',
-                        '11_emptyroom_d8_g4_p_t8.cnf',
-                        '11_emptyroom_d8_g4_p_t9.cnf', '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t5.cnf',
-                        '13_ring2_r6_p_t6.cnf', '13_ring2_r6_p_t7.cnf',
-                        '13_ring2_r6_p_t8.cnf', '13_ring2_r6_p_t9.cnf', '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t4.cnf',
-                        '13_ring2_r8_p_t5.cnf',
-                        '13_ring2_r8_p_t6.cnf', '13_ring2_r8_p_t7.cnf', '13_ring2_r8_p_t8.cnf', '13_ring2_r8_p_t9.cnf',
-                        '13_ring_3_p_t10.cnf',
-                        '13_ring_3_p_t7.cnf', '13_ring_3_p_t8.cnf', '13_ring_3_p_t9.cnf', '13_ring_4_p_t10.cnf',
-                        '13_ring_4_p_t5.cnf', '13_ring_4_p_t6.cnf',
-                        '13_ring_4_p_t7.cnf', '13_ring_4_p_t8.cnf', '13_ring_4_p_t9.cnf', '13_ring_5_p_t10.cnf',
-                        '13_ring_5_p_t4.cnf', '13_ring_5_p_t5.cnf',
-                        '13_ring_5_p_t6.cnf', '13_ring_5_p_t7.cnf', '13_ring_5_p_t8.cnf', '13_ring_5_p_t9.cnf',
-                        '14_safe_safe_30_p_t7.cnf',
-                        '14_safe_safe_30_p_t8.cnf', '14_safe_safe_30_p_t9.cnf', '15_sort_num_s_4_p_t4.cnf',
-                        '15_sort_num_s_4_p_t5.cnf', '15_sort_num_s_4_p_t6.cnf',
-                        '15_sort_num_s_4_p_t7.cnf', '15_sort_num_s_4_p_t8.cnf', '15_sort_num_s_4_p_t9.cnf',
-                        '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_5_p_t3.cnf',
-                        '15_sort_num_s_5_p_t4.cnf', '15_sort_num_s_6_p_t1.cnf', '15_sort_num_s_6_p_t2.cnf',
-                        '15_sort_num_s_7_p_t1.cnf', '16_uts_k2_p_t4.cnf',
-                        '16_uts_k2_p_t5.cnf', '16_uts_k2_p_t6.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf',
-                        '16_uts_k2_p_t9.cnf', '16_uts_k3_p_t2.cnf',
-                        '16_uts_k3_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k4_p_t1.cnf', '16_uts_k4_p_t2.cnf',
-                        '16_uts_k5_p_t1.cnf']
-
-medium_part2 = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf',
-                    '05_iscas93_s1269_bench.cnf',
-                    '06_iscas99_b04.cnf', '06_iscas99_b11.cnf', '07_blocks_right_3_p_t5.cnf',
-                    '07_blocks_right_4_p_t3.cnf',
-                    '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf',
-                    '09_coins_p01_p_t5.cnf', '09_coins_p02_p_t5.cnf',
-                    '09_coins_p03_p_t5.cnf', '09_coins_p04_p_t5.cnf', '09_coins_p05_p_t5.cnf', '09_coins_p10_p_t2.cnf',
-                    '11_emptyroom_d8_g4_p_t10.cnf', '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t7.cnf',
-                    '13_ring2_r6_p_t8.cnf',
-                    '13_ring2_r6_p_t9.cnf', '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t6.cnf', '13_ring2_r8_p_t7.cnf',
-                    '13_ring2_r8_p_t8.cnf',
-                    '13_ring2_r8_p_t9.cnf', '13_ring_4_p_t10.cnf', '13_ring_5_p_t10.cnf', '13_ring_5_p_t8.cnf',
-                    '13_ring_5_p_t9.cnf',
-                    '15_sort_num_s_4_p_t4.cnf', '15_sort_num_s_4_p_t5.cnf', '15_sort_num_s_4_p_t6.cnf',
-                    '15_sort_num_s_4_p_t7.cnf',
-                    '15_sort_num_s_4_p_t8.cnf', '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf',
-                    '15_sort_num_s_5_p_t3.cnf',
-                    '15_sort_num_s_5_p_t4.cnf', '15_sort_num_s_6_p_t1.cnf', '15_sort_num_s_6_p_t2.cnf',
-                    '15_sort_num_s_7_p_t1.cnf',
-                    '16_uts_k2_p_t5.cnf', '16_uts_k2_p_t6.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf',
-                    '16_uts_k2_p_t9.cnf',
-                    '16_uts_k3_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k4_p_t2.cnf']
 
 large_instances = ['05_iscas93_s3271_bench.cnf', '05_iscas93_s3330_bench.cnf', '05_iscas93_s3384_bench.cnf',
                        '05_iscas93_s4863_bench.cnf', '06_iscas99_b05.cnf',
@@ -1405,11 +1325,45 @@ large_instances = ['05_iscas93_s3271_bench.cnf', '05_iscas93_s3330_bench.cnf', '
 columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC",
            "obj"]  # for d4
 
+def get_medium_instances():
+    medium = []
+    directory = "./input/Dataset_preproc/"
+    init_exprs =write_inits()
+    for filename in os.listdir(directory):
+        if filename.endswith(".cnf"):
+            f = os.path.join(directory, filename)
+            # checking if it is a file
+            if os.path.isfile(f):
+                # print(f)
+                with open(f, "r") as f:
+                    content = f.readlines()
+                    nb_vars = int(content[0].strip().split(" ")[2])
+                    if nb_vars > 300 and nb_vars < 900:
+                        temp = filename.split("/")[-1]
+                        if temp.count(".") > 1:
+                            temp = temp.replace(".", "_", temp.count(".") - 1)
+                        if temp in init_exprs:
+                            medium.append(filename)
+                        else:
+                            print("no init: ", filename, nb_vars)
+    print(len(medium))
+    medium = sorted(medium)
+    k=4
+    n=len(medium)
+    splits = [medium[i * (n // k) + min(i, n % k):(i+1) * (n // k) + min(i+1, n % k)] for i in range(k)]
+    for k in splits:
+        print(k)
+    #1- 03 -07
+    #2 - 08-10
+    #3 11-13
+    #4 14-16
+
 if __name__ == "__main__":
-    # evaluate_prediction()
+    # get_medium_instances()
+    evaluate_prediction()
     # read_medium2()
     # filer_instances()
-    get_best_variable_percentage(50)
+    # get_best_variable_percentage(50)
     # write_inits()
     # plot_percentage_experiments(22)
     # log_plot_percentage_experiment(22)

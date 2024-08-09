@@ -7,7 +7,7 @@ import graphviz
 import os
 import subprocess
 import math
-
+import datetime
 class WCNF:
     def __init__(self,logger=None, scalar=0, NO_COMPILE=False):
         self.variables = {}  # name:domain
@@ -244,7 +244,9 @@ class WCNF:
             elif "Final time:" in line:
                 solve_time = float(line.split(" ")[-1].strip())
         if wmc == -1:
-            self.logger.log_error(output)
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
+            self.write_cnf(file_name=cnf_file.replace(".cnf", "_error"+timestamp+".cnf"))
+            self.logger.log_error(cnf_file,output)
         return  wmc, solve_time
 
     def compile_d4_wmc(self, cnf_file, weights_file):
@@ -584,8 +586,8 @@ class WCNF:
         elif score_type == "adjoccratio":
             score = (1 + self.adjusted_occurance(var, value, )) / (2 + self.adjusted_occurance(var, 0) + self.adjusted_occurance(var, 1))
         elif score_type == "estimate":
-            opp_occurance_list = [ cls for cls in self.cls if opp_lit in cls]
-            occurance_list = [ cls for cls in self.cls if lit in cls]
+            # opp_occurance_list = [ cls for cls in self.cls if opp_lit in cls]
+            # occurance_list = [ cls for cls in self.cls if lit in cls]
             # if occurance_list == [] or opp_occurance_list == []:
             #     print("UNCONSTRAINED VAR CHOSEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             #     score =  0

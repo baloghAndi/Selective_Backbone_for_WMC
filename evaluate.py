@@ -27,6 +27,7 @@ class Logger:
         self.f = open(filename,"a+")
         self.writer = csv.writer(self.f, delimiter=',')
         self.progress_log =  open(filename.replace(".csv", ".txt"),"a+")
+        self.error_log =  open(filename.replace(".csv", "_error.txt"),"a+")
         self.column_names = column_names
         self.expr_data = expr_data
         self.out_folder = out_folder
@@ -45,9 +46,10 @@ class Logger:
         self.expr_data.data.append(row)
         self.f.flush()
 
-    def log_error(self, message):
+    def log_error(self, cnf, message):
+        self.error_log.write(cnf+"\n")
         for m in message:
-            self.writer.writerow(m)
+            self.error_log.write(m)
         self.f.flush()
     def close(self):
         if len(self.expr_data.data) > 0:
@@ -4278,23 +4280,7 @@ if __name__ == "__main__":
 
     # exprs = [   "./aaai_data/output/Planning/blocks/",    "./aaai_data/output/Planning/ring/",
     #     "./aaai_data/output/Planning/sort/" ]
-    expr_folders = [         "./aaai_data/output/DatasetA/"
-                             # "./aaai_data/output/DatasetB/"
-                             #     "./aaai_data/output/iscas/iscas93/",
-                             #          "./aaai_data/output/iscas/iscas89/",
-                             #          "./aaai_data/output/iscas/iscas99/"
-                             #          "./aaai_data/output/Planning/blocks/",
-                             #           "./aaai_data/output/Planning/bomb/",
-                             #                "./aaai_data/output/Planning/coins/",
-                             #           "./aaai_data/output/Planning/comm/",
-                             #     "./aaai_data/output/Planning/emptyroom/",
-                             #     "./aaai_data/output/Planning/flip/",
-                             #          "./aaai_data/output/Planning/ring/",
-                             #          "./aaai_data/output/Planning/safe/",
-                             #          "./aaai_data/output/Planning/comm/",
-                             #          "./aaai_data/output/Planning/uts/"
 
-                             ]
     # exprs = ["./aaai_data/output/Planning/coins/"]
 
     # exprs = [  "./aaai_data/output/DatasetA/", "./aaai_data/output/DatasetB/" ,
