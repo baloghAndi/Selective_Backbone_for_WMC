@@ -1321,7 +1321,8 @@ def eval_progress(folders,outputfile, title,  labels, min_n, columns, obj, paddi
     redo = ['08_bomb_b10_t10_p_t10.cnf', '08_bomb_b10_t10_p_t11.cnf', '08_bomb_b10_t10_p_t12.cnf', '08_bomb_b10_t10_p_t13.cnf', '08_bomb_b10_t10_p_t14.cnf', '08_bomb_b10_t10_p_t15.cnf', '08_bomb_b10_t10_p_t16.cnf', '08_bomb_b10_t10_p_t17.cnf', '08_bomb_b10_t10_p_t18.cnf', '08_bomb_b10_t10_p_t19.cnf', '08_bomb_b10_t10_p_t20.cnf', '08_bomb_b10_t10_p_t2.cnf', '08_bomb_b10_t10_p_t3.cnf', '08_bomb_b10_t10_p_t4.cnf', '08_bomb_b10_t10_p_t5.cnf', '08_bomb_b10_t10_p_t6.cnf', '08_bomb_b10_t10_p_t7.cnf', '08_bomb_b10_t10_p_t8.cnf', '08_bomb_b10_t10_p_t9.cnf', '08_bomb_b10_t5_p_t10.cnf', '08_bomb_b10_t5_p_t3.cnf', '08_bomb_b10_t5_p_t4.cnf', '08_bomb_b10_t5_p_t5.cnf', '08_bomb_b10_t5_p_t6.cnf', '08_bomb_b10_t5_p_t7.cnf', '08_bomb_b10_t5_p_t8.cnf', '08_bomb_b10_t5_p_t9.cnf', '08_bomb_b20_t5_p_t10.cnf', '08_bomb_b20_t5_p_t1.cnf', '08_bomb_b20_t5_p_t2.cnf', '08_bomb_b20_t5_p_t3.cnf', '08_bomb_b20_t5_p_t4.cnf', '08_bomb_b20_t5_p_t5.cnf', '08_bomb_b20_t5_p_t6.cnf', '08_bomb_b20_t5_p_t7.cnf', '08_bomb_b20_t5_p_t8.cnf', '08_bomb_b20_t5_p_t9.cnf', '08_bomb_b5_t5_p_t10.cnf', '08_bomb_b5_t5_p_t5.cnf', '08_bomb_b5_t5_p_t6.cnf', '08_bomb_b5_t5_p_t7.cnf', '08_bomb_b5_t5_p_t8.cnf', '08_bomb_b5_t5_p_t9.cnf', '10_comm_p03_p_t10.cnf', '10_comm_p03_p_t7.cnf', '10_comm_p03_p_t8.cnf', '10_comm_p03_p_t9.cnf', '10_comm_p04_p_t10.cnf', '10_comm_p04_p_t5.cnf', '10_comm_p04_p_t6.cnf', '10_comm_p04_p_t7.cnf', '10_comm_p04_p_t8.cnf', '10_comm_p04_p_t9.cnf', '10_comm_p05_p_t4.cnf', '10_comm_p05_p_t5.cnf', '10_comm_p05_p_t6.cnf', '10_comm_p05_p_t7.cnf', '10_comm_p05_p_t8.cnf', '10_comm_p10_p_t1.cnf']
 
 
-def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, padding=False, same_expr=False,filter_timeout=False, filter_conflict=False, subfolder=""):
+def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, padding=False, same_expr=False,
+                       filter_timeout=False, filter_conflict=False, subfolder="",median=False):
     "new func to plot avg"
     #if same_length : remove instances that have no results for all exprs
     wmc_data_to_average = {f: {} for f in folders}
@@ -1407,8 +1408,12 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
                 if e in wmc_data_to_average[f][l] and e in size_data_to_average[f][l]:
                     if same_expr and all_expr_names_count[e] != nb_exps:
                         continue
-                    sampled_wmc_data, finished_expr = sample_data(wmc_data_to_average[f][l][e], smallest_n + 1)
-                    sampled_size_data, finished_expr = sample_data(size_data_to_average[f][l][e], smallest_n + 1)
+                    #TODO: fixed : we have to ignore first datapoint as that is just 1 to show that initial ratio is 1
+                    sampled_wmc_data, finished_expr = sample_data(wmc_data_to_average[f][l][e][1:], smallest_n )
+                    sampled_wmc_data = [wmc_data_to_average[f][l][e][0]] + sampled_wmc_data
+                    sampled_size_data, finished_expr = sample_data(size_data_to_average[f][l][e][1:], smallest_n )
+                    sampled_size_data = [size_data_to_average[f][l][e][0]] + sampled_size_data
+                    print("------------------smallest_n ", smallest_n, len(sampled_wmc_data),wmc_data_to_average[f][l][e][0],  sampled_wmc_data)
 
                     wmc_to_average.append(sampled_wmc_data.copy())
                     size_to_average.append(sampled_size_data.copy())
@@ -1421,7 +1426,12 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
             print("-------------- Expr to avg", f, l, exprs_to_avg)
             avg_wmc = [ sum([ wmc_to_average[j][i] for j in range(len(wmc_to_average)) ]) / exprs_to_avg for i in range(len(wmc_to_average[0]))]
             avg_size = [ sum([ size_to_average[j][i] for j in range(len(size_to_average)) ]) / exprs_to_avg for i in range(len(size_to_average[0]))]
-
+            #statistics.median
+            if median:
+                avg_wmc = [statistics.median([wmc_to_average[j][i] for j in range(len(wmc_to_average))])    for i in
+                           range(len(wmc_to_average[0]))]
+                avg_size = [statistics.median([size_to_average[j][i] for j in range(len(size_to_average))])  for i in
+                            range(len(size_to_average[0]))]
             fname = f.split("_")[-1]
             if "rand_dynamic" in f:
                 fname = "random"
@@ -1644,7 +1654,7 @@ def average_efficiency_WMC_MC(folders, outputfile, title, labels, min_n, columns
 
 
 def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, padding=False, same_expr=False,filter_timeout=False,
-                  filter_conflict=False, subfolder=""):
+                  filter_conflict=False, subfolder="",median=False):
     "new func to plot avg"
     ratio_data_to_average = {f: {} for f in folders}
     all_expr_names = []
@@ -1715,7 +1725,9 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
                 if e in ratio_data_to_average[f][l]:
                     if same_expr and all_expr_names_count[e] != nb_exprs:
                         continue
-                    sampled_ratio_data, finished_expr = sample_data(ratio_data_to_average[f][l][e], smallest_n + 1)
+                    sampled_ratio_data, finished_expr = sample_data(ratio_data_to_average[f][l][e][1:], smallest_n )
+                    sampled_ratio_data = [ratio_data_to_average[f][l][e][0]] + sampled_ratio_data
+
                     ratio_to_average.append(sampled_ratio_data.copy())
                     writer.writerow([e, l] + [100 * k for k in sampled_ratio_data])
 
@@ -1723,6 +1735,9 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
             exprs_to_avg = len(ratio_to_average)
             print("-------------- Expr to avg", f, l, exprs_to_avg)
             avg_wmc = [ sum([ ratio_to_average[j][i] for j in range(len(ratio_to_average)) ]) / exprs_to_avg for i in range(len(ratio_to_average[0]))]
+            if median:
+                avg_wmc = [ statistics.median([ ratio_to_average[j][i] for j in range(len(ratio_to_average)) ])  for i in range(len(ratio_to_average[0]))]
+
 
             fname = f.split("_")[-1]
             if "rand_dynamic" in f:
@@ -3986,955 +4001,13 @@ def filer_instances():
     # print(keys)
     # print(occurance)
 
-def get_best_variable_percentage(sample_size = 50):
-    #given a set of experiments :
-    # 1. read stats files - no padding - all should have the same nb iterations - if not eliminate it
-    # 2. calculate adjusted ratio(AR) for each iteration - ratio with respect to initial compilation wmc and size
-    # 3. nb_improvement = for each p - number of iteration - calculate how many instanes have AR > 1 ( improvement)
-    # 4. percentage var = p that maximizes 3.nb_improvement(nb_p)
-    # break ties for 4 with max lb_p ; lb_p =  min AR per each p
-    FOLDER = "Dataset_preproc"
-    nb_vars_data = {}
-    columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
-    nb_exprs = 0
-    all_expr_names_count = {}
-    folder = "./results_aaai2/Dataset_preproc_hybrid_wmc/"
-    type = "dynamic"
-    nb_vars_data = {}
-    stats_file = folder + "dataset_stats_" + type + ".csv" #-for init compilations
-    expr_data = ExprData(columns)
-    expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False, filter_timeout=False, filter_conflict=False)
-    init_wmc_per_expr, smallest_n = expr_data.get_metric_wrt_initial_per_expr(metric="WMC", obj="WMC")
-    init_mc_per_expr, smallest_n = expr_data.get_metric_wrt_initial_per_expr(metric="MC", obj="MC")
-    init_ratios_per_expr, smallest_n = expr_data.get_metric_wrt_initial_per_expr(metric="ratio", obj="WMC")
-    print("data set len, ", len(expr_data.all_expr_data))
-    dont_consider = []
-    conflict_exprs = []
-    nb_vars = columns.index("nb_vars")
-    for e in init_ratios_per_expr.keys():
-        if expr_data.all_expr_data[e][0][nb_vars] < 50: # or len(init_ratios_per_expr[e]) < sample_size+1 :
-            print(e, len(init_ratios_per_expr[e]), expr_data.all_expr_data[e][0][nb_vars])
-            dont_consider.append(e)
-        elif len(init_ratios_per_expr[e]) < sample_size + 1:
-            conflict_exprs.append(e)
-    print(len(dont_consider))
-    print("conflict_exprs" ,len(conflict_exprs))
-    for e in conflict_exprs:
-        print(e, len(init_ratios_per_expr[e]))
 
-    nb_compact_ars = [0 for i in  range(1, sample_size+1)]
-    lbs = [100000 for i in  range(1, sample_size+1)]
-    all_compact_ars = [[] for i in  range(1, sample_size+1)]
-    all_ars = [[] for i in  range(1, sample_size+1)]
-    # print("dont consider ", len(dont_consider) )
-    count_exp = []
-    for index in range(1, sample_size+1):
-        for e in init_ratios_per_expr.keys():
-            if e not in dont_consider:
-                if e not in count_exp:
-                    count_exp.append(e)
-                if index < len(init_ratios_per_expr[e]):
-
-                    current_ar = init_ratios_per_expr[e][index]
-                    all_ars[index-1].append(current_ar)
-                    # if current_ar >= 1 and init_wmc_per_expr[e][index] >= 0.5:
-                    if current_ar >= 1.5 :
-                        nb_compact_ars[index-1] += 1
-                        all_compact_ars[index-1].append(current_ar)
-                        if current_ar < lbs[index-1]:
-                            lbs[index - 1] = current_ar
-                else:
-                    all_ars[index - 1].append(0)
-    best_var_percentage = 0
-    best_var_percentage_index = 0
-    for i, ar in enumerate(nb_compact_ars):
-        if ar > best_var_percentage:
-            best_var_percentage = ar
-            best_var_percentage_index = i
-        elif ar == best_var_percentage:
-            if lbs[i] > lbs[best_var_percentage_index]:
-                best_var_percentage = ar
-                best_var_percentage_index = i
-
-
-    print("nb_compact_ars", len(nb_compact_ars), len(count_exp), len(dont_consider), len(init_ratios_per_expr))
-    print(nb_compact_ars)
-    print("best_var_percentage_index: ", best_var_percentage_index, best_var_percentage)
-    print("lbs: ", lbs)
-    print("all")
-    # for ar in all_ars:
-    #     print(ar)
-    avgs = []
-    medians = []
-    maxes = []
-    for adjusted_ratio_at_index in all_ars:
-        avg = sum(adjusted_ratio_at_index) / len(adjusted_ratio_at_index)
-        avgs.append(avg)
-        median = statistics.median(adjusted_ratio_at_index)
-        medians.append(median)
-    print("max avg: ", max(avgs), np.argmax(avgs))
-    print("max medians : ", max(medians), np.argmax(medians))
-    print(len(all_ars))
-    print(len(dont_consider))
-    # for e in count_exp:
-    #     if 11 < len(init_ratios_per_expr[e]):
-    #         print(e, round(100* init_wmc_per_expr[e][11], 26),round(100* init_mc_per_expr[e][11], 26) )
-
-def write_inits():
-    alg_types = [  "dynamic"]# , "static"]
-    FOLDER = "Dataset_preproc"
-    result_folder = "./results_aaai/"
-    expr_folders = [result_folder + FOLDER+"_wscore_estimate/" ]#,  result_folder + FOLDER+"_WMC/",result_folder + FOLDER + "_hybrid_wmc/"  ]
-    columns = [ "p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
-    init_exprs = {}
-    no_compiling_expr = []
-    i = 0
-    for folder in expr_folders:
-        for type in alg_types:
-            if 'rand_dynamic' in folder and type == 'static' :
-                # if ('rand_dynamic' in folder or 'wscore_half' in folder or 'wscore_estimate' in folder ) and type == 'static' :
-                continue
-            i +=1
-            stats_file = folder + "dataset_stats_" + type + ".csv"
-            expr_data = ExprData(columns)
-            expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False, filter_timeout=False, filter_conflict=False)
-            inits = expr_data.get_line(0)
-            for e in inits.keys():
-                if e not in init_exprs:
-                    init_exprs[e] = inits[e]
-                    if i > 1:
-                        print("+++++++++++++++++++++++++++++++++++++++++++++++++++++", e, folder, type)
-                        # exit(9)
-                else:
-                    init_exprs[e].append(inits[e])
-            # for e in expr_data.no_data_expr:
-            #     if e not in no_compiling_expr:
-            #         no_compiling_expr.append(e)
-    # for e in init_exprs:
-    #     print(e, [t[5] for t in init_exprs[e]])
-        # print(e, variance([t[5] for t in init_exprs[e]]), variance([t[6] for t in init_exprs[e]]), len([t[5] for t in init_exprs[e]]))
-    print(len(init_exprs))
-    print(len(no_compiling_expr))
-    print(no_compiling_expr)
-    f = open(result_folder+"init_compilations2.csv", "w+")
-    writer = csv.writer(f, delimiter=',')
-    for e in init_exprs:
-        writer.writerow([e])
-        writer.writerow(list(init_exprs[e]))
-    f.flush()
-    f.close()
-
-
-def plot_percentage_experiments(percent=8):
-    #look at exprs that have an init compilation, are present in the list of the dynamic_p_ stats file - and have a line for it -  and have a non zero value for compilation
-    #read in init data
-
-    f = open("./results_aaai2/" + "init_compilations.csv", "r")
-    init_compilations = {}
-    init_times = {}
-    columns = [ "p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
-
-    while True:
-        line1 = f.readline()
-        line2 = f.readline()
-        if not line2: break  # EOF
-        data_row = []
-        print(line1)
-        print(line2)
-        for x in line2.split(","):  # why do we ignore last column? it might be the empty value after the end line separator
-            print(x)
-            # x_val = float(x.strip('.%'))
-            x_val = float(x)
-            if math.isinf(x_val):
-                x_val = np.float128(x)
-            data_row.append(x_val)
-        init_compilations[line1.strip()] = data_row
-        # read compilation file
-    c = 0
-    for e in init_compilations:
-        if e not in medium_instances:
-            c+=1
-
-    # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + str(percent)+"percent_compilations.csv", "r")
-    f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_medium_nofullsb.csv", "r")
-    # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + "8percent_compilations.csv", "r")
-    percent_compilations = {}
-    while True:
-        line1 = f.readline()
-        line2 = f.readline()
-        if not line2: break  # EOF
-        data_row = []
-        print(line1)
-        print(line2)
-        for x in line2.split(","):
-            print(x, type(x))
-            x_val = float(x.strip('"'))
-            # x_val = float(x.strip())
-            if math.isinf(x_val):
-                x_val = np.float128(x.strip('"'))
-            data_row.append(x_val)
-        ename = line1.split(",")[0].split("_temphybrid")[0].split("/")[-1]+".cnf"
-        if ename.count(".") > 1:
-            ename = ename.strip("\n").replace(".", "_", ename.count(".") - 1)  # actually first . will always be ./input so should skipp tha
-        percent_compilations[ename] = data_row
-    #read csv from where we extract if expr shoul have a compilation
-    percent_expr_data = ExprData(columns)
-    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "dataset_stats_p"+str(percent)+"_dynamic.csv"
-    # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "dataset_stats_p8_dynamic.csv"
-    percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False, filter_timeout=False,
-                                      filter_conflict=False)
-    lines = percent_expr_data.get_line(1)
-    # print(len(lines))
-    print(len(percent_expr_data.no_data_expr))
-    print(len(percent_expr_data.all_expr_data))
-    # print(len(expr_data.no_data_expr))
-    # no_init_compilation = 0
-
-    ars = {}
-    y = []
-    wmc_index = columns.index("WMC")
-    size_index = columns.index("edge_count")
-    time_index = columns.index("time")
-    nb_vars_index = columns.index("nb_vars")
-    nb_expr = 0
-    sb_times = {}
-    sb_compilation_times = {}
-    init_ratios = {}
-    count_compact = 0
-    count_not_compact = 0
-    no_init_compilation = 0
-    compilation_zero = 0
-    compilation_zero_expr = []
-    plotted_expr_ratios = {}
-    plotted_expr_nb_count = {}
-    # for expr in lines.keys():
-    for expr in percent_compilations:
-        if expr in init_compilations:
-            if expr in percent_compilations:
-                if  expr in  medium_part2:
-                    if percent_compilations[expr][wmc_index] > 0 and  percent_compilations[expr][size_index] > 0 :
-                        print(expr, init_compilations[expr][wmc_index],  init_compilations[expr][size_index],  percent_compilations[expr][wmc_index] , percent_compilations[expr][size_index])
-                        init_ratio = init_compilations[expr][wmc_index] /  init_compilations[expr][size_index]
-                        current_ratio = percent_compilations[expr][wmc_index] /  percent_compilations[expr][size_index]
-                        ar = current_ratio / init_ratio
-                        if ar >= 1:
-                            count_compact += 1
-                        else:
-                            print("not compact: ", ar)
-                            count_not_compact += 1
-                        init_ratios[expr] = init_ratio
-                        # ars[expr] = ar
-                        y.append(ar)
-                        plotted_expr_ratios[expr] = ar
-                        # plotted_expr_nb_count[expr] = percent_expr_data.all_expr_data[expr][0][nb_vars_index]
-
-                        init_times[expr] = init_compilations[expr][time_index]
-                        # sb_times[expr] = lines[expr][time_index]
-                        # sb_compilation_times[expr] = percent_compilations[expr][time_index]
-                        nb_expr += 1
-            else:
-                compilation_zero += 1
-                compilation_zero_expr.append(expr)
-        else:
-            print(expr)
-            no_init_compilation += 1
-
-    # sorted_exprs = dict(sorted(plotted_expr_nb_count.items(), key=lambda kv: kv[1]))
-    # instance_sizes = list(sorted_exprs.values())
-    # y = []
-    # for e in sorted_exprs.keys():
-    #     y.append(plotted_expr_ratios[e])
-    #
-    print(statistics.median(y))
-    print(len(y), len(medium_part2))
-
-    fig = plt.figure(figsize=(10, 7))
-    ax1 = fig.add_subplot(111)
-    x = [i for i in range(nb_expr)]
-    ax1.scatter(x, y)
-    ax1.plot(x, y)
-
-    # ax1.scatter(instance_sizes, y)
-    # ax1.plot(instance_sizes, y)
-    handles, labels = ax1.get_legend_handles_labels()
-    ax1.legend(handles, labels)
-    # fig.tight_layout()
-    # plt.yticks([i for i in range(300)])
-    # plt.xticks(instance_sizes)
-    # plt.ylim((float(6.931164793584654e-21), 280.37139126615557))
-    plt.yscale("log")
-    plt.grid()
-    plt.show()
-    # plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_log.png")
-    exit(9)
-
-
-    #plot time
-    # init_y = []
-    # sb_y = []
-    # sb_comp_y = []
-    # for e in sorted_exprs.keys():
-    #     init_y.append(init_times[e])
-    #     sb_y.append(sb_times[e])
-    #     sb_comp_y.append(sb_compilation_times[e])
-    # fig = plt.figure(figsize=(10, 7))
-    # ax1 = fig.add_subplot(111)
-    #----------
-
-    # ax1.scatter(instance_sizes, init_y, color="r")
-    # ax1.plot(instance_sizes, init_y, color = "r", label="init compilation time")
-    #
-    ax1.scatter(instance_sizes, sb_y, color="green")
-    ax1.plot(instance_sizes, sb_y, color="green", label=str(percent)+" var percent SB")
-    #
-    # ax1.scatter(instance_sizes, sb_comp_y, color="cyan")
-    # ax1.plot(instance_sizes, sb_comp_y, color="cyan", label=str(percent) + " var percent compilation")
-
-    handles, labels = ax1.get_legend_handles_labels()
-    ax1.legend(handles, labels)
-    # fig.tight_layout()
-    # plt.yticks([i for i in range(300)])
-    # plt.xticks(instance_sizes)
-    # plt.ylim((float(6.931164793584654e-21), 280.37139126615557))
-    # plt.yscale("log")
-    plt.grid()
-    plt.show()
-    # plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_log.png")
-
-    # --------------------------s
-    # print(y)
-    print(init_times)
-    print(sb_times)
-    print(nb_expr)
-    print("count_compact", count_compact)
-    print("count_not_compact", count_not_compact)
-    print("no_init_compilation", no_init_compilation)
-    print(len(medium_instances))
-    print(y)
-    # count_medium = 0
-    # count_large = 0
-    # diff_count = 0
-    # for expr in percent_expr_data.all_expr_data.keys():
-    #     # print(expr, plotted_expr_nb_count[expr], plotted_expr_ratios[expr] )
-    #     if expr in medium_instances:
-    #         count_medium+=1
-    #     elif expr in large_instances:
-    #         count_large +=1
-    #     else:
-    #         diff_count += 1
-    #         print(expr)
-    # print("count_medium: ", count_medium, "count_large: ", count_large, len(medium_instances), len(large_instances), len(percent_expr_data.all_expr_data), diff_count)
-    #
-    # count = 0
-    # no_sb = []
-    # for expr in medium_instances:
-    #     if expr not in plotted_expr_ratios:
-    #         if expr in compilation_zero_expr:
-    #             print("zero compilation ", expr)
-    #         else:
-    #             print(" ---------------------- not in plotted :", expr)
-    #         count += 1
-    #     if expr not in percent_compilations:
-    #         print("no sb within an hour: ", expr)
-    #         no_sb.append(expr)
-    # print(count, len(medium_instances), len(plotted_expr_ratios), len(no_sb))
-    # print(no_sb)
-
-    # count = 0
-    # for expr in large_instances:
-    #     if expr not in plotted_expr_ratios:
-    #         # print(" ---------------------- not in plotted :", expr)
-    #         count += 1
-    # print("large ", count)
-    # print( len(medium_instances), len(sorted_exprs), len(percent_compilations))
-    # print(min(y),max(y))
-    # print("avg:", sum(y)/len(y) )
-    # print("avg:", statistics.mean(y) )
-    # print("compilation_zero:", compilation_zero)
-
-def read_compilation_file(fname):
-    f = open(fname, "r")
-    # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + "8percent_sscompilations.csv", "r")
-    percent_compilations = {}
-    while True:
-        line1 = f.readline()
-        line2 = f.readline()
-        if not line2: break  # EOF
-        data_row = []
-        # print(line1)
-        # print(line2)
-        for x in line2.split(","):
-            # print(x, type(x))
-            x_val = float(x.strip('"'))
-            # x_val = float(x.strip())
-            if math.isinf(x_val):
-                x_val = np.float128(x.strip('"'))
-            data_row.append(x_val)
-        if "_temphybrid" in line1:
-            ename = line1.split(",")[0].split("_temphybrid")[0].split("/")[-1] + ".cnf"
-        else:
-            ename = line1.split(",")[0].strip()
-        if ename.count(".") > 1:
-            ename = ename.strip("\n").replace(".", "_", ename.count(
-                ".") - 1)  # actually first . will always be ./input so should skipp tha
-        percent_compilations[ename] = data_row
-    return  percent_compilations
-
-def log_plot_percentage_experiment(percent=22):
-    """
-     the instances are sorted by adjusted ratio (so maybe a bar plot instead of having the number of variables as the X axis)
-    - the Y axis starts at 10^-2
-    """
-
-
-    f = open("./results_aaai2/" + "init_compilations.csv", "r")
-    init_compilations = {}
-    init_times = {}
-    columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC",
-               "obj"]  # for d4
-
-    while True:
-        line1 = f.readline()
-        line2 = f.readline()
-        if not line2: break  # EOF
-        data_row = []
-        print(line1)
-        print(line2)
-        for x in line2.split(","):  # why do we ignore last column? it might be the empty value after the end line separator
-            print(x)
-            x_val = float(x)
-            if math.isinf(x_val):
-                x_val = np.float128(x)
-            data_row.append(x_val)
-        init_compilations[line1.strip()] = data_row
-    # read compilation file
-    c = 0
-
-
-    # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + str(percent)+"percent_compilations.csv", "r")
-    f = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_allmedium_compilations.csv"
-    # f = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_medium_compilations.csv"
-    # f = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_medium_nofullsb.csv"
-    # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + "8percent_sscompilations.csv", "r")
-    sb_compilations = read_compilation_file(f)
-    print("sb_compilations ", len(sb_compilations))
-
-    #
-    # percent_expr_data = ExprData(columns)
-    # # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p" + str(percent) + "_dynamic.csv"
-    # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p" + str(percent) + ".csv"
-    # # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "dataset_stats_p8_dynamic.csv"
-    # percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
-    #                                   filter_timeout=False,
-    #                                   filter_conflict=False)
-    # lines = percent_expr_data.get_line(1)
-    # print(len(lines))
-    # print(len(percent_expr_data.no_data_expr))
-    # print(len(percent_expr_data.all_expr_data))
-    # print(len(expr_data.no_data_expr))
-    # no_init_compilation = 0
-
-    ars = {}
-    y = []
-    wmc_index = columns.index("WMC")
-    size_index = columns.index("edge_count")
-    time_index = columns.index("time")
-    nb_vars_index = columns.index("nb_vars")
-    nb_expr = 0
-    sb_times = {}
-    sb_compilation_times = {}
-    init_ratios = {}
-    count_compact = 0
-    count_not_compact = 0
-    no_init_compilation = 0
-    compilation_zero = 0
-    compilation_zero_expr = []
-    plotted_expr_ratios = {}
-    plotted_expr_nb_count = {}
-    # for expr in lines.keys():
-    for expr in medium_instances:
-        if expr in init_compilations and expr in sb_compilations:
-            if sb_compilations[expr][wmc_index] > 0 and sb_compilations[expr][size_index] > 0:
-                init_ratio = init_compilations[expr][wmc_index] / init_compilations[expr][size_index]
-                current_ratio = sb_compilations[expr][wmc_index] / sb_compilations[expr][size_index]
-                ar = current_ratio / init_ratio
-                if ar >= 1.5:
-                    count_compact += 1
-                else:
-                    print("not compact: ", ar)
-                    count_not_compact += 1
-                init_ratios[expr] = init_ratio
-                # ars[expr] = ar
-                y.append(ar)
-                plotted_expr_ratios[expr] = ar
-                        # plotted_expr_nb_count[expr] = percent_expr_data.all_expr_data[expr][0][nb_vars_index]
-
-                init_times[expr] = init_compilations[expr][time_index]
-                # sb_times[expr] = lines[expr][time_index]
-                # sb_compilation_times[expr] = percent_compilations[expr][time_index]
-                nb_expr += 1
-            else:
-                compilation_zero += 1
-                compilation_zero_expr.append(expr)
-        else:
-            print(expr, "no init and full sb")
-            no_init_compilation += 1
-    print("----------------no_init_compilation", no_init_compilation)
-    sorted_exprs = dict(sorted(plotted_expr_ratios.items(), key=lambda kv: kv[1]))
-        # instance_sizes = list(sorted_exprs.values())
-    y = []
-    for e in sorted_exprs.keys():
-        y.append(plotted_expr_ratios[e])
-        print(e, plotted_expr_ratios[e])
-
-
-    fig = plt.figure(figsize=(10, 7))
-    ax1 = fig.add_subplot(111)
-    x = [i for i in range(nb_expr)]
-    ax1.bar(x, y)
-    # ax1.plot(x, y)
-
-    # ax1.scatter(instance_sizes, y)
-    # ax1.plot(instance_sizes, y)
-    handles, labels = ax1.get_legend_handles_labels()
-    ax1.legend(handles, labels)
-    # fig.tight_layout()
-    # plt.yticks([i for i in range(300)])
-    # plt.xticks(instance_sizes)
-    plt.ylim(0.01, max(y)+10 )
-    plt.yscale("log")
-    plt.grid()
-    # plt.show()
-    # plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_ordered_log.png")
-
-    percent_expr_data = ExprData(columns)
-    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p22_details.csv"
-    percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
-                                      filter_timeout=False,
-                                      filter_conflict=False)
-    selective_backbone_line = percent_expr_data.get_line(-1)
-
-    percent_expr_data_m1 = ExprData(columns)
-    stats_file_m1 = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p22_dynamic.csv"
-    percent_expr_data_m1.read_stats_file(stats_file_m1, full_expr_only=False, min_nb_expr=1, padding=False,
-                                         filter_timeout=False,
-                                         filter_conflict=False)
-    selective_backbone_line_m1 = percent_expr_data_m1.get_line(1)
-
-    saved_expr = []
-    filename = "./results_aaai2/Dataset_preproc_hybrid_wmc/ratio_at_p"+str(percent)+"_ordered_log.csv"
-    f = open(filename, "w+")
-    writer = csv.writer(f, delimiter=',')
-    no_init = 0
-    no_full_sb_count = 0
-    expr_count = 0
-
-    for e in medium_instances:
-        if e.count(".") > 1:
-            e = e.strip("\n").replace(".", "_", e.count(".") - 1)
-
-        if (e in percent_expr_data_m1.remove_expr and e not in medium_part2) or e in percent_expr_data.remove_expr:
-            writer.writerow([e])
-            writer.writerow(columns)
-            if e not in init_compilations:
-                empty_row = [-1 for i in range(len(columns))]
-                if e in percent_expr_data_m1.remove_expr:
-                    empty_row[3] = percent_expr_data_m1.removed_expr_data[e][0][3]
-                    empty_row[4] = percent_expr_data_m1.removed_expr_data[e][0][4]
-                elif e in percent_expr_data.remove_expr:
-                    empty_row[3] = percent_expr_data.removed_expr_data[e][0][3]
-                    empty_row[4] = percent_expr_data.removed_expr_data[e][0][4]
-                print("no init: ", e)
-                no_init += 1
-                writer.writerow(empty_row)
-            else:
-                writer.writerow(init_compilations[e])
-                no_full_sb_count+=1
-                print("no_full_sb_count: ",no_full_sb_count, e)
-            writer.writerow([-1 for i in range(len(columns))])
-        elif e in selective_backbone_line:
-            writer.writerow([e])
-            writer.writerow(columns)
-            writer.writerow(init_compilations[e])
-            if e not in sb_compilations:
-                no_full_sb_count += 1
-                print("no full SB found ", e, (selective_backbone_line[e][0]*100)/init_compilations[e][nb_vars_index], selective_backbone_line[e][0] , init_compilations[e][nb_vars_index])
-                writer.writerow(selective_backbone_line[e])
-            else:
-                expr_count+=1
-                comp_row = sb_compilations[e]
-                comp_row[0] = selective_backbone_line[e][0]
-                comp_row[1] = selective_backbone_line[e][1]
-                comp_row[2] = selective_backbone_line[e][2]
-                comp_row[3] = selective_backbone_line[e][3]
-                comp_row[4] = selective_backbone_line[e][4]
-                writer.writerow(comp_row)
-        elif e in selective_backbone_line_m1:
-            expr_count+=1
-            writer.writerow([e])
-            writer.writerow(columns)
-            writer.writerow(init_compilations[e])
-            comp_row = sb_compilations[e]
-            comp_row[0] = selective_backbone_line_m1[e][0]
-            comp_row[1] = selective_backbone_line_m1[e][1]
-            comp_row[2] = selective_backbone_line_m1[e][2]
-            comp_row[3] = selective_backbone_line_m1[e][3]
-            comp_row[4] = selective_backbone_line_m1[e][4]
-            writer.writerow(comp_row)
-        else:
-            print("something wrong: ", e)
-
-    f.flush()
-    f.close()
-
-    print("no_full_sb_count: ", no_full_sb_count)
-    print("no_init: ", no_init)
-    print("expr_count: ", expr_count)
-
-
-def evaluate_prediction():
-    fname = "./results_aaai2/Dataset_preproc_hybrid_wmc/ratio_at_p22_allmedium.csv"
-    f = open(fname, "r")
-    percent_compilations = {}
-    all_sb_compilation = {}
-    all_init_compilation = {}
-    expr_full_sb = []
-    expr_no_init = []
-    expr_partial_sb = []
-    nb_vars_index = columns.index("nb_vars")
-    wmc_index = columns.index("WMC")
-    size_index = columns.index("edge_count")
-    while True:
-        expr_name = f.readline().strip()
-        cols = f.readline()
-        temp_init_compilation = f.readline()
-        temp_sb_compilation = f.readline()
-        if not temp_sb_compilation: break  # EOF
-        sb_compilation = []
-        init_compilation = []
-        for x in temp_sb_compilation.split(","):
-            x_val = float(x.strip('"'))
-            if math.isinf(x_val):
-                x_val = np.float128(x.strip('"'))
-            sb_compilation.append(x_val)
-        all_sb_compilation[expr_name] = sb_compilation.copy()
-        for x in temp_init_compilation.split(","):
-            x_val = float(x.strip('"'))
-            if math.isinf(x_val):
-                x_val = np.float128(x.strip('"'))
-            init_compilation.append(x_val)
-        all_init_compilation[expr_name] = init_compilation.copy()
-
-        if init_compilation[wmc_index] == -1:
-            expr_no_init.append(expr_name)
-        if sb_compilation[wmc_index] > -1 and round( (sb_compilation[0]*100)/sb_compilation[nb_vars_index]) == 22:
-            expr_full_sb.append(expr_name)
-        else:
-            expr_partial_sb.append(expr_name)
-            if sb_compilation[0] == -1:
-                print("no compilation at all: ", expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
-                if expr_name in medium_part2:
-                    print("second part")
-            else:
-                print(expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
-
-
-    ratios={}
-    conflict_expr_fullSB = 0
-    for e in expr_full_sb:
-        init_ratio = all_init_compilation[e][wmc_index] / all_init_compilation[e][size_index]
-        if all_sb_compilation[e][size_index] == 0:
-            print(e, "is 0 size , expr finished but reached conflic SB", all_init_compilation[e][nb_vars_index])
-            if e in medium_part2:
-                print("part 2")
-            current_ratio = 0
-            conflict_expr_fullSB += 1
-        else:
-            current_ratio = all_sb_compilation[e][wmc_index] / all_sb_compilation[e][size_index]
-        ar = current_ratio / init_ratio
-        ratios[e]=ar
-    print(len(expr_no_init), len(expr_partial_sb), len(expr_full_sb), conflict_expr_fullSB)
-    sorted_exprs = dict(sorted(ratios.items(), key=lambda kv: kv[1]))
-    nb_expr= len(sorted_exprs)
-    y = [sorted_exprs[k] for k in sorted_exprs]
-    fig = plt.figure(figsize=(10, 7))
-    ax1 = fig.add_subplot(111)
-    x = [i for i in range(nb_expr)]
-    ax1.bar(x, y)
-    # ax1.plot(x, y)
-
-    # ax1.scatter(instance_sizes, y)
-    # ax1.plot(instance_sizes, y)
-    handles, labels = ax1.get_legend_handles_labels()
-    ax1.legend(handles, labels)
-    # fig.tight_layout()
-    # plt.yticks([i for i in range(300)])
-    # plt.xticks(instance_sizes)
-    plt.ylim(0.01, max(y) + 10)
-    plt.yscale("log")
-    plt.grid()
-    plt.show()
-    # plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_ordered_log.png")
-
-
-
-def count_hybrid_call():
-    filename = "./results_aaai2/Dataset_preproc_hybrid_wmc/dataset_stats_p_dynamic.txt"
-    total_d4_callcount = {}
-    iteration_d4_callcount = {}
-
-    d4_calls = 0
-    prev_expr = ""
-    with open(filename, "r") as f:
-        content = f.readlines()
-        for line in content:
-            if "input/" in line:
-                if line.count(".") > 1:
-                    save_expr_name = line.strip("\n").replace(".", "_", line.count(".") - 1)  # actually first . will always be ./input so should skipp tha
-                    save_expr_name = save_expr_name.split("/")[-1]
-                if prev_expr != "":
-                    total_d4_callcount[prev_expr] = d4_calls
-                iteration_d4_callcount[save_expr_name] = []
-                total_d4_callcount[save_expr_name] = 0
-                prev_expr = save_expr_name
-                d4_calls = 0
-            elif "A:" in line:
-                nb_d4 = int(line.split(",")[-1].strip("]\n"))
-                iteration_d4_callcount[prev_expr].append(nb_d4)
-                d4_calls +=nb_d4
-
-    columns = [ "p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]  # for d4
-
-    expr_data = ExprData(columns)
-    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p8_dynamic.csv"
-    expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False, filter_timeout=False,
-                              filter_conflict=False)
-    sb_lines = expr_data.get_line(1)
-    print(len(sb_lines))
-
-    for e in total_d4_callcount:
-        if e in sb_lines:
-            nb_vars = sb_lines[e][3]
-            iteration_len = len(iteration_d4_callcount[e])
-            percentages = []
-            for i in range(iteration_len):
-                vars = nb_vars-i
-                assignments = 2*vars
-                p =  ( iteration_d4_callcount[e][i] * 100 ) / assignments
-                formatted = "{:.3f}".format(p)
-                percentages.append(formatted)
-            print(e, "-" ,sb_lines[e][3], "-" , sb_lines[e][4], "-", total_d4_callcount[e], "-", iteration_len , "-",  max(percentages), "-", percentages,  "-", iteration_d4_callcount[e])
-    print(len(total_d4_callcount))
-
-def read_medium2():
-    percent= 22
-    percent_expr_data = ExprData(columns)
-    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p22_details.csv"
-    percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
-                                      filter_timeout=False,
-                                      filter_conflict=False)
-    selective_backbone_line = percent_expr_data.get_line(-1)
-
-    percent_expr_data_m1 = ExprData(columns)
-    stats_file_m1 = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p22_dynamic.csv"
-    percent_expr_data_m1.read_stats_file(stats_file_m1, full_expr_only=False, min_nb_expr=1, padding=False,
-                                      filter_timeout=False,
-                                      filter_conflict=False)
-    selective_backbone_line_m1 = percent_expr_data_m1.get_line(1)
-
-    #filter to only exprs in medium2
-    #check if nb assignments reached 22%
-    compfile = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_allmedium_compilations.csv"
-    # compfile_medium2 = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_medium2_final.csv"
-    # comp_medium2 = read_compilation_file(compfile_medium2)
-    comp_medium_all = read_compilation_file(compfile)
-    print(len(medium_part2), len(comp_medium_all), len(medium_instances))
-    # f = open(compfile, "a+")
-    medium_part3 = []
-    for expr in medium_part2:
-        if expr not in comp_medium_all:
-            medium_part3.append(expr)
-            print("not finished SB ", expr)
-    print(len(medium_part3))
-    print(medium_part3)
-
-
-
-
-
-medium_instances = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf',
-                        '04_iscas89_s1196_bench.cnf',
-                        '04_iscas89_s1238_bench.cnf', '04_iscas89_s1423_bench.cnf', '04_iscas89_s1488_bench.cnf',
-                        '04_iscas89_s1494_bench.cnf',
-                        '04_iscas89_s641_bench.cnf', '04_iscas89_s713_bench.cnf', '04_iscas89_s820_bench.cnf',
-                        '04_iscas89_s832_bench.cnf',
-                        '04_iscas89_s838_1_bench.cnf', '04_iscas89_s953_bench.cnf', '05_iscas93_s1196_bench.cnf',
-                        '05_iscas93_s1269_bench.cnf',
-                        '05_iscas93_s1512_bench.cnf', '05_iscas93_s635_bench.cnf', '05_iscas93_s938_bench.cnf',
-                        '05_iscas93_s967_bench.cnf',
-                        '05_iscas93_s991_bench.cnf', '06_iscas99_b04.cnf', '06_iscas99_b07.cnf', '06_iscas99_b11.cnf',
-                        '06_iscas99_b13.cnf',
-                        '07_blocks_right_2_p_t4.cnf', '07_blocks_right_2_p_t5.cnf', '07_blocks_right_3_p_t2.cnf',
-                        '08_bomb_b10_t5_p_t1.cnf',
-                        '08_bomb_b5_t1_p_t3.cnf', '08_bomb_b5_t1_p_t4.cnf', '08_bomb_b5_t1_p_t5.cnf',
-                        '08_bomb_b5_t5_p_t2.cnf', '09_coins_p05_p_t2.cnf',
-                        '09_coins_p10_p_t1.cnf', '10_comm_p03_p_t1.cnf', '11_emptyroom_d16_g8_p_t2.cnf',
-                        '11_emptyroom_d28_g14_corners_p_t1.cnf',
-                        '11_emptyroom_d4_g2_p_t10.cnf', '11_emptyroom_d4_g2_p_t9.cnf', '11_emptyroom_d8_g4_p_t4.cnf',
-                        '14_safe_safe_10_p_t10.cnf',
-                        '14_safe_safe_30_p_t3.cnf', '14_safe_safe_30_p_t4.cnf', '14_safe_safe_30_p_t5.cnf',
-                        '14_safe_safe_30_p_t6.cnf',
-                        '15_sort_num_s_3_p_t10.cnf', '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t6.cnf',
-                        '07_blocks_right_2_p_t7.cnf',
-                        '07_blocks_right_2_p_t8.cnf', '07_blocks_right_2_p_t9.cnf', '07_blocks_right_3_p_t3.cnf',
-                        '07_blocks_right_3_p_t4.cnf',
-                        '07_blocks_right_3_p_t5.cnf', '07_blocks_right_4_p_t2.cnf', '07_blocks_right_4_p_t3.cnf',
-                        '07_blocks_right_5_p_t1.cnf',
-                        '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf', '08_bomb_b5_t1_p_t6.cnf',
-                        '08_bomb_b5_t1_p_t7.cnf',
-                        '08_bomb_b5_t1_p_t8.cnf', '08_bomb_b5_t5_p_t3.cnf', '09_coins_p01_p_t2.cnf',
-                        '09_coins_p01_p_t3.cnf', '09_coins_p01_p_t4.cnf',
-                        '09_coins_p01_p_t5.cnf', '09_coins_p02_p_t2.cnf', '09_coins_p02_p_t3.cnf',
-                        '09_coins_p02_p_t4.cnf', '09_coins_p02_p_t5.cnf',
-                        '09_coins_p03_p_t2.cnf', '09_coins_p03_p_t3.cnf', '09_coins_p03_p_t4.cnf',
-                        '09_coins_p03_p_t5.cnf', '09_coins_p04_p_t2.cnf',
-                        '09_coins_p04_p_t3.cnf', '09_coins_p04_p_t4.cnf', '09_coins_p04_p_t5.cnf',
-                        '09_coins_p05_p_t3.cnf', '09_coins_p05_p_t4.cnf',
-                        '09_coins_p05_p_t5.cnf', '09_coins_p10_p_t2.cnf', '10_comm_p01_p_t3.cnf',
-                        '10_comm_p01_p_t4.cnf', '10_comm_p01_p_t5.cnf',
-                        '10_comm_p01_p_t6.cnf', '10_comm_p02_p_t2.cnf', '10_comm_p02_p_t3.cnf', '10_comm_p03_p_t2.cnf',
-                        '10_comm_p04_p_t1.cnf',
-                        '10_comm_p05_p_t1.cnf', '11_emptyroom_d12_g6_p_t3.cnf', '11_emptyroom_d12_g6_p_t4.cnf',
-                        '11_emptyroom_d12_g6_p_t5.cnf',
-                        '11_emptyroom_d12_g6_p_t6.cnf', '11_emptyroom_d12_g6_p_t7.cnf', '11_emptyroom_d16_g8_p_t3.cnf',
-                        '11_emptyroom_d16_g8_p_t4.cnf',
-                        '11_emptyroom_d16_g8_p_t5.cnf', '11_emptyroom_d20_g10_corners_p_t2.cnf',
-                        '11_emptyroom_d20_g10_corners_p_t3.cnf',
-                        '11_emptyroom_d20_g10_corners_p_t4.cnf', '11_emptyroom_d24_g12_p_t2.cnf',
-                        '11_emptyroom_d24_g12_p_t3.cnf',
-                        '11_emptyroom_d28_g14_corners_p_t2.cnf', '11_emptyroom_d28_g14_corners_p_t3.cnf',
-                        '11_emptyroom_d8_g4_p_t10.cnf',
-                        '11_emptyroom_d8_g4_p_t5.cnf', '11_emptyroom_d8_g4_p_t6.cnf', '11_emptyroom_d8_g4_p_t7.cnf',
-                        '11_emptyroom_d8_g4_p_t8.cnf',
-                        '11_emptyroom_d8_g4_p_t9.cnf', '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t5.cnf',
-                        '13_ring2_r6_p_t6.cnf', '13_ring2_r6_p_t7.cnf',
-                        '13_ring2_r6_p_t8.cnf', '13_ring2_r6_p_t9.cnf', '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t4.cnf',
-                        '13_ring2_r8_p_t5.cnf',
-                        '13_ring2_r8_p_t6.cnf', '13_ring2_r8_p_t7.cnf', '13_ring2_r8_p_t8.cnf', '13_ring2_r8_p_t9.cnf',
-                        '13_ring_3_p_t10.cnf',
-                        '13_ring_3_p_t7.cnf', '13_ring_3_p_t8.cnf', '13_ring_3_p_t9.cnf', '13_ring_4_p_t10.cnf',
-                        '13_ring_4_p_t5.cnf', '13_ring_4_p_t6.cnf',
-                        '13_ring_4_p_t7.cnf', '13_ring_4_p_t8.cnf', '13_ring_4_p_t9.cnf', '13_ring_5_p_t10.cnf',
-                        '13_ring_5_p_t4.cnf', '13_ring_5_p_t5.cnf',
-                        '13_ring_5_p_t6.cnf', '13_ring_5_p_t7.cnf', '13_ring_5_p_t8.cnf', '13_ring_5_p_t9.cnf',
-                        '14_safe_safe_30_p_t7.cnf',
-                        '14_safe_safe_30_p_t8.cnf', '14_safe_safe_30_p_t9.cnf', '15_sort_num_s_4_p_t4.cnf',
-                        '15_sort_num_s_4_p_t5.cnf', '15_sort_num_s_4_p_t6.cnf',
-                        '15_sort_num_s_4_p_t7.cnf', '15_sort_num_s_4_p_t8.cnf', '15_sort_num_s_4_p_t9.cnf',
-                        '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_5_p_t3.cnf',
-                        '15_sort_num_s_5_p_t4.cnf', '15_sort_num_s_6_p_t1.cnf', '15_sort_num_s_6_p_t2.cnf',
-                        '15_sort_num_s_7_p_t1.cnf', '16_uts_k2_p_t4.cnf',
-                        '16_uts_k2_p_t5.cnf', '16_uts_k2_p_t6.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf',
-                        '16_uts_k2_p_t9.cnf', '16_uts_k3_p_t2.cnf',
-                        '16_uts_k3_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k4_p_t1.cnf', '16_uts_k4_p_t2.cnf',
-                        '16_uts_k5_p_t1.cnf']
-
-medium_part2 = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf',
-                    '05_iscas93_s1269_bench.cnf',
-                    '06_iscas99_b04.cnf', '06_iscas99_b11.cnf', '07_blocks_right_3_p_t5.cnf',
-                    '07_blocks_right_4_p_t3.cnf',
-                    '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf',
-                    '09_coins_p01_p_t5.cnf', '09_coins_p02_p_t5.cnf',
-                    '09_coins_p03_p_t5.cnf', '09_coins_p04_p_t5.cnf', '09_coins_p05_p_t5.cnf', '09_coins_p10_p_t2.cnf',
-                    '11_emptyroom_d8_g4_p_t10.cnf', '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t7.cnf',
-                    '13_ring2_r6_p_t8.cnf',
-                    '13_ring2_r6_p_t9.cnf', '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t6.cnf', '13_ring2_r8_p_t7.cnf',
-                    '13_ring2_r8_p_t8.cnf',
-                    '13_ring2_r8_p_t9.cnf', '13_ring_4_p_t10.cnf', '13_ring_5_p_t10.cnf', '13_ring_5_p_t8.cnf',
-                    '13_ring_5_p_t9.cnf',
-                    '15_sort_num_s_4_p_t4.cnf', '15_sort_num_s_4_p_t5.cnf', '15_sort_num_s_4_p_t6.cnf',
-                    '15_sort_num_s_4_p_t7.cnf',
-                    '15_sort_num_s_4_p_t8.cnf', '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf',
-                    '15_sort_num_s_5_p_t3.cnf',
-                    '15_sort_num_s_5_p_t4.cnf', '15_sort_num_s_6_p_t1.cnf', '15_sort_num_s_6_p_t2.cnf',
-                    '15_sort_num_s_7_p_t1.cnf',
-                    '16_uts_k2_p_t5.cnf', '16_uts_k2_p_t6.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf',
-                    '16_uts_k2_p_t9.cnf',
-                    '16_uts_k3_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k4_p_t2.cnf']
-
-large_instances = ['05_iscas93_s3271_bench.cnf', '05_iscas93_s3330_bench.cnf', '05_iscas93_s3384_bench.cnf',
-                       '05_iscas93_s4863_bench.cnf', '06_iscas99_b05.cnf',
-                       '06_iscas99_b12.cnf', '07_blocks_right_3_p_t10.cnf', '07_blocks_right_3_p_t6.cnf',
-                       '07_blocks_right_3_p_t7.cnf', '07_blocks_right_3_p_t8.cnf',
-                       '07_blocks_right_3_p_t9.cnf', '07_blocks_right_4_p_t4.cnf', '07_blocks_right_4_p_t5.cnf',
-                       '07_blocks_right_5_p_t3.cnf', '07_blocks_right_6_p_t2.cnf',
-                       '08_bomb_b10_t10_p_t10.cnf', '08_bomb_b10_t10_p_t11.cnf', '08_bomb_b10_t10_p_t12.cnf',
-                       '08_bomb_b10_t10_p_t13.cnf', '08_bomb_b10_t10_p_t14.cnf',
-                       '08_bomb_b10_t10_p_t15.cnf', '08_bomb_b10_t10_p_t16.cnf', '08_bomb_b10_t10_p_t17.cnf',
-                       '08_bomb_b10_t10_p_t18.cnf', '08_bomb_b10_t10_p_t1.cnf',
-                       '08_bomb_b10_t10_p_t2.cnf', '08_bomb_b10_t10_p_t3.cnf', '08_bomb_b10_t10_p_t4.cnf',
-                       '08_bomb_b10_t10_p_t5.cnf', '08_bomb_b10_t10_p_t6.cnf', '08_bomb_b10_t10_p_t7.cnf',
-                       '08_bomb_b10_t10_p_t8.cnf', '08_bomb_b10_t10_p_t9.cnf', '08_bomb_b10_t5_p_t10.cnf',
-                       '08_bomb_b10_t5_p_t2.cnf', '08_bomb_b10_t5_p_t3.cnf', '08_bomb_b10_t5_p_t4.cnf',
-                       '08_bomb_b10_t5_p_t5.cnf', '08_bomb_b10_t5_p_t6.cnf', '08_bomb_b10_t5_p_t7.cnf',
-                       '08_bomb_b10_t5_p_t8.cnf', '08_bomb_b10_t5_p_t9.cnf', '08_bomb_b20_t5_p_t10.cnf',
-                       '08_bomb_b20_t5_p_t1.cnf', '08_bomb_b20_t5_p_t2.cnf', '08_bomb_b20_t5_p_t3.cnf',
-                       '08_bomb_b20_t5_p_t4.cnf', '08_bomb_b20_t5_p_t5.cnf', '08_bomb_b20_t5_p_t6.cnf',
-                       '08_bomb_b20_t5_p_t7.cnf', '08_bomb_b20_t5_p_t8.cnf', '08_bomb_b20_t5_p_t9.cnf',
-                       '08_bomb_b5_t1_p_t10.cnf', '08_bomb_b5_t1_p_t9.cnf', '08_bomb_b5_t5_p_t10.cnf',
-                       '08_bomb_b5_t5_p_t4.cnf', '08_bomb_b5_t5_p_t5.cnf', '08_bomb_b5_t5_p_t6.cnf',
-                       '08_bomb_b5_t5_p_t7.cnf', '08_bomb_b5_t5_p_t8.cnf', '08_bomb_b5_t5_p_t9.cnf',
-                       '09_coins_p01_p_t6.cnf', '09_coins_p01_p_t7.cnf', '09_coins_p01_p_t8.cnf',
-                       '09_coins_p01_p_t9.cnf', '09_coins_p02_p_t6.cnf', '09_coins_p02_p_t7.cnf',
-                       '09_coins_p02_p_t8.cnf', '09_coins_p02_p_t9.cnf', '09_coins_p03_p_t6.cnf',
-                       '09_coins_p03_p_t7.cnf', '09_coins_p03_p_t8.cnf', '09_coins_p03_p_t9.cnf',
-                       '09_coins_p04_p_t6.cnf', '09_coins_p04_p_t7.cnf', '09_coins_p04_p_t8.cnf',
-                       '09_coins_p04_p_t9.cnf', '09_coins_p05_p_t6.cnf', '09_coins_p05_p_t7.cnf',
-                       '09_coins_p05_p_t8.cnf', '09_coins_p05_p_t9.cnf', '09_coins_p10_p_t3.cnf',
-                       '09_coins_p10_p_t4.cnf', '10_comm_p01_p_t10.cnf', '10_comm_p01_p_t7.cnf',
-                       '10_comm_p01_p_t8.cnf', '10_comm_p01_p_t9.cnf', '10_comm_p02_p_t10.cnf', '10_comm_p02_p_t4.cnf',
-                       '10_comm_p02_p_t5.cnf', '10_comm_p02_p_t6.cnf',
-                       '10_comm_p02_p_t7.cnf', '10_comm_p02_p_t8.cnf', '10_comm_p02_p_t9.cnf', '10_comm_p03_p_t10.cnf',
-                       '10_comm_p03_p_t3.cnf', '10_comm_p03_p_t4.cnf',
-                       '10_comm_p03_p_t5.cnf', '10_comm_p03_p_t6.cnf', '10_comm_p03_p_t7.cnf', '10_comm_p03_p_t8.cnf',
-                       '10_comm_p03_p_t9.cnf', '10_comm_p04_p_t10.cnf',
-                       '10_comm_p04_p_t2.cnf', '10_comm_p04_p_t3.cnf', '10_comm_p04_p_t4.cnf', '10_comm_p04_p_t5.cnf',
-                       '10_comm_p04_p_t6.cnf', '10_comm_p04_p_t7.cnf',
-                       '10_comm_p04_p_t8.cnf', '10_comm_p04_p_t9.cnf', '10_comm_p05_p_t2.cnf', '10_comm_p05_p_t3.cnf',
-                       '10_comm_p05_p_t4.cnf', '10_comm_p05_p_t5.cnf',
-                       '10_comm_p05_p_t6.cnf', '10_comm_p05_p_t7.cnf', '10_comm_p05_p_t8.cnf', '10_comm_p05_p_t9.cnf',
-                       '10_comm_p10_p_t1.cnf', '10_comm_p10_p_t2.cnf',
-                       '11_emptyroom_d12_g6_p_t10.cnf', '11_emptyroom_d12_g6_p_t8.cnf', '11_emptyroom_d12_g6_p_t9.cnf',
-                       '11_emptyroom_d16_g8_p_t10.cnf', '11_emptyroom_d16_g8_p_t6.cnf',
-                       '11_emptyroom_d16_g8_p_t7.cnf', '11_emptyroom_d16_g8_p_t8.cnf', '11_emptyroom_d16_g8_p_t9.cnf',
-                       '11_emptyroom_d20_g10_corners_p_t5.cnf',
-                       '11_emptyroom_d20_g10_corners_p_t6.cnf', '11_emptyroom_d20_g10_corners_p_t7.cnf',
-                       '11_emptyroom_d20_g10_corners_p_t8.cnf', '11_emptyroom_d20_g10_corners_p_t9.cnf',
-                       '11_emptyroom_d24_g12_p_t10.cnf', '11_emptyroom_d24_g12_p_t4.cnf',
-                       '11_emptyroom_d24_g12_p_t5.cnf', '11_emptyroom_d24_g12_p_t6.cnf',
-                       '11_emptyroom_d24_g12_p_t7.cnf', '11_emptyroom_d24_g12_p_t8.cnf',
-                       '11_emptyroom_d24_g12_p_t9.cnf', '11_emptyroom_d28_g14_corners_p_t4.cnf',
-                       '11_emptyroom_d28_g14_corners_p_t5.cnf', '11_emptyroom_d28_g14_corners_p_t6.cnf',
-                       '11_emptyroom_d28_g14_corners_p_t7.cnf', '11_emptyroom_d28_g14_corners_p_t8.cnf',
-                       '11_emptyroom_d28_g14_corners_p_t9.cnf', '14_safe_safe_30_p_t10.cnf',
-                       '15_sort_num_s_4_p_t10.cnf', '16_uts_k2_p_t10.cnf']
 columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC",
            "obj"]  # for d4
 
 if __name__ == "__main__":
-    evaluate_prediction()
-    # read_medium2()
-    # filer_instances()
-    # get_best_variable_percentage(50)
-    # write_inits()
-    # plot_percentage_experiments(22)
-    # log_plot_percentage_experiment(22)
-    # plot_percentage_experiments(8)
-    # count_hybrid_call()
-    exit(8)
 
-
-    # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
+      # alg_types = [ "static", "dynamic",  "random_selection_1234" ]
     # alg_types = [ "rand_dynamic" ]# ,  "random_selection_1234" ]
     alg_types = [ "static", "dynamic" ]
     # alg_types = [  "dynamic" ]
@@ -4951,7 +4024,10 @@ if __name__ == "__main__":
     # expr_folders =  [ "./results/"+FOLDER+"_MC/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [  result_folder+FOLDER+"_hybrid_wmc/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
+
     expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" , result_folder+FOLDER+"_wscore_half/" , result_folder+FOLDER+"_hybrid_wmc/" ,  result_folder+FOLDER+"_rand_dynamic/" ]
+    # expr_folders =  [ result_folder+FOLDER+"_hybrid_wmc/" , result_folder+FOLDER+"_rand_dynamic/" ]
+
     # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders = [  "./results/Benchmark_preproc2_WMC/" ,  "./results/Benchmark_preproc2_wscore_half/", "./results/Benchmark_preproc2_wscore_estimate/", "./results/Benchmark_preproc2_rand_dynamic/"]
     # expr_folders = [ "./results/Benchmark_preproc2_wscore_half/" ,"./results/Benchmark_preproc2_wscore_estimate/" ,"./results/Benchmark_preproc_wscore_adjoccratio/"   ]#, "./results/Benchmark_preproc_wscore_estimate/"]# "./results/sdd/wmc2022_track2_private_WMC/"
@@ -5007,15 +4083,20 @@ if __name__ == "__main__":
     # create_time_table_d4(expr_folders, alg_types, columns, nocompile=False, cutoff={})
     # exit(4)
 
-    subfolder = ""
+    subfolder = "planning"
     # obj = "MC"
     obj = "WMC"
     out_file = result_folder+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
-    if obj == "MC":
-        out_file = result_folder+"Dataset_preproc_avg_MC_"
+    # out_file = result_folder+FOLDER+"_median_weighted_"#+subfolder+"_" #this is actually ecai23 data
+    # if obj == "MC":
+    #     out_file = result_folder+"Dataset_preproc_avg_MC_"
+
     same_expr = True
     filter_timeout = False
     filter_conflict = False
+    median = True
+    if median:
+         out_file = result_folder+"Dataset_preproc_median_MC_"
 
     # out_file = "./results2/Dataset_preproc_avg_MC"
     # out_file = "./results/Dataset_preproc_avg_MC_and_WMC"
@@ -5034,15 +4115,19 @@ if __name__ == "__main__":
     if filter_conflict:
         out_file = out_file+"filterC_"
     title = "Average weighted efficiency over dataset "
-    if obj == "MC":
-        title = "Average MC efficiency over instances "
-    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 100, columns, obj, padding=True, same_expr=same_expr,
-                       filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
+    if median:
+        title = "Median weighted efficiency over dataset "
+    # if obj == "MC":
+    #     title = "Average MC efficiency over instances "
+    average_efficiency(expr_folders, out_file +"efficiency", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+                       filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder, median=median)
     title = "Average weighted ratio over instances"
-    if obj == "MC":
-        title = "Average MC efficiency over instances"
-    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 100, columns, obj, padding=True, same_expr=same_expr,
-                  filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder)
+    if median:
+        title = "Median weighted ratio over instances"
+    # if obj == "MC":
+    #     title = "Average MC efficiency over instances"
+    average_ratio(expr_folders, out_file +"ratio", title, alg_types, 50, columns, obj, padding=True, same_expr=same_expr,
+                  filter_timeout=filter_timeout, filter_conflict=filter_conflict, subfolder=subfolder, median=median)
     # col = "WMC"
     # title = "Average weighted " + col
     # average_column(expr_folders, out_file + col, title, alg_types, 100, columns, "WMC", padding=True, plot_tye=col,
