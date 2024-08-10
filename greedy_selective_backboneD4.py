@@ -148,6 +148,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
         best_variable = best[2]
         best_value =  best[3]
         best_cost =  best[0]
+        best_wmc = best_cost
         best_size = -1
         best_node_count = -1
         # logger.progress_log.write("order after actual wmc calculation: \n")
@@ -164,7 +165,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
         logger.progress_log.write(str([best_variable, best_value, best_cost]) + "\n")
         logger.progress_log.write("----- \n")
 
-    if not NO_COMPILE:
+    if not NO_COMPILE: #if compilation needed but heur does not calculate it
         if (obj_type == "count" or "score" in obj_type) or backbone_assigned or obj_type == "hybrid_wmc":
             nb_nodes, nb_edges,  best_wmc, comp_time = csp.check_wmc_of(best_variable, best_value)
             best_size = nb_edges
@@ -250,7 +251,7 @@ def dynamic_greedy_pWSB_at_variable_percent(csp, max_p, obj_type,logger, NO_COMP
         elapsed = logger.get_time_elapsed()
         log_line = [p, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, wmc, -1, best_cost]
         logger.log(log_line)
-        if wmc == 0 or wmc == -1:
+        if wmc == 0  or wmc == -1:
             print("expr failed")
             exit(22)
 
