@@ -15,7 +15,6 @@ import pylatex as px
 from shapely.geometry import Polygon
 from shapely.ops import polygonize, unary_union
 from sklearn.metrics.pairwise import euclidean_distances, manhattan_distances
-from torch._C._return_types import sort
 
 import CNFmodelBDD as _cnfBDD
 
