@@ -11,20 +11,29 @@ if __name__ == "__main__":
 
     cnf_file =  sys.argv[1]
     #part = sys.argv[2]
-    stats_file = "./22percent_compilations_medium2_final.csv"
+    stats_file = "./22percent_compilations_medium3.csv"
+    error_file = "./22percent_compilations_medium3_error.txt"
 
     f = open(stats_file, "a+")
+    ferror = open(error_file, "a+")
     writer = csv.writer(f, delimiter=',')
+    error_writer = csv.writer(ferror, delimiter=',')
 
 
     writer.writerow([cnf_file])
+    error_writer.writerow([cnf_file])
     weights_file = cnf_file.replace(".cnf", "_w3.w" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
     #weights_file =  weights_file.replace("./", "../../../input/Dataset_preproc/")   
-    weights_file = weights_file.replace("_temphybrid_wmcdynamic_22percent_large", "" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
-    #weights_file = weights_file.replace("temp_sb_comp/", "")
+    weights_file = weights_file.replace("_temphybrid_wmcdynamic", "" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
+    if "error" in weights_file:
+        weights_file = weights_file.split("_error")[0]+"_w3.w"
+        #weights_file = weights_file.replace("temp_sb_comp/", "")
     res = subprocess.run(["./d4", "-dDNNF", cnf_file, "-wFile="+weights_file ], stdout=subprocess.PIPE, text=True)
     output = res.stdout
     print(output)
+    error_writer.writerow(output)
+    ferror.flush()
+    ferror.close()
     output = output.split("\n")
     nb_nodes = 0
     nb_edges = 0

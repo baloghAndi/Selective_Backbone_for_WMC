@@ -14,7 +14,7 @@ for i in $folder*.cnf; do
 	          if [[  $3 = "2" ]]  ; then
       	      if [[   $i = *"/10_"* ]] || [[   $i = *"/11_"* ]] || [[   $i = *"/12_"* ]]  ; then
 	              timeout 3600 python3 compile_cnf.py $i $1
-	            fi
+	    s        fi
 	          fi
 	          if [[  $3 = "3" ]]  ; then
       	      if [[   $i = *"/13_"* ]] || [[   $i = *"/14_"* ]] ; then
