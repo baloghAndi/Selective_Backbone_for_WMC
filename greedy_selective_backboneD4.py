@@ -142,7 +142,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
                 nb_nodes, nb_edges,  wmc, comp_time = csp.check_wmc_of(var,val, compile=False)
                 weight = csp.literal_weights[val][var - 1]
                 actual_wmc_queue.put(tuple([-1 * wmc, -1 * weight, var, val]))
-                print(nb_considered, var, val)
+                print(nb_considered, var, val, wmc)
                 # logger.progress_log.write(str(top_tuple)+"\n")
                 # logger.progress_log.flush()
             else:
