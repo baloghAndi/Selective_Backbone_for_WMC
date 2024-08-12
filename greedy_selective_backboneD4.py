@@ -151,7 +151,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
         best_variable = best[2]
         best_value =  best[3]
         best_cost =  best[0]
-        best_wmc = best_cost
+        best_wmc = abs(best_cost)
         best_size = -1
         best_node_count = -1
         # logger.progress_log.write("order after actual wmc calculation: \n")
@@ -222,6 +222,7 @@ def dynamic_greedy_pWSB(csp, max_p, obj_type,logger, NO_COMPILE=False, sample_si
             else:
                 logWMC = math.log10(wmc)
             log_line = [iteration_index, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, wmc, logWMC, best_cost]
+            logger.log(log_line)
 
         while extra_iterations > 0 :
             iteration_index += 1
@@ -684,14 +685,14 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE
     columns = ["p", "var", "value", "nb_vars", "nb_cls", "MC", "edge_count", 'node_count', 'time', 'WMC', "logWMC", "obj"]
     if "random" in alg_type or "ls" in alg_type:
         # stats_file = d + "dataset_stats_" + alg_type + "_" + str(seed) + ".csv"
-        stats_file = out_folder + "dataset_stats_init" + alg_type + "_" + str(seed) + ".csv"
+        stats_file = out_folder + "dataset_stats_" + alg_type + "_" + str(seed) + ".csv"
     else:
         # stats_file = d + "dataset_stats_" + alg_type + ".csv"
-        stats_file = out_folder + "dataset_stats_init" + alg_type + ".csv"
+        stats_file = out_folder + "dataset_stats_" + alg_type + ".csv"
     if part != "":
         stats_file = stats_file.replace(".csv", "_part"+str(part)+".csv")
     if NO_COMPILE:
-        stats_file = stats_file.replace("_part", +"NOCOMPILE_part")
+        stats_file = stats_file.replace("_part", "_NOCOMPILE_part")
     print("stats file: --------", stats_file)
     expr_data = evaluate.ExprData(columns)
     logger = evaluate.Logger(stats_file, columns, expr_data, out_folder, compile=True)
