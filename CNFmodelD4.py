@@ -482,6 +482,7 @@ class WCNF:
         f.write("p cnf " + str(self.n) + " " + str(len(self.cls)) + "\n")
         for c in self.cls:
             f.write(" ".join([str(x) for x in c]) + " 0 \n")
+        f.flush()
         f.close()
 
     def write_cnf_extend(self, cnf_file_name, extra_cls):
@@ -495,6 +496,7 @@ class WCNF:
             f.write(" ".join([str(x) for x in c]) + " 0 \n")
         for c in extra_cls:
             f.write(" ".join([str(x) for x in c]) + " 0 \n")
+        f.flush()
         f.close()
 
     def opposite_occurance(self, var, value):
