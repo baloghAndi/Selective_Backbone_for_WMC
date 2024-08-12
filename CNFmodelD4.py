@@ -227,6 +227,7 @@ class WCNF:
         # stats_file = weights_file.replace(".w", "_stats.txt")
         # f = open(stats_file, "w")
         # res = subprocess.run(["./d4", "-dDNNF", cnf_file, "-wFile="+weights_file ], stdout=f, text=True, timeout=600)
+        print("running: ", "./d4 -no-dDNNF"+ cnf_file+ "-wFile="+weights_file+ "-mc" )
         res = subprocess.run(["./d4", "-no-dDNNF", cnf_file, "-wFile="+weights_file, "-mc"], stdout=subprocess.PIPE, text=True)
         output = res.stdout
         output = output.split("\n")
