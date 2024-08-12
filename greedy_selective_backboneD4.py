@@ -48,6 +48,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
                 best_variable = variable
                 best_value = value
                 best_cost = weight * 100000
+                best_wmc = best_cost
                 best_tb = tb
         backbone_assigned = True
         csp.trivial_backbone.remove(best_tb)
