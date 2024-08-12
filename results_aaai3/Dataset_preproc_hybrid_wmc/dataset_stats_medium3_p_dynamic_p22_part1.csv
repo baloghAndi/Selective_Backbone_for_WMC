@@ -30,3 +30,12 @@ p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
 1,321,0,636,2219,-1,-1,-1,6587.010314494371,-6.197393170061634e+86,-1,-6.197393170061634e+86
 2,390,0,636,2217,-1,-1,-1,12577.192377924453,-6.197393170061633e+86,-1,-6.197393170061633e+86
 3,303,0,636,2215,-1,-1,-1,18065.480249814223,-6.197393170061633e+86,-1,-6.197393170061633e+86
+./input/Dataset_preproc/05_iscas93_s1269.bench.cnf
+p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
+0,-1,-1,623,1616,-1,-1,-1,0.01340562291443348,-1,-1,-1
+./input/Dataset_preproc/05_iscas93_s1269.bench.cnf
+p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
+0,-1,-1,623,1616,-1,-1,-1,0.012844339944422245,-1,-1,-1
+./input/Dataset_preproc/05_iscas93_s1269.bench.cnf
+p,var,value,nb_vars,nb_cls,MC,edge_count,node_count,time,WMC,logWMC,obj
+0,-1,-1,623,1616,-1,-1,-1,0.01189939584583044,-1,-1,-1
