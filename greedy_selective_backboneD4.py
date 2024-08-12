@@ -944,7 +944,7 @@ if __name__ == "__main__":
                         '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf', '16_uts_k3_p_t2.cnf',
                         '16_uts_k4_p_t1.cnf', '16_uts_k5_p_t1.cnf']
 
-    medium3 = ['05_iscas93_s1269.bench.cnf','16_uts_k2_p_t8.cnf']
+    medium3 = ['05_iscas93_s1269_bench.cnf','16_uts_k2_p_t8.cnf']
         # '03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '05_iscas93_s1269.bench.cnf', '06_iscas99_b04.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf'
                                                                                                                                                  
                # '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t5.cnf',
