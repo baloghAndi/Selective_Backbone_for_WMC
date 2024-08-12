@@ -944,16 +944,17 @@ if __name__ == "__main__":
                         '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf', '16_uts_k3_p_t2.cnf',
                         '16_uts_k4_p_t1.cnf', '16_uts_k5_p_t1.cnf']
 
-    medium3 = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '05_iscas93_s1269_bench.cnf', '06_iscas99_b04.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf'
+    medium3 = ['05_iscas93_s1269.bench.cnf','16_uts_k2_p_t8.cnf']
+        # '03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '05_iscas93_s1269.bench.cnf', '06_iscas99_b04.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf'
                                                                                                                                                  
-               '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t5.cnf',
-               '07_blocks_right_2_p_t8.cnf', '07_blocks_right_3_p_t5.cnf', '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf',
-
-               '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t9.cnf',
-               '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t8.cnf', '13_ring2_r8_p_t9.cnf', '13_ring_5_p_t10.cnf', '13_ring_5_p_t6.cnf',
-
-               '15_sort_num_s_4_p_t7.cnf', '15_sort_num_s_4_p_t8.cnf',
-               '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_6_p_t1.cnf', '15_sort_num_s_7_p_t1.cnf', ]
+               # '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t5.cnf',
+               # '07_blocks_right_2_p_t8.cnf', '07_blocks_right_3_p_t5.cnf', '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf',
+               #
+               # '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t9.cnf',
+               # '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t8.cnf', '13_ring2_r8_p_t9.cnf', '13_ring_5_p_t10.cnf', '13_ring_5_p_t6.cnf',
+               #
+               # '15_sort_num_s_4_p_t7.cnf', '15_sort_num_s_4_p_t8.cnf',
+               # '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_6_p_t1.cnf', '15_sort_num_s_7_p_t1.cnf', ]
 
 
     large_instances = ['05_iscas93_s3271_bench.cnf', '05_iscas93_s3330_bench.cnf', '05_iscas93_s3384_bench.cnf', '05_iscas93_s4863_bench.cnf', '06_iscas99_b05.cnf',

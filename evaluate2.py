@@ -855,7 +855,7 @@ def read_compilation_file(fname):
         if "_temphybrid" in line1:
             ename = line1.split(",")[0].split("_temphybrid")[0].split("/")[-1] + ".cnf"
         else:
-            ename = line1.split(",")[0].strip()
+            ename =line1.split(",")[0].strip("'")
         if ename.count(".") > 1:
             ename = ename.strip("\n").replace(".", "_", ename.count(
                 ".") - 1)  # actually first . will always be ./input so should skipp tha
@@ -1086,9 +1086,12 @@ def log_plot_percentage_experiment(percent=22):
 def evaluate_prediction():
     fname = "./results_aaai2/Dataset_preproc_hybrid_wmc/ratio_at_p22_allmedium.csv"
     f = open(fname, "r")
+    fname_pSB = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_partialSB.csv"
+    partial_SB = read_compilation_file(fname_pSB)
     percent_compilations = {}
     all_sb_compilation = {}
     all_init_compilation = {}
+    all_partial_compilation = {}
     expr_full_sb = []
     expr_no_init = []
     expr_partial_sb = []
@@ -1116,30 +1119,33 @@ def evaluate_prediction():
             init_compilation.append(x_val)
         all_init_compilation[expr_name] = init_compilation.copy()
 
-        if init_compilation[wmc_index] == -1:
+        if init_compilation[wmc_index] == -1: #no init compilation - ignore these
             expr_no_init.append(expr_name)
         if sb_compilation[wmc_index] > -1 and round( (sb_compilation[0]*100)/sb_compilation[nb_vars_index]) == 22:
             expr_full_sb.append(expr_name)
-        else:
+        else: #partial SB
             expr_partial_sb.append(expr_name)
             if sb_compilation[0] == -1:
                 print("no compilation at all: ", expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
                 # if expr_name in medium_part2:
                 #     print("second part")
             else:
-                print(expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
-
+                print("partial:", expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
+            if expr_name in partial_SB:
+                print("partial_SB: ", expr_name)
+                all_partial_compilation[expr_name] = partial_SB[expr_name]
+    exit(9)
 
     ratios={}
     conflict_expr_fullSB = 0
     medium3 = []
-    for e in expr_partial_sb+expr_partial_sb+expr_no_init:
-        if e in medium_instances:
-            print(e)
-            if e not in medium3:
-                medium3.append(e)
-        else:
-            print("---------------------",e)
+    # for e in expr_partial_sb+expr_partial_sb+expr_no_init:
+    #     if e in medium_instances:
+    #         print(e)
+    #         if e not in medium3:
+    #             medium3.append(e)
+    #     else:
+    #         print("---------------------",e)
     for e in expr_full_sb:
         init_ratio = all_init_compilation[e][wmc_index] / all_init_compilation[e][size_index]
         if all_sb_compilation[e][size_index] == 0:
@@ -1156,10 +1162,10 @@ def evaluate_prediction():
 
         ar = current_ratio / init_ratio
         ratios[e]=ar
-    print("m3", len(medium3), sorted(medium3))
+    # print("m3", len(medium3), sorted(medium3))
 
     # print(len(expr_no_init), len(expr_partial_sb), len(expr_full_sb), conflict_expr_fullSB)
-    exit(6)
+    # exit(6)
     sorted_exprs = dict(sorted(ratios.items(), key=lambda kv: kv[1]))
     nb_expr= len(sorted_exprs)
     y = [sorted_exprs[k] for k in sorted_exprs]
