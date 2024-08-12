@@ -29,7 +29,7 @@ seed=1234
       	     		 if [[   $i = *"/14_"* ]] || [[   $i = *"/15_"* ]] || [[   $i = *"/16_"* ]] ; then
 	             	 	timeout 3600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
 	            	fi
-		 
+	    fi
 
 	    echo done $i
      done
