@@ -1086,12 +1086,12 @@ def log_plot_percentage_experiment(percent=22):
 def evaluate_prediction():
     fname = "./results_aaai2/Dataset_preproc_hybrid_wmc/ratio_at_p22_allmedium.csv"
     f = open(fname, "r")
-    fname_pSB = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_partialSB.csv"
-    partial_SB = read_compilation_file(fname_pSB)
+    # fname_pSB = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_partialSB.csv"
+    # partial_SB = read_compilation_file(fname_pSB)
     percent_compilations = {}
     all_sb_compilation = {}
     all_init_compilation = {}
-    all_partial_compilation = {}
+    # all_partial_compilation = {}
     expr_full_sb = []
     expr_no_init = []
     expr_partial_sb = []
@@ -1131,14 +1131,14 @@ def evaluate_prediction():
                 #     print("second part")
             else:
                 print("partial:", expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
-            if expr_name in partial_SB:
-                print("partial_SB: ", expr_name)
-                all_partial_compilation[expr_name] = partial_SB[expr_name]
-    exit(9)
+            # if expr_name in partial_SB:
+            #     print("partial_SB: ", expr_name)
+            #     all_partial_compilation[expr_name] = partial_SB[expr_name]
+    print(expr_no_init)
 
     ratios={}
     conflict_expr_fullSB = 0
-    medium3 = []
+    # medium3 = []
     # for e in expr_partial_sb+expr_partial_sb+expr_no_init:
     #     if e in medium_instances:
     #         print(e)
@@ -1146,23 +1146,29 @@ def evaluate_prediction():
     #             medium3.append(e)
     #     else:
     #         print("---------------------",e)
+    medium4 = []
     for e in expr_full_sb:
         init_ratio = all_init_compilation[e][wmc_index] / all_init_compilation[e][size_index]
         if all_sb_compilation[e][size_index] == 0:
             print(e, "is 0 size , expr finished but reached conflic SB", all_init_compilation[e][nb_vars_index])
+            # exit(3)
             # if e in medium_part2:
             #     print("part 2")
             current_ratio = 0
             conflict_expr_fullSB += 1
-            if e in medium_instances:
-                if e not in medium3:
-                    medium3.append(e)
+            medium4.append(e)
+            # if e in medium_instances:
+            #     if e not in medium3:
+            #         medium3.append(e)
         else:
             current_ratio = all_sb_compilation[e][wmc_index] / all_sb_compilation[e][size_index]
 
         ar = current_ratio / init_ratio
         ratios[e]=ar
     # print("m3", len(medium3), sorted(medium3))
+    print(conflict_expr_fullSB)
+    print(medium4)
+    exit(3)
 
     # print(len(expr_no_init), len(expr_partial_sb), len(expr_full_sb), conflict_expr_fullSB)
     # exit(6)
@@ -1172,10 +1178,13 @@ def evaluate_prediction():
     fig = plt.figure(figsize=(10, 7))
     ax1 = fig.add_subplot(111)
     x = [i for i in range(nb_expr)]
-    # ax1.bar(x, y)
+    ax1.bar(x, y)
     # ax1.plot(x, y)
+    plt.xlabel("Number of instances")
+    plt.ylabel("Adjusted ratio improvement compared to initial compilation")
+    # plt.title("")
 
-    ax1.plot(x, list(ratios.value()))
+    # ax1.plot(x, list(sorted_exprs.value()))
     # ax1.scatter(instance_sizes, y)
     # ax1.plot(instance_sizes, y)
     handles, labels = ax1.get_legend_handles_labels()
@@ -1186,9 +1195,10 @@ def evaluate_prediction():
     plt.ylim(0.01, max(y) + 10)
     plt.yscale("log")
     plt.grid()
-    plt.show()
-    # plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(percent)+"_ordered_log.png")
-
+    # plt.show()
+    plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(22)+"_ordered_log.png")
+    partial_with_init = list(set(expr_partial_sb)-set(expr_no_init))
+    print(len(sorted_exprs), len(expr_no_init), len(expr_partial_sb), len(partial_with_init))
 
 
 def count_hybrid_call():

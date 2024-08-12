@@ -742,7 +742,7 @@ def run_at_p_percent_variable(alg_type, filename, seed, out_folder, obj_type, sc
         stats_file = out_folder + "dataset_stats_p_" + alg_type + "_" + str(seed) + ".csv"
     else:
         # stats_file = d + "dataset_stats_" + alg_type + ".csv"
-        stats_file = out_folder + "dataset_stats_medium3_p_" + alg_type + ".csv"
+        stats_file = out_folder + "dataset_stats_medium4_p_" + alg_type + ".csv"
     if part != "":
         stats_file = stats_file.replace(".csv", "_part"+str(part)+".csv")
     if var_percentage != 0:
@@ -986,6 +986,12 @@ if __name__ == "__main__":
                        '11_emptyroom_d28_g14_corners_p_t5.cnf', '11_emptyroom_d28_g14_corners_p_t6.cnf', '11_emptyroom_d28_g14_corners_p_t7.cnf', '11_emptyroom_d28_g14_corners_p_t8.cnf',
                        '11_emptyroom_d28_g14_corners_p_t9.cnf', '14_safe_safe_30_p_t10.cnf', '15_sort_num_s_4_p_t10.cnf', '16_uts_k2_p_t10.cnf']
 
+    medium4 = ['04_iscas89_s1494_bench.cnf', '04_iscas89_s820_bench.cnf', '04_iscas89_s832_bench.cnf', '04_iscas89_s953_bench.cnf',
+               '05_iscas93_s967_bench.cnf',
+               '07_blocks_right_2_p_t5.cnf', '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t8.cnf', '07_blocks_right_3_p_t5.cnf',
+               '07_blocks_right_5_p_t2.cnf',
+               '13_ring2_r6_p_t9.cnf', '13_ring_5_p_t6.cnf']
+
     medium_part2 = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf', '05_iscas93_s1269_bench.cnf',
                     '06_iscas99_b04.cnf', '06_iscas99_b11.cnf', '07_blocks_right_3_p_t5.cnf', '07_blocks_right_4_p_t3.cnf',
                     '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf',
@@ -1003,7 +1009,7 @@ if __name__ == "__main__":
     filename_only  = filename.split("/")[-1]
     if filename_only.count(".") > 1:
         filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    if filename_only not in medium3:
+    if filename_only not in medium4:
         print('skip ', filename_only)
         exit(2)
     print("processing ", filename_only)
