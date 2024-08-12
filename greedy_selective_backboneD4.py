@@ -1020,14 +1020,14 @@ if __name__ == "__main__":
     filename_only  = filename.split("/")[-1]
     if filename_only.count(".") > 1:
         filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    if filename_only not in ecai23:
+    if filename_only not in medium3:
         print('skip ', filename_only)
         exit(2)
     print("processing ", filename_only)
 
     # run(alg_type, d, filename,  seed)
-    out_folder = "./results_nocompile/" + folder + "_" + inobj + "/"
-    # out_folder = "./results2/" + folder + "_" + inobj + "/"
+    # out_folder = "./results_nocompile/" + folder + "_" + inobj + "/"
+    out_folder = "./results_aaai3/" + folder + "_" + inobj + "/"
     # out_folder = "./results/" + folder + "_NO_COMPILE_2_" + inobj + "/"
 
 
@@ -1039,10 +1039,10 @@ if __name__ == "__main__":
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    NO_COMPILE = True
-    sample_size = -1
-    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
-    # run_at_p_percent_variable(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True, part=part ,var_percentage=22)
+    # NO_COMPILE = True
+    # sample_size = -1
+    # run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
+    run_at_p_percent_variable(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True, part=part ,var_percentage=22)
 
     # inti_compilation("init300", d, filename, out_folder, inobj)
     exit(0)
