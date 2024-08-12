@@ -1387,8 +1387,13 @@ def average_efficiency(folders, outputfile, title, labels, min_n, columns, obj, 
     marks = ["s", "o", "p", "*", "x", "v", "^", "+", "1", "2", "3"]
     # plt.xlabel("Average BDD size percentage")
     plt.xlabel("Average representation size percentage")
+    if median:
+        plt.xlabel("Median representation size percentage")
     if obj == "WMC":
-        plt.ylabel("Average Weighted Model Count percentage")
+        if median:
+            plt.ylabel("Median Weighted Model Count percentage")
+        else:
+            plt.ylabel("Average Weighted Model Count percentage")
     else:
         plt.ylabel("Average Model count percentage")
 
@@ -1710,7 +1715,10 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
     # labels[2] = "random_selection_ratio"
     plt.xlabel("Percentage of selective backbone size")
     if obj == "WMC":
-        plt.ylabel("Average of WMC/size ratio percentage wrt initial ratio")
+        if median:
+            plt.ylabel("Median of WMC/size ratio percentage wrt initial ratio")
+        else:
+            plt.ylabel("Average of WMC/size ratio percentage wrt initial ratio")
     else:
         plt.ylabel("Average of MC/size ratio percentage wrt initial ratio")
     index = 0
@@ -4018,7 +4026,7 @@ if __name__ == "__main__":
     result_folder = "./results/"
     FOLDER = "Dataset_preproc_final"
     # FOLDER = "Dataset_preproc_NO_COMPILE_2"
-    HEUR_NAMES = {"MC/": "actual_MC", "WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random", "hybrid_wmc/": "hybrid"}
+    HEUR_NAMES = {"MC/": "actual_MC", "WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random", "hybrid_wmc/": "hybrid_wmc"}
     # FOLDER = "Dataset_preproc_part2"
     # expr_folders =  [  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
@@ -4084,7 +4092,7 @@ if __name__ == "__main__":
     # create_time_table_d4(expr_folders, alg_types, columns, nocompile=False, cutoff={})
     # exit(4)
 
-    subfolder = "planning"
+    subfolder = ""
     # obj = "MC"
     obj = "WMC"
     out_file = result_folder+FOLDER+"_avg_weighted_"#+subfolder+"_" #this is actually ecai23 data
@@ -4097,7 +4105,7 @@ if __name__ == "__main__":
     filter_conflict = False
     median = True
     if median:
-         out_file = result_folder+"Dataset_preproc_median_MC_"
+         out_file = result_folder+"Dataset_preproc_median_WMC_"
 
     # out_file = "./results2/Dataset_preproc_avg_MC"
     # out_file = "./results/Dataset_preproc_avg_MC_and_WMC"
