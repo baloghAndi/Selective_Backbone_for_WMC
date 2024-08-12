@@ -1020,7 +1020,7 @@ if __name__ == "__main__":
     print("processing ", filename_only)
 
     # run(alg_type, d, filename,  seed)
-    out_folder = "./results_aaai3/" + folder + "_" + inobj + "/"
+    out_folder = "./results_aaai_noCompHybrid/" + folder + "_" + inobj + "/"
     # out_folder = "./results2/" + folder + "_" + inobj + "/"
     # out_folder = "./results/" + folder + "_NO_COMPILE_2_" + inobj + "/"
 
@@ -1033,9 +1033,10 @@ if __name__ == "__main__":
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    NO_COMPILE = False
-    # run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
-    run_at_p_percent_variable(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True, part=part ,var_percentage=22)
+    NO_COMPILE = True
+    sample_size = -1
+    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
+    # run_at_p_percent_variable(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True, part=part ,var_percentage=22)
 
     # inti_compilation("init300", d, filename, out_folder, inobj)
     exit(0)

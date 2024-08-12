@@ -1167,7 +1167,8 @@ def evaluate_prediction():
         ratios[e]=ar
     # print("m3", len(medium3), sorted(medium3))
     print(conflict_expr_fullSB)
-    print(medium4)
+    # print(medium4)
+    print(expr_no_init)
     exit(3)
 
     # print(len(expr_no_init), len(expr_partial_sb), len(expr_full_sb), conflict_expr_fullSB)
