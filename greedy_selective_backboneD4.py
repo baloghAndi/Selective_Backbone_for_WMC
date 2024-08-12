@@ -126,6 +126,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
                             best_node_count = node_count
                         #print("best: ", v, value)
     if obj_type == "hybrid_wmc" and not backbone_assigned:
+        print("E:"+ str([best_variable, best_value, best_cost])+"\n")
         logger.progress_log.write("E:"+ str([best_variable, best_value, best_cost])+"\n")
         logger.progress_log.flush()
         actual_wmc_queue = _queue.PriorityQueue()
@@ -141,6 +142,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
                 nb_nodes, nb_edges,  wmc, comp_time = csp.check_wmc_of(var,val, compile=False)
                 weight = csp.literal_weights[val][var - 1]
                 actual_wmc_queue.put(tuple([-1 * wmc, -1 * weight, var, val]))
+                print(nb_considered, var, val)
                 # logger.progress_log.write(str(top_tuple)+"\n")
                 # logger.progress_log.flush()
             else:
@@ -154,6 +156,7 @@ def get_best_assignment(csp, obj_type, NO_COMPILE, logger):
         best_node_count = -1
         # logger.progress_log.write("order after actual wmc calculation: \n")
         # logger.progress_log.flush()
+        print("A:"+ str([best_variable, best_value, best_cost, nb_considered]) + "\n")
         logger.progress_log.write("A:"+ str([best_variable, best_value, best_cost, nb_considered]) + "\n")
         logger.progress_log.write("----- \n")
         logger.progress_log.flush()
