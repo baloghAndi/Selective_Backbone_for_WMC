@@ -9,26 +9,26 @@ seed=1234
               continue
             fi
             if [[  $3 = "1" ]]  ; then
-              if   [[   $i = *"/15_sort_num_s_7_p_t1"* ]]  ;  then
+              if  if  [[   $i = *"/03_"* ]] ||  [[   $i = *"/04_"* ]] || [[   $i = *"/05_"* ]] ||  [[   $i = *"/06_"* ]]  ||  [[   $i = *"/16_"* ]]  ;  then
                       echo 1 $i
                       timeout 21600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
               fi
             fi
             if [[  $3 = "2" ]]  ; then
-              if [[   $i = *"/05_"* ]]   ; then
+              if if [[   $i = *"/07_"* ]]  ; then
                      echo 2 $i
                       timeout 21600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
               fi
             fi
             if [[  $3 = "3" ]]  ; then
-              if [[   $i = *"/07_"* ]] ; then
+              if [[   $i = *"/13_"* ]] ; then
                       echo 3 $i
                       timeout 21600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
               fi
             fi
             if [[  $3 = "4" ]]  ; then
               	echo $i
-		    if  [[   $i = *"/13_"* ]] ; then
+		    if  [[   $i = *"/15_"* ]] ; then
                       echo 4 $i
                       timeout 21600 python3 greedy_selective_backboneD4.py $d $i $alg_type $2 $3
               fi
