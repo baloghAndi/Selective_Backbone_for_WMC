@@ -49,7 +49,7 @@ class Logger:
         self.error_log.write(cnf+"\n")
         for m in message:
             self.error_log.write(m)
-        self.f.flush()
+        self.error_log.flush()
     def close(self):
         if len(self.expr_data.data) > 0:
             self.expr_data.all_expr_data[self.expr_data.exprs[-1]] = self.expr_data.data.copy()

@@ -246,6 +246,7 @@ class WCNF:
         if wmc == -1:
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
             self.write_cnf(file_name=cnf_file.replace(".cnf", "_error"+timestamp+".cnf"))
+            print(output)
             self.logger.log_error(cnf_file,output)
         return  wmc, solve_time
 
