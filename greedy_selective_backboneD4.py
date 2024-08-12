@@ -690,6 +690,8 @@ def run_sdd(alg_type, filename, seed, out_folder, obj_type, scalar=3, NO_COMPILE
         stats_file = out_folder + "dataset_stats_init" + alg_type + ".csv"
     if part != "":
         stats_file = stats_file.replace(".csv", "_part"+str(part)+".csv")
+    if NO_COMPILE:
+        stats_file = stats_file.replace("_part", +"NOCOMPILE_part")
     print("stats file: --------", stats_file)
     expr_data = evaluate.ExprData(columns)
     logger = evaluate.Logger(stats_file, columns, expr_data, out_folder, compile=True)
@@ -1017,13 +1019,13 @@ if __name__ == "__main__":
     filename_only  = filename.split("/")[-1]
     if filename_only.count(".") > 1:
         filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    if filename_only not in medium3:
+    if filename_only not in ecai23:
         print('skip ', filename_only)
         exit(2)
     print("processing ", filename_only)
 
     # run(alg_type, d, filename,  seed)
-    out_folder = "./results_aaai3/" + folder + "_" + inobj + "/"
+    out_folder = "./results_nocompile/" + folder + "_" + inobj + "/"
     # out_folder = "./results2/" + folder + "_" + inobj + "/"
     # out_folder = "./results/" + folder + "_NO_COMPILE_2_" + inobj + "/"
 
@@ -1037,9 +1039,9 @@ if __name__ == "__main__":
         os.makedirs(out_folder)
 
     NO_COMPILE = True
-    # sample_size = -1
-    # run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
-    run_at_p_percent_variable(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True, part=part ,var_percentage=22)
+    sample_size = -1
+    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
+    # run_at_p_percent_variable(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True, part=part ,var_percentage=22)
 
     # inti_compilation("init300", d, filename, out_folder, inobj)
     exit(0)
