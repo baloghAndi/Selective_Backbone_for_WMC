@@ -1037,9 +1037,9 @@ if __name__ == "__main__":
         os.makedirs(out_folder)
 
     NO_COMPILE = True
-    sample_size = -1
-    run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
-    # run_at_p_percent_variable(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True, part=part ,var_percentage=22)
+    # sample_size = -1
+    # run_sdd(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=NO_COMPILE, part=part, sample_size=sample_size)
+    run_at_p_percent_variable(alg_type, filename, seed, out_folder, inobj, NO_COMPILE=True, part=part ,var_percentage=22)
 
     # inti_compilation("init300", d, filename, out_folder, inobj)
     exit(0)
