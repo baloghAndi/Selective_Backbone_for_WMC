@@ -494,7 +494,6 @@ def get_best_variable_percentage(sample_size = 50):
     # dont_consider = []
     print("=------------------dont_consider,", len(dont_consider))
     print(dont_consider)
-    exit(9)
     print("conflict_exprs" ,len(conflict_exprs))
     for e in conflict_exprs:
         print(e, len(init_ratios_per_expr[e]))
@@ -557,7 +556,12 @@ def get_best_variable_percentage(sample_size = 50):
     x = [i for i in range(len(medians))]
     ax1.scatter(x, medians)
     ax1.plot(x, medians)
-    plt.show()
+    plt.grid()
+    plt.xlabel("Percent of variables assigned")
+    plt.ylabel("Adjusted ratio of hybrid_WMC ")
+    plt.xticks([i for i in range(0,len(medians)+1,5)], [i*2 for i in range(0,len(medians)+1,5)])
+    # plt.show()
+    plt.savefig("./results_aaai_final/identify_22p.png")
 
     print(len(all_ars))
     print(len(dont_consider))
@@ -1376,10 +1380,10 @@ def get_medium_instances():
 
 if __name__ == "__main__":
     # get_medium_instances()
-    evaluate_prediction()
+    # evaluate_prediction()
     # read_medium2()
     # filer_instances()
-    # get_best_variable_percentage(50)
+    get_best_variable_percentage(50)
     # write_inits()
     # plot_percentage_experiments(22)
     # log_plot_percentage_experiment(22)
