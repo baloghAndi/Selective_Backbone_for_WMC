@@ -17,7 +17,7 @@ from shapely.ops import polygonize, unary_union
 from sklearn.metrics.pairwise import euclidean_distances, manhattan_distances
 
 import CNFmodelBDD as _cnfBDD
-
+import seaborn as sns
 
 class Logger:
 
@@ -513,8 +513,9 @@ def get_best_variable_percentage(sample_size = 50):
 
                     current_ar = init_ratios_per_expr[e][index]
                     all_ars[index-1].append(current_ar)
+
                     # if current_ar >= 1 and init_wmc_per_expr[e][index] >= 0.5:
-                    if current_ar >= 1.5 :
+                    if current_ar > 1 :
                         nb_compact_ars[index-1] += 1
                         all_compact_ars[index-1].append(current_ar)
                         if current_ar < lbs[index-1]:
@@ -543,13 +544,56 @@ def get_best_variable_percentage(sample_size = 50):
     avgs = []
     medians = []
     maxes = []
+
+    # fig = plt.figure(figsize=(50, 20))
+    # ax1 = fig.add_subplot(111)
+    # x = [i for i in range(51)]
+    # for e in count_exp:
+    #     ar = init_ratios_per_expr[e]
+    #     max_ar = max(init_ratios_per_expr[e])
+    #     if max_ar < 1:
+    #         print("-------nocpmpact:",e, max_ar)
+    #     if len(ar) < 51 :
+    #         ar.extend([0]*(51-len(ar)))
+    #     ax1.scatter(x, ar)
+    #     ax1.plot(x, ar)
+    # plt.yscale("log")
+    # plt.ylim(0.00000001, 10)
+    # plt.show()
+    # exit(6)
+
     for adjusted_ratio_at_index in all_ars:
         avg = sum(adjusted_ratio_at_index) / len(adjusted_ratio_at_index)
         avgs.append(avg)
         median = statistics.median(adjusted_ratio_at_index)
         medians.append(median)
+
+    nb_compact_at22 = 0
+    for i,d in enumerate(all_ars[10]):
+        if d >= 1:
+            nb_compact_at22 +=1
+        else:
+            print(d, count_exp[i])
+    print(statistics.median(all_ars[11]),len(all_ars[11]), nb_compact_at22 )
+    exit(2)
+
     print("max avg: ", max(avgs), np.argmax(avgs))
-    print("max medians : ", max(medians), np.argmax(medians))
+    print("max medians : ", round( max(medians), 2), np.argmax(medians))
+
+    #calculate pearson correlation between datapoints
+    df = pd.DataFrame(all_ars, columns=[i for i in  count_exp])
+    print(df)
+    pearson_corr = df.corr()
+    round(pearson_corr, 2)
+    plt.figure(figsize=(10, 8))
+    ax = sns.heatmap(pearson_corr, cmap = 'coolwarm')
+    plt.show()
+    print(ax)
+    c = pearson_corr[pearson_corr > 0.0].count()
+    print("positively correlated ",pearson_corr[pearson_corr > 0.0].count())
+    print(100* c /123)
+    print(c.sum())
+    exit(3)
 
     fig = plt.figure(figsize=(10, 7))
     ax1 = fig.add_subplot(111)
@@ -1173,10 +1217,10 @@ def evaluate_prediction():
     print(conflict_expr_fullSB)
     # print(medium4)
     print(expr_no_init)
-    exit(3)
+    # exit(3)
 
-    # print(len(expr_no_init), len(expr_partial_sb), len(expr_full_sb), conflict_expr_fullSB)
-    # exit(6)
+    print(len(expr_no_init), len(expr_partial_sb), len(expr_full_sb), conflict_expr_fullSB)
+    exit(6)
     sorted_exprs = dict(sorted(ratios.items(), key=lambda kv: kv[1]))
     nb_expr= len(sorted_exprs)
     y = [sorted_exprs[k] for k in sorted_exprs]
@@ -1185,7 +1229,7 @@ def evaluate_prediction():
     x = [i for i in range(nb_expr)]
     ax1.bar(x, y)
     # ax1.plot(x, y)
-    plt.xlabel("Number of instances")
+    plt.xlabel("Instance number")
     plt.ylabel("Adjusted ratio improvement compared to initial compilation")
     # plt.title("")
 
@@ -1201,7 +1245,7 @@ def evaluate_prediction():
     plt.yscale("log")
     plt.grid()
     # plt.show()
-    plt.savefig("./results_aaai2/Dataset_preproc_hybrid_wmc/"  + "ratio_at_p"+str(22)+"_ordered_log.png")
+    plt.savefig("./results_aaai_final/Dataset_preproc_final_hybrid_wmc/"  + "ratio_at_p"+str(22)+"_ordered_log.png")
     partial_with_init = list(set(expr_partial_sb)-set(expr_no_init))
     print(len(sorted_exprs), len(expr_no_init), len(expr_partial_sb), len(partial_with_init))
 
@@ -1380,10 +1424,10 @@ def get_medium_instances():
 
 if __name__ == "__main__":
     # get_medium_instances()
-    # evaluate_prediction()
+    evaluate_prediction()
     # read_medium2()
     # filer_instances()
-    get_best_variable_percentage(50)
+    # get_best_variable_percentage(50)
     # write_inits()
     # plot_percentage_experiments(22)
     # log_plot_percentage_experiment(22)
