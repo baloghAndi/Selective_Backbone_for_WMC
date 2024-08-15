@@ -757,7 +757,7 @@ def run_at_p_percent_variable(alg_type, filename, seed, out_folder, obj_type, sc
         stats_file = out_folder + "dataset_stats_p_" + alg_type + "_" + str(seed) + ".csv"
     else:
         # stats_file = d + "dataset_stats_" + alg_type + ".csv"
-        stats_file = out_folder + "dataset_stats_medium3_p_" + alg_type + ".csv"
+        stats_file = out_folder + "dataset_stats_medium4_p_" + alg_type + ".csv"
     if part != "":
         stats_file = stats_file.replace(".csv", "_part"+str(part)+".csv")
     if var_percentage != 0:
@@ -819,7 +819,7 @@ if __name__ == "__main__":
     alg_type = sys.argv[4]
     part = str(sys.argv[5])
     # NO_COMPILE = False
-
+    print(d, folder)
 
     # d = "./input/Dataset_preproc/"
     # folder = d.split("/")[-2]

@@ -40,7 +40,7 @@ if __name__ == "__main__":
     nb_nodes = 0
     nb_edges = 0
     comp_time = 0
-    for line in output:sss
+    for line in output:
         if "Number of nodes:" in line:
             nb_nodes = int(line.split(" ")[-1].strip())
         elif "Number of edges:" in line:
