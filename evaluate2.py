@@ -19,6 +19,9 @@ from sklearn.metrics.pairwise import euclidean_distances, manhattan_distances
 import CNFmodelBDD as _cnfBDD
 import seaborn as sns
 
+from CNFmodelD4 import WCNF
+
+
 class Logger:
 
     def __init__(self, filename, column_names, expr_data, out_folder, compile=False):
@@ -212,6 +215,7 @@ class ExprData:
                 if len(line) == 1 or ".cnf" in line[0]: #if first line or start of new expr
                     expr_count +=1
                     line_index = 0
+                    original_expr_name = line[0]
                     save_expr_name = line[0]
                     if save_expr_name.count(".")>1:
                         save_expr_name = save_expr_name.replace(".", "_", save_expr_name.count(".")-1) #actually first . will always be ./input so should skipp that
@@ -228,7 +232,7 @@ class ExprData:
                         self.full_expr_name.pop()
                         self.no_data_expr.append(temp)
 
-                    self.full_expr_name.append(save_expr_name)
+                    self.full_expr_name.append(original_expr_name)
                     expr_short_name = save_expr_name.split("/")[-1]
                     self.exprs.append(expr_short_name) #add expr name - should only add if it has data
                     self.data = []
@@ -1130,6 +1134,57 @@ def log_plot_percentage_experiment(percent=22):
     print("no_init: ", no_init)
     print("expr_count: ", expr_count)
 
+def recreate_partial_cnf():
+    fname = "./results_aaai3/Dataset_preproc_hybrid_wmc/dataset_stats_medium3_p_dynamic_p22.csv"
+    stats_file = "./results_aaai3/Dataset_preproc_hybrid_wmc/dataset_stats_medium3_p_dynamic_p22_recreated.csv"
+    expr_data = ExprData(columns)
+    expr_data.read_stats_file(fname, full_expr_only=False, min_nb_expr=1, padding=False,filter_timeout=False,filter_conflict=False)
+
+    expr_data_recreated = ExprData(columns)
+    expr_data_recreated.read_stats_file(fname, full_expr_only=False, min_nb_expr=1, padding=False, filter_timeout=False,
+                              filter_conflict=False)
+    logger = Logger(stats_file, columns, expr_data_recreated, "./results_aaai3/Dataset_preproc_hybrid_wmc/", compile=True)
+
+    print(len(expr_data.all_expr_data))
+    var_index = columns.index("var")
+    value_index = columns.index("value")
+    obj_index = columns.index("obj")
+    WMC_index = columns.index("WMC")
+    for index, expr_name in enumerate(expr_data.all_expr_data.keys()):
+        full_expr_name = expr_data.full_expr_name[index]
+        print(full_expr_name, expr_name, expr_data.all_expr_data[expr_name])
+        #read in original cnf
+        all_start = time.perf_counter()
+        logger.log_expr(full_expr_name)
+        start = time.perf_counter()
+        logger.set_start_time(start)
+        cnf = WCNF(logger, scalar=3, NO_COMPILE=True)
+        b = cnf.load_file(full_expr_name, "hybrid_wmc", "dynamic")
+        #iterate over vars assigned to it - from index 1
+        p = 0
+        for idata in expr_data.all_expr_data[expr_name][1:]:
+            p = idata[0]
+            var = int(idata[var_index])
+            value = int(idata[value_index])
+            score = idata[obj_index]
+            if idata[WMC_index] == 0:
+                print("stop")
+                break
+            # log_line = [p, var, value, cnf.n, len(cnf.cls), "-1", "-1", "-1", "-1", "-1", "-1", score]
+            log_line = idata
+            log_line[3] = cnf.n
+            log_line[4] = len(cnf.cls)
+            logger.log(log_line)
+            cnf_file_name = cnf.instance_name.replace(".cnf", "_temp" + cnf.obj_type + cnf.heur_type + ".cnf")
+            cnf.print_clauses(cnf_file_name, cnf.cls, cnf.n)
+            print(len(cnf.cls))
+            cnf.extend_assignment( var, value, score, propagate=True)
+            print(len(cnf.cls))
+            exit(8)
+
+
+
+             #call extend on it
 
 def evaluate_prediction():
     fname = "./results_aaai2/Dataset_preproc_hybrid_wmc/ratio_at_p22_allmedium.csv"
@@ -1423,8 +1478,17 @@ def get_medium_instances():
     #4 14-16
 
 if __name__ == "__main__":
+
+    percent_expr_data = ExprData(columns)
+    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p22_details.csv"
+    percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
+                                      filter_timeout=False,
+                                      filter_conflict=False)
+    selective_backbone_line = percent_expr_data.get_line(-1)
+
     # get_medium_instances()
-    evaluate_prediction()
+    # recreate_partial_cnf()
+    # evaluate_prediction()
     # read_medium2()
     # filer_instances()
     # get_best_variable_percentage(50)

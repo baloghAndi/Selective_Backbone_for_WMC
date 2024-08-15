@@ -964,7 +964,7 @@ if __name__ == "__main__":
 
                '15_sort_num_s_4_p_t7.cnf', '15_sort_num_s_4_p_t8.cnf',
                '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_6_p_t1.cnf',
-               '15_sort_num_s_7_p_t1.cnf', ]
+               '15_sort_num_s_7_p_t1.cnf' ]
 
 
     large_instances = ['05_iscas93_s3271_bench.cnf', '05_iscas93_s3330_bench.cnf', '05_iscas93_s3384_bench.cnf', '05_iscas93_s4863_bench.cnf', '06_iscas99_b05.cnf',
