@@ -360,6 +360,8 @@ class WCNF:
             var = -var
             opp = abs(var)
         new_cls = [var]
+        if var == -730:
+            print("stop", self.instance_name)
         self.literal_clause_map[var].append(1)
         #call this if you want to save intermediate cnf files
         # fname = self.instance_name.replace(".cnf", "_x"+str(var) + ".cnf")

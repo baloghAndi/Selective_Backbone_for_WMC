@@ -549,22 +549,29 @@ def get_best_variable_percentage(sample_size = 50):
     medians = []
     maxes = []
 
-    # fig = plt.figure(figsize=(50, 20))
-    # ax1 = fig.add_subplot(111)
-    # x = [i for i in range(51)]
-    # for e in count_exp:
-    #     ar = init_ratios_per_expr[e]
-    #     max_ar = max(init_ratios_per_expr[e])
-    #     if max_ar < 1:
-    #         print("-------nocpmpact:",e, max_ar)
-    #     if len(ar) < 51 :
-    #         ar.extend([0]*(51-len(ar)))
-    #     ax1.scatter(x, ar)
-    #     ax1.plot(x, ar)
+    fig = plt.figure(figsize=(20, 10))
+    ax1 = fig.add_subplot(111)
+    x = [i for i in range(123)]
+    max_indexes = []
+    for e in count_exp:
+        ar = init_ratios_per_expr[e]
+        max_ar = max(init_ratios_per_expr[e])
+
+        index_max_ar = np.argmax(init_ratios_per_expr[e])
+        print(e, max_ar, index_max_ar)
+        max_indexes.append(index_max_ar)
+        # if max_ar < 1:
+        #     print("-------nocpmpact:",e, max_ar)
+        # if len(ar) < 51 :
+        #     ar.extend([0]*(51-len(ar)))
+        # ax1.scatter(x, ar)
+        # ax1.plot(x, ar)
+    print(max_indexes)
+    plt.scatter(x,max_indexes)
     # plt.yscale("log")
     # plt.ylim(0.00000001, 10)
-    # plt.show()
-    # exit(6)
+    plt.show()
+    exit(6)
 
     for adjusted_ratio_at_index in all_ars:
         avg = sum(adjusted_ratio_at_index) / len(adjusted_ratio_at_index)
@@ -579,7 +586,7 @@ def get_best_variable_percentage(sample_size = 50):
         else:
             print(d, count_exp[i])
     print(statistics.median(all_ars[11]),len(all_ars[11]), nb_compact_at22 )
-    exit(2)
+    # exit(2)
 
     print("max avg: ", max(avgs), np.argmax(avgs))
     print("max medians : ", round( max(medians), 2), np.argmax(medians))
@@ -1151,7 +1158,13 @@ def recreate_partial_cnf():
     obj_index = columns.index("obj")
     WMC_index = columns.index("WMC")
     for index, expr_name in enumerate(expr_data.all_expr_data.keys()):
-        full_expr_name = expr_data.full_expr_name[index]
+        full_expr_name = "./input/Dataset_preproc/"+expr_name
+        if "03_iscas85_c1355_isc" in full_expr_name:
+            full_expr_name = "./input/Dataset_preproc/03_iscas85_c1355.isc.cnf"
+        if "03_iscas85_c1908_isc" in full_expr_name:
+            full_expr_name = "./input/Dataset_preproc/03_iscas85_c1908.isc.cnf"
+        if "05_iscas93_s1269_bench" in full_expr_name:
+            full_expr_name = "./input/Dataset_preproc/05_iscas93_s1269.bench.cnf"
         print(full_expr_name, expr_name, expr_data.all_expr_data[expr_name])
         #read in original cnf
         all_start = time.perf_counter()
@@ -1168,19 +1181,16 @@ def recreate_partial_cnf():
             value = int(idata[value_index])
             score = idata[obj_index]
             if idata[WMC_index] == 0:
-                print("stop")
+                print("stop", expr_name)
                 break
             # log_line = [p, var, value, cnf.n, len(cnf.cls), "-1", "-1", "-1", "-1", "-1", "-1", score]
+            cnf.extend_assignment( var, value, score, propagate=True)
             log_line = idata
             log_line[3] = cnf.n
             log_line[4] = len(cnf.cls)
             logger.log(log_line)
-            cnf_file_name = cnf.instance_name.replace(".cnf", "_temp" + cnf.obj_type + cnf.heur_type + ".cnf")
+            cnf_file_name = cnf.instance_name.replace(".cnf", "_temp" + cnf.obj_type + cnf.heur_type + "_partialSB.cnf")
             cnf.print_clauses(cnf_file_name, cnf.cls, cnf.n)
-            print(len(cnf.cls))
-            cnf.extend_assignment( var, value, score, propagate=True)
-            print(len(cnf.cls))
-            exit(8)
 
 
 
@@ -1275,7 +1285,7 @@ def evaluate_prediction():
     # exit(3)
 
     print(len(expr_no_init), len(expr_partial_sb), len(expr_full_sb), conflict_expr_fullSB)
-    exit(6)
+    # exit(6)
     sorted_exprs = dict(sorted(ratios.items(), key=lambda kv: kv[1]))
     nb_expr= len(sorted_exprs)
     y = [sorted_exprs[k] for k in sorted_exprs]
@@ -1287,6 +1297,11 @@ def evaluate_prediction():
     plt.xlabel("Instance number")
     plt.ylabel("Adjusted ratio improvement compared to initial compilation")
     # plt.title("")
+
+    print(statistics.median(y))
+    print(len(y))
+
+    exit(8)
 
     # ax1.plot(x, list(sorted_exprs.value()))
     # ax1.scatter(instance_sizes, y)
@@ -1477,17 +1492,16 @@ def get_medium_instances():
     #3 11-13
     #4 14-16
 
+def update_SB_file():
+    #run one iteration of SB - print in a csv
+   pass
+
+
 if __name__ == "__main__":
 
-    percent_expr_data = ExprData(columns)
-    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p22_details.csv"
-    percent_expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
-                                      filter_timeout=False,
-                                      filter_conflict=False)
-    selective_backbone_line = percent_expr_data.get_line(-1)
 
     # get_medium_instances()
-    # recreate_partial_cnf()
+    recreate_partial_cnf()
     # evaluate_prediction()
     # read_medium2()
     # filer_instances()
