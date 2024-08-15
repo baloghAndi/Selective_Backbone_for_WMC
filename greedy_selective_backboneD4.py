@@ -1004,7 +1004,7 @@ if __name__ == "__main__":
                        '11_emptyroom_d28_g14_corners_p_t5.cnf', '11_emptyroom_d28_g14_corners_p_t6.cnf', '11_emptyroom_d28_g14_corners_p_t7.cnf', '11_emptyroom_d28_g14_corners_p_t8.cnf',
                        '11_emptyroom_d28_g14_corners_p_t9.cnf', '14_safe_safe_30_p_t10.cnf', '15_sort_num_s_4_p_t10.cnf', '16_uts_k2_p_t10.cnf']
 
-    medium4 = ['04_iscas89_s1494_bench.cnf', '04_iscas89_s820_bench.cnf', '04_iscas89_s832_bench.cnf', '04_iscas89_s953_bench.cnf', '05_iscas93_s967_bench.cnf' ]
+    medium4 = ['04_iscas89_s1494.bench.cnf', '04_iscas89_s820.bench.cnf', '04_iscas89_s832.bench.cnf', '04_iscas89_s953.bench.cnf', '05_iscas93_s967.bench.cnf' ]
 
     medium_part2 = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf', '05_iscas93_s1269_bench.cnf',
                     '06_iscas99_b04.cnf', '06_iscas99_b11.cnf', '07_blocks_right_3_p_t5.cnf', '07_blocks_right_4_p_t3.cnf',
