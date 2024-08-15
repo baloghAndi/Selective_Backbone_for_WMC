@@ -254,18 +254,26 @@ def dynamic_greedy_pWSB_at_variable_percent(csp, max_p, obj_type,logger, NO_COMP
         best_variable, best_value, best_cost, best_size, best_node_count, mc, wmc = get_best_assignment(csp,obj_type, NO_COMPILE,logger)
         print("assign ",p , best_variable, best_value, best_cost, wmc, mc)
         elapsed = logger.get_time_elapsed()
-        log_line = [p, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, wmc, -1, best_cost]
-        logger.log(log_line)
+
         if wmc == 0  or wmc == -1:
+            logger.log( ["failed with wmc "+str(wmc)] )
+            cnf_file_name = csp.instance_name.replace(".cnf","_temp" + csp.obj_type + csp.heur_type + "_22percent_medium4_partialSB.cnf")
+            csp.print_clauses(cnf_file_name, csp.cls, csp.n)
+            log_line = [p, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, wmc,-1,best_cost]
+            logger.log(log_line)
             print("expr failed")
             exit(22)
 
+
         csp.extend_assignment( best_variable,best_value, abs(best_cost), propagate=True )
+        log_line = [p, best_variable, best_value, csp.n, len(csp.cls), mc, best_size, best_node_count, elapsed, wmc, -1,
+                    best_cost]
+        logger.log(log_line)
 
-    best_variable, best_value, best_cost, best_size, best_node_count, mc, wmc = get_best_assignment(csp,obj_type, NO_COMPILE,logger)
-    print("assign ",p , best_variable, best_value, best_cost, wmc, mc)
+    # best_variable, best_value, best_cost, best_size, best_node_count, mc, wmc = get_best_assignment(csp,obj_type, NO_COMPILE,logger)
+    # print("assign ",p , best_variable, best_value, best_cost, wmc, mc)
 
-    cnf_file_name = csp.instance_name.replace(".cnf", "_temp" + csp.obj_type + csp.heur_type + "_22percent_medium3.cnf")
+    cnf_file_name = csp.instance_name.replace(".cnf", "_temp" + csp.obj_type + csp.heur_type + "_22percent_medium4.cnf")
     csp.print_clauses(cnf_file_name, csp.cls, csp.n)
 
     # csp.extend_assignment(best_variable, best_value, abs(best_cost), propagate=True)
@@ -996,12 +1004,7 @@ if __name__ == "__main__":
                        '11_emptyroom_d28_g14_corners_p_t5.cnf', '11_emptyroom_d28_g14_corners_p_t6.cnf', '11_emptyroom_d28_g14_corners_p_t7.cnf', '11_emptyroom_d28_g14_corners_p_t8.cnf',
                        '11_emptyroom_d28_g14_corners_p_t9.cnf', '14_safe_safe_30_p_t10.cnf', '15_sort_num_s_4_p_t10.cnf', '16_uts_k2_p_t10.cnf']
 
-    medium4 = [ '15_sort_num_s_7_p_t1.cnf',
-        '04_iscas89_s1494_bench.cnf', '04_iscas89_s820_bench.cnf', '04_iscas89_s832_bench.cnf', '04_iscas89_s953_bench.cnf',
-               '05_iscas93_s967_bench.cnf',
-               '07_blocks_right_2_p_t5.cnf', '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t8.cnf', '07_blocks_right_3_p_t5.cnf',
-               '07_blocks_right_5_p_t2.cnf',
-               '13_ring2_r6_p_t9.cnf', '13_ring_5_p_t6.cnf']
+    medium4 = ['04_iscas89_s1494_bench.cnf', '04_iscas89_s820_bench.cnf', '04_iscas89_s832_bench.cnf', '04_iscas89_s953_bench.cnf', '05_iscas93_s967_bench.cnf' ]
 
     medium_part2 = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf', '05_iscas93_s1269_bench.cnf',
                     '06_iscas99_b04.cnf', '06_iscas99_b11.cnf', '07_blocks_right_3_p_t5.cnf', '07_blocks_right_4_p_t3.cnf',
@@ -1020,14 +1023,14 @@ if __name__ == "__main__":
     filename_only  = filename.split("/")[-1]
     if filename_only.count(".") > 1:
         filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
-    if filename_only not in medium3:
+    if filename_only not in medium4:
         print('skip ', filename_only)
         exit(2)
     print("processing ", filename_only)
 
     # run(alg_type, d, filename,  seed)
     # out_folder = "./results_nocompile/" + folder + "_" + inobj + "/"
-    out_folder = "./results_aaai3/" + folder + "_" + inobj + "/"
+    out_folder = "./results_aaai4/" + folder + "_" + inobj + "/"
     # out_folder = "./results/" + folder + "_NO_COMPILE_2_" + inobj + "/"
 
 

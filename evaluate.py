@@ -2021,6 +2021,7 @@ def sample_data(data, smallest_n):
     # print(len(data),smallest_n)
     #return false in case there is less data then smallest n . smallest n is smallest nb variables, there can be less data in case exprs didn't finish
     return [data[int((i*n)/smallest_n)] for i in range(smallest_n)], n >= smallest_n
+
 def create_best_ratio_table(out_folder, folders, labels,aggregate ):
     f = open(out_folder, "a+")
     writer = csv.writer(f, delimiter=',')
@@ -3401,14 +3402,31 @@ def best_ratio_per_alg(folders, labels, columns, subfolder="", overlap=True):
     # for e in all_exprs:
     #     print(e, "FOLDER: ",  best_ratio_per_instance[e]['f'], "LABEL: ", best_ratio_per_instance[e]['l'] ,  best_ratio_per_instance[e]['ratio'] ,  best_ratio_per_instance[e]['location'] ) #best_ratio_per_instance[e]['ratio'] , best_ratio_per_instance[e]['stats']['init_WMC'] /  best_ratio_per_instance[e]['stats']['init_size']  )
     # stat_count = 0
-    # for e in best_ratio_per_instance.keys():
-    #     best_f = best_ratio_per_instance[e]['f']
-    #     best_l = best_ratio_per_instance[e]['l']
-    #     if best_f == folders[1]:
-    #         if best_l == "static" and algs_stats[best_f]["dynamic"][e]['ratio'] < best_ratio_per_instance[e]['ratio']:
-    #                 stat_count+=1
-    #                 print(e, best_ratio_per_instance[e]['ratio'], algs_stats[best_f]["dynamic"][e]['ratio'] )
-    # print(stat_count)
+    print("--------------------------------")
+    print(len(best_ratio_per_instance))
+    eliminate_expr = []
+    for e in best_ratio_per_instance.keys():
+        # print(e, best_ratio_per_instance[e] )
+        best_f = best_ratio_per_instance[e]['f']
+        best_l = best_ratio_per_instance[e]['l']
+        print(best_f, best_l)
+        if len(best_f) > 1:
+            eliminate_expr.append(e)
+
+    for e in eliminate_expr:
+        del best_ratio_per_instance[e]
+
+    print(eliminate_expr)
+    print(len(best_ratio_per_instance), len(eliminate_expr))
+    best_noduplicate_alg_count = { f.split("_")[-1] + "_" + l: 0 for f in folders for l in labels if not (('rand_dynamic' in f or 'hybrid_wmc' in f ) and l == 'static') }
+    for e in best_ratio_per_instance.keys():
+        best_f = best_ratio_per_instance[e]['f']
+        best_l = best_ratio_per_instance[e]['l']
+        key= best_f[0].split("_")[-1] + "_" + best_l[0]
+        best_noduplicate_alg_count[key] += 1
+
+    print(best_noduplicate_alg_count)
+
     
 
 
@@ -4723,12 +4741,11 @@ if __name__ == "__main__":
                       result_folder + FOLDER + "_wscore_half/",
                     result_folder + FOLDER + "_hybrid_wmc/",
                       result_folder + FOLDER + "_rand_dynamic/"]
-    #todo: READ NUMBER OF MODELS FOR EACH INIT INSTANCE
 
-    create_percent_of_assigned_table_d4(expr_folders, alg_types, columns, nocompile=False, cutoff={})
-    exit(4)
+    # create_percent_of_assigned_table_d4(expr_folders, alg_types, columns, nocompile=False, cutoff={})
+    # exit(4)
 
-    # best_ratio_per_alg(expr_folders, alg_types, columns, "", overlap=False)
+    best_ratio_per_alg(expr_folders, alg_types, columns, "", overlap=False)
     exit(5)
     # ----------------------percent of vars assinged  table ---------------------------
 

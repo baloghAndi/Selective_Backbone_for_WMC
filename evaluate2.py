@@ -550,29 +550,29 @@ def get_best_variable_percentage(sample_size = 50):
     medians = []
     maxes = []
 
-    fig = plt.figure(figsize=(20, 10))
-    ax1 = fig.add_subplot(111)
-    x = [i for i in range(123)]
-    max_indexes = []
-    for e in count_exp:
-        ar = init_ratios_per_expr[e]
-        max_ar = max(init_ratios_per_expr[e])
-
-        index_max_ar = np.argmax(init_ratios_per_expr[e])
-        print(e, max_ar, index_max_ar)
-        max_indexes.append(index_max_ar)
-        # if max_ar < 1:
-        #     print("-------nocpmpact:",e, max_ar)
-        # if len(ar) < 51 :
-        #     ar.extend([0]*(51-len(ar)))
-        # ax1.scatter(x, ar)
-        # ax1.plot(x, ar)
-    print(max_indexes)
-    plt.scatter(x,max_indexes)
-    # plt.yscale("log")
-    # plt.ylim(0.00000001, 10)
-    plt.show()
-    exit(6)
+    # fig = plt.figure(figsize=(20, 10))
+    # ax1 = fig.add_subplot(111)
+    # x = [i for i in range(123)]
+    # max_indexes = []
+    # for e in count_exp:
+    #     ar = init_ratios_per_expr[e]
+    #     max_ar = max(init_ratios_per_expr[e])
+    #
+    #     index_max_ar = np.argmax(init_ratios_per_expr[e])
+    #     print(e, max_ar, index_max_ar)
+    #     max_indexes.append(index_max_ar)
+    #     # if max_ar < 1:
+    #     #     print("-------nocpmpact:",e, max_ar)
+    #     # if len(ar) < 51 :
+    #     #     ar.extend([0]*(51-len(ar)))
+    #     # ax1.scatter(x, ar)
+    #     # ax1.plot(x, ar)
+    # print(max_indexes)
+    # plt.scatter(x,max_indexes)
+    # # plt.yscale("log")
+    # # plt.ylim(0.00000001, 10)
+    # plt.show()
+    # exit(6)
 
     for adjusted_ratio_at_index in all_ars:
         avg = sum(adjusted_ratio_at_index) / len(adjusted_ratio_at_index)
@@ -588,24 +588,24 @@ def get_best_variable_percentage(sample_size = 50):
             print(d, count_exp[i])
     print(statistics.median(all_ars[11]),len(all_ars[11]), nb_compact_at22 )
     # exit(2)
-
-    print("max avg: ", max(avgs), np.argmax(avgs))
-    print("max medians : ", round( max(medians), 2), np.argmax(medians))
-
-    #calculate pearson correlation between datapoints
-    df = pd.DataFrame(all_ars, columns=[i for i in  count_exp])
-    print(df)
-    pearson_corr = df.corr()
-    round(pearson_corr, 2)
-    plt.figure(figsize=(10, 8))
-    ax = sns.heatmap(pearson_corr, cmap = 'coolwarm')
-    plt.show()
-    print(ax)
-    c = pearson_corr[pearson_corr > 0.0].count()
-    print("positively correlated ",pearson_corr[pearson_corr > 0.0].count())
-    print(100* c /123)
-    print(c.sum())
-    exit(3)
+    #
+    # print("max avg: ", max(avgs), np.argmax(avgs))
+    # print("max medians : ", round( max(medians), 2), np.argmax(medians))
+    #
+    # #calculate pearson correlation between datapoints
+    # df = pd.DataFrame(all_ars, columns=[i for i in  count_exp])
+    # print(df)
+    # pearson_corr = df.corr()
+    # round(pearson_corr, 2)
+    # plt.figure(figsize=(10, 8))
+    # ax = sns.heatmap(pearson_corr, cmap = 'coolwarm')
+    # plt.show()
+    # print(ax)
+    # c = pearson_corr[pearson_corr > 0.0].count()
+    # print("positively correlated ",pearson_corr[pearson_corr > 0.0].count())
+    # print(100* c /123)
+    # print(c.sum())
+    # exit(3)
 
     fig = plt.figure(figsize=(10, 7))
     ax1 = fig.add_subplot(111)
@@ -614,7 +614,7 @@ def get_best_variable_percentage(sample_size = 50):
     ax1.plot(x, medians)
     plt.grid()
     plt.xlabel("Percent of variables assigned")
-    plt.ylabel("Adjusted ratio of hybrid_WMC ")
+    plt.ylabel("Median adjusted ratio of hybrid_WMC ") #TODO: redo
     plt.xticks([i for i in range(0,len(medians)+1,5)], [i*2 for i in range(0,len(medians)+1,5)])
     # plt.show()
     plt.savefig("./results_aaai_final/identify_22p.png")
@@ -1150,7 +1150,7 @@ def log_plot_percentage_experiment(percent=22):
 
 def recreate_partial_cnf():
     fname = "./results_aaai3/Dataset_preproc_hybrid_wmc/dataset_stats_medium3_p_dynamic_p22.csv"
-    stats_file = "./results_aaai3/Dataset_preproc_hybrid_wmc/dataset_stats_medium3_p_dynamic_p22_recreated.csv"
+    stats_file = "./results_aaai3/Dataset_preproc_hybrid_wmc/dataset_stats_medium3_p_dynamic_p22_recreated_temp.csv"
     expr_data = ExprData(columns)
     expr_data.read_stats_file(fname, full_expr_only=False, min_nb_expr=1, padding=False,filter_timeout=False,filter_conflict=False)
 
@@ -1173,6 +1173,8 @@ def recreate_partial_cnf():
         if "05_iscas93_s1269_bench" in full_expr_name:
             full_expr_name = "./input/Dataset_preproc/05_iscas93_s1269.bench.cnf"
         print(full_expr_name, expr_name, expr_data.all_expr_data[expr_name])
+        if "15_sort_num_s_5_p_t2" in full_expr_name:
+            print("stop")
         #read in original cnf
         all_start = time.perf_counter()
         logger.log_expr(full_expr_name)
@@ -1182,6 +1184,7 @@ def recreate_partial_cnf():
         b = cnf.load_file(full_expr_name, "hybrid_wmc", "dynamic")
         #iterate over vars assigned to it - from index 1
         p = 0
+
         for idata in expr_data.all_expr_data[expr_name][1:]:
             p = idata[0]
             var = int(idata[var_index])
@@ -1197,32 +1200,49 @@ def recreate_partial_cnf():
             log_line[4] = len(cnf.cls)
             logger.log(log_line)
             cnf_file_name = cnf.instance_name.replace(".cnf", "_temp" + cnf.obj_type + cnf.heur_type + "_partialSB.cnf")
-            cnf.print_clauses(cnf_file_name, cnf.cls, cnf.n)
+            # cnf.print_clauses(cnf_file_name, cnf.cls, cnf.n)
 
 
 
              #call extend on it
 
 def evaluate_prediction():
-    fname = "./results_aaai2/Dataset_preproc_hybrid_wmc/ratio_at_p22_allmedium.csv"
+    medium3_partialSB = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '05_iscas93_s1269_bench.cnf',
+               '06_iscas99_b04.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf',
+               '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t5.cnf',
+               '07_blocks_right_2_p_t8.cnf', '07_blocks_right_3_p_t5.cnf', '07_blocks_right_5_p_t2.cnf',
+               '07_blocks_right_6_p_t1.cnf',
+               '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t9.cnf',
+               '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t8.cnf', '13_ring2_r8_p_t9.cnf', '13_ring_5_p_t10.cnf',
+               '13_ring_5_p_t6.cnf',
+               '15_sort_num_s_4_p_t7.cnf', '15_sort_num_s_4_p_t8.cnf',
+               '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_6_p_t1.cnf',
+               '15_sort_num_s_7_p_t1.cnf']
+    fname = "./results_aaai_final/Dataset_preproc_final_hybrid_wmc/ratio_at_p22_allmedium.csv"
     f = open(fname, "r")
     # fname_pSB = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_partialSB.csv"
     # partial_SB = read_compilation_file(fname_pSB)
     percent_compilations = {}
     all_sb_compilation = {}
     all_init_compilation = {}
-    # all_partial_compilation = {}
+    all_partial_compilation = {}
     expr_full_sb = []
     expr_no_init = []
     expr_partial_sb = []
     nb_vars_index = columns.index("nb_vars")
     wmc_index = columns.index("WMC")
     size_index = columns.index("edge_count")
+
     while True:
-        expr_name = f.readline().strip()
+        expr_name = f.readline()
+        if not expr_name: break
+        expr_name = expr_name.split(",")[0].strip()
+        # if "16_uts_k5_p_t1" in expr_name:
+        #     print(expr_name)
+        expr_name = eval(expr_name)
         cols = f.readline()
-        temp_init_compilation = f.readline()
-        temp_sb_compilation = f.readline()
+        temp_init_compilation = f.readline().strip()
+        temp_sb_compilation = f.readline().strip()
         if not temp_sb_compilation: break  # EOF
         sb_compilation = []
         init_compilation = []
@@ -1241,21 +1261,28 @@ def evaluate_prediction():
 
         if init_compilation[wmc_index] == -1: #no init compilation - ignore these
             expr_no_init.append(expr_name)
-        if sb_compilation[wmc_index] > -1 and round( (sb_compilation[0]*100)/sb_compilation[nb_vars_index]) == 22:
-            expr_full_sb.append(expr_name)
-        else: #partial SB
-            expr_partial_sb.append(expr_name)
-            if sb_compilation[0] == -1:
-                print("no compilation at all: ", expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
-                # if expr_name in medium_part2:
-                #     print("second part")
-            else:
-                print("partial:", expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
-            # if expr_name in partial_SB:
-            #     print("partial_SB: ", expr_name)
-            #     all_partial_compilation[expr_name] = partial_SB[expr_name]
-    print(expr_no_init)
+        else:
+            if sb_compilation[wmc_index] > -1 and round( (sb_compilation[0]*100)/sb_compilation[nb_vars_index]) == 22:
+                expr_full_sb.append(expr_name)
+            else: #partial SB
+                expr_partial_sb.append(expr_name)
+                if sb_compilation[0] == -1:
+                    print("no compilation at all: ", expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
+                    # if expr_name in medium_part2:
+                    #     print("second part")
+                else:
+                    print("partial:", expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
+                    if expr_name not in medium3_partialSB:
+                        print("weird")
+                        exit(6)
+                # if expr_name in partial_SB:
+                #     print("partial_SB: ", expr_name)
+                #     all_partial_compilation[expr_name] = partial_SB[expr_name]
+    print(expr_no_init, len(expr_no_init))
+    print(expr_partial_sb, len(expr_partial_sb))
+    print(len(expr_full_sb))
 
+    all_ratios={}
     ratios={}
     conflict_expr_fullSB = 0
     # medium3 = []
@@ -1266,7 +1293,7 @@ def evaluate_prediction():
     #             medium3.append(e)
     #     else:
     #         print("---------------------",e)
-    medium4 = []
+    conflict_fullSB = []
     for e in expr_full_sb:
         init_ratio = all_init_compilation[e][wmc_index] / all_init_compilation[e][size_index]
         if all_sb_compilation[e][size_index] == 0:
@@ -1276,7 +1303,7 @@ def evaluate_prediction():
             #     print("part 2")
             current_ratio = 0
             conflict_expr_fullSB += 1
-            medium4.append(e)
+            conflict_fullSB.append(e)
             # if e in medium_instances:
             #     if e not in medium3:
             #         medium3.append(e)
@@ -1285,30 +1312,39 @@ def evaluate_prediction():
 
         ar = current_ratio / init_ratio
         ratios[e]=ar
-    # print("m3", len(medium3), sorted(medium3))
-    print(conflict_expr_fullSB)
-    # print(medium4)
-    print(expr_no_init)
-    # exit(3)
+        all_ratios[e] = ar
 
-    print(len(expr_no_init), len(expr_partial_sb), len(expr_full_sb), conflict_expr_fullSB)
-    # exit(6)
-    sorted_exprs = dict(sorted(ratios.items(), key=lambda kv: kv[1]))
+    print(len(conflict_fullSB))
+    print(conflict_fullSB)
+    exit(8)
+
+    partial_ratios = {}
+    for e in expr_partial_sb:
+        init_ratio = all_init_compilation[e][wmc_index] / all_init_compilation[e][size_index]
+        current_ratio = all_sb_compilation[e][wmc_index] / all_sb_compilation[e][size_index]
+
+        ar = current_ratio / init_ratio
+        partial_ratios[e] = ar
+        all_ratios[e] = ar
+
+    sorted_exprs = dict(sorted(all_ratios.items(), key=lambda kv: kv[1]))
     nb_expr= len(sorted_exprs)
     y = [sorted_exprs[k] for k in sorted_exprs]
+    colors = ["blue" if e in expr_full_sb else "orange" for e in sorted_exprs ]
     fig = plt.figure(figsize=(10, 7))
     ax1 = fig.add_subplot(111)
     x = [i for i in range(nb_expr)]
-    ax1.bar(x, y)
+
+    ax1.bar(x, y, color=colors)
+
     # ax1.plot(x, y)
     plt.xlabel("Instance number")
-    plt.ylabel("Adjusted ratio improvement compared to initial compilation")
+    plt.ylabel("Adjusted ratio") #TODO: redo
     # plt.title("")
 
     print(statistics.median(y))
     print(len(y))
 
-    exit(8)
 
     # ax1.plot(x, list(sorted_exprs.value()))
     # ax1.scatter(instance_sizes, y)
@@ -1325,7 +1361,10 @@ def evaluate_prediction():
     plt.savefig("./results_aaai_final/Dataset_preproc_final_hybrid_wmc/"  + "ratio_at_p"+str(22)+"_ordered_log.png")
     partial_with_init = list(set(expr_partial_sb)-set(expr_no_init))
     print(len(sorted_exprs), len(expr_no_init), len(expr_partial_sb), len(partial_with_init))
-
+    print("number of instances that reached 22 percent compilation but got into conflict: ", conflict_expr_fullSB)
+    print("median", statistics.median(y))
+    compactnb =  sum(i > 1 for i in y)
+    print(compactnb, 100* round(compactnb/nb_expr, 2))
 
 def count_hybrid_call():
     filename = "./results_aaai2/Dataset_preproc_hybrid_wmc/dataset_stats_p_dynamic.txt"
@@ -1509,7 +1548,7 @@ if __name__ == "__main__":
 
     # get_medium_instances()
     # recreate_partial_cnf()
-    # evaluate_prediction()
+    evaluate_prediction()
     # read_medium2()
     # filer_instances()
     # get_best_variable_percentage(50)
