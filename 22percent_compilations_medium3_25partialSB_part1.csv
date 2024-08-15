@@ -1,0 +1,12 @@
+./input/Dataset_preproc/03_iscas85_c1355.isc_temphybrid_wmcdynamic_partialSB.cnf
+0,-1,-1,-1,-1,-1,25323932,24341342,115.677493,7.389614711149157e+67,0,0
+./input/Dataset_preproc/03_iscas85_c1908.isc_temphybrid_wmcdynamic_partialSB.cnf
+0,-1,-1,-1,-1,-1,35558085,34867910,122.640053,2.0373056033394994e+77,0,0
+./input/Dataset_preproc/05_iscas93_s1269.bench_temphybrid_wmcdynamic_partialSB.cnf
+0,-1,-1,-1,-1,-1,7360945,6995015,30.949232,3.4740366023768696e+76,0,0
+./input/Dataset_preproc/06_iscas99_b04_temphybrid_wmcdynamic_partialSB.cnf
+0,-1,-1,-1,-1,-1,229113445,219141771,914.491845,9.138163834438072e+99,0,0
+./input/Dataset_preproc/16_uts_k2_p_t7_temphybrid_wmcdynamic_partialSB.cnf
+0,-1,-1,-1,-1,-1,120524876,109953041,522.25166,6.197393170061633e+86,0,0
+./input/Dataset_preproc/16_uts_k2_p_t8_temphybrid_wmcdynamic_partialSB.cnf
+0,-1,-1,-1,-1,-1,53965081,49324751,294.333471,1.91991049327368e+94,0,0
