@@ -1021,8 +1021,8 @@ if __name__ == "__main__":
                     '16_uts_k3_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k4_p_t2.cnf']
 
     filename_only  = filename.split("/")[-1]
-    #if filename_only.count(".") > 1:
-    #    filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
+    # if filename_only.count(".") > 1:
+    #     filename_only = filename_only.replace(".", "_", filename_only.count(".") - 1)
     if filename_only not in medium4:
         print('skip ', filename_only)
         exit(2)
