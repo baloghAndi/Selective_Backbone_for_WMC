@@ -1714,13 +1714,14 @@ def average_ratio(folders, outputfile, title, labels, min_n, columns, obj, paddi
     # labels = [s.replace("_1234", "") for s in labels]
     # labels[2] = "random_selection_ratio"
     plt.xlabel("Percentage of selective backbone size")
-    if obj == "WMC":
-        if median:
-            plt.ylabel("Median of WMC/size ratio percentage wrt initial ratio")
-        else:
-            plt.ylabel("Average of WMC/size ratio percentage wrt initial ratio")
-    else:
-        plt.ylabel("Average of MC/size ratio percentage wrt initial ratio")
+    plt.ylabel("Median of adjusted ratio")
+    # if obj == "WMC":
+    #     if median:
+    #         plt.ylabel("Median of WMC/size ratio percentage wrt initial ratio")
+    #     else:
+    #         plt.ylabel("Average of WMC/size ratio percentage wrt initial ratio")
+    # else:
+    #     plt.ylabel("Average of MC/size ratio percentage wrt initial ratio")
     index = 0
 
     for f in folders:
@@ -3314,7 +3315,7 @@ def plot_percentage_of_assigned_backbones(folder, labels, columns,filter_timeout
     # file = folder + "percentage_of_completion_"+type+".png"
     file = folder + "percentage_of_backbone_all.png"
     plt.savefig(file)
-def best_ratio_per_alg(folders, labels, columns, subfolder=""):
+def best_ratio_per_alg(folders, labels, columns, subfolder="", overlap=True):
     algs_stats = {f : {l: [] for l in labels if not (('rand_dynamic' in f or 'hybrid_wmc' in f ) and l == 'static')} for f in folders }
     algs_ratios = {f : {l: [] for l in labels if not (('rand_dynamic' in f or 'hybrid_wmc' in f ) and l == 'static')} for f in folders }
     best_alg_count = { f.split("_")[-1] + "_" + l: 0 for f in folders for l in labels if not (('rand_dynamic' in f or 'hybrid_wmc' in f ) and l == 'static') }
@@ -4001,11 +4002,22 @@ def create_percent_of_assigned_table_d4(folders, labels, columns, nocompile=Fals
                 expr_data.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=0, padding=False,
                                       filter_timeout=False, filter_conflict=False)
             print("========", folder, type, len(expr_data.all_expr_data))
+            if "hybrid" in folder:
+                print("stop")
+                finised = 0
+                last_line = expr_data.get_line(-1)
+                for e in last_line.keys():
+                    if e in ecai23:
+                        if last_line[e][0] ==  last_line[e][3]:
+                            finised+=1
+                        else:
+                            print("not finished ", e)
+                print(finised)
             nb_assigned_vars_data[folder][type] = expr_data.nb_completed_assignments
             if type == "static" and "_WMC" in folder:
                 print(folder)
                 print(expr_data.nb_completed_assignments)
-                exit(88)
+                # exit(88)
             nb_vars_col_index = expr_data.column_names.index("nb_vars")
             if len(nb_vars_data) == 0:
                 nb_vars_data = { e : expr_data.all_expr_data[e][0][nb_vars_col_index] for e in expr_data.all_expr_data}
@@ -4626,10 +4638,11 @@ if __name__ == "__main__":
     # alg_types = [  "dynamic" , "static"]
     # FOLDER = "Dataset_preproc"
     # result_folder = "./results_aaai2/"
-    result_folder = "./results/"
+    result_folder = "./results_aaai_final/"
     # FOLDER = "Dataset_preproc_final"
     FOLDER = "Dataset_preproc_NO_COMPILE"
-    HEUR_NAMES = {"MC/": "actual_MC", "WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random", "hybrid_wmc/": "hybrid_wmc"}
+    HEUR_NAMES = {"MC/": "actual_MC", "WMC/": "actual_WMC", "half/": "relative_weight", "estimate/": "estimated_WMC", "random":"random",
+                  "hybrid_wmc/": "hybrid_WMC"}
     # FOLDER = "Dataset_preproc_part2"
     # expr_folders =  [  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [ "./results/"+FOLDER+"_WMC/",  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
@@ -4637,7 +4650,8 @@ if __name__ == "__main__":
     # expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
     # expr_folders =  [  result_folder+FOLDER+"_hybrid_wmc/" ]#,  "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
 
-    expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" , result_folder+FOLDER+"_wscore_half/" , result_folder+FOLDER+"_hybrid_wmc/" ,  result_folder+FOLDER+"_rand_dynamic/" ]
+    expr_folders =  [ result_folder+FOLDER+"_WMC/", result_folder+FOLDER+"_wscore_estimate/" , result_folder+FOLDER+"_wscore_half/" ,
+                      result_folder+FOLDER+"_hybrid_wmc/" ,  result_folder+FOLDER+"_rand_dynamic/" ]
     # expr_folders =  [ result_folder+FOLDER+"_hybrid_wmc/" , result_folder+FOLDER+"_rand_dynamic/" ]
 
     # expr_folders =  [ "./results/"+FOLDER+"_wscore_half/", "./results/"+FOLDER+"_wscore_estimate/",  "./results/"+FOLDER+"_rand_dynamic/"]
@@ -4709,13 +4723,15 @@ if __name__ == "__main__":
                       result_folder + FOLDER + "_wscore_half/",
                     result_folder + FOLDER + "_hybrid_wmc/",
                       result_folder + FOLDER + "_rand_dynamic/"]
+    #todo: READ NUMBER OF MODELS FOR EACH INIT INSTANCE
 
-    # create_percent_of_assigned_table_d4(expr_folders, alg_types, columns, nocompile=False, cutoff={})
-    # exit(4)
+    create_percent_of_assigned_table_d4(expr_folders, alg_types, columns, nocompile=False, cutoff={})
+    exit(4)
 
-    best_ratio_per_alg(expr_folders, alg_types, columns, "")
+    # best_ratio_per_alg(expr_folders, alg_types, columns, "", overlap=False)
     exit(5)
     # ----------------------percent of vars assinged  table ---------------------------
+
 
     subfolder = ""
     # obj = "MC"

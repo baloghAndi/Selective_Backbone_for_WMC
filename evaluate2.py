@@ -20,6 +20,7 @@ import CNFmodelBDD as _cnfBDD
 import seaborn as sns
 
 from CNFmodelD4 import WCNF
+from evaluate import ecai23
 
 
 class Logger:
@@ -695,6 +696,12 @@ def plot_percentage_experiments(percent=8):
     for e in init_compilations:
         if e not in medium_instances:
             c+=1
+    ecai23_init = []
+    for e in init_compilations:
+        if e in ecai23:
+            ecai23_init.append(init_compilations[e][columns.index("MC")])
+    print(min(ecai23_init), max(ecai23_init), sum(ecai23_init)/len(ecai23_init), statistics.median(ecai23_init), len(ecai23_init))
+    exit(12)
 
     # f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/" + str(percent)+"percent_compilations.csv", "r")
     f = open("./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_medium_nofullsb.csv", "r")
@@ -1498,14 +1505,15 @@ def update_SB_file():
 
 
 if __name__ == "__main__":
-
+    # plot_percentage_experiments()
 
     # get_medium_instances()
-    recreate_partial_cnf()
+    # recreate_partial_cnf()
     # evaluate_prediction()
     # read_medium2()
     # filer_instances()
     # get_best_variable_percentage(50)
+
     # write_inits()
     # plot_percentage_experiments(22)
     # log_plot_percentage_experiment(22)
