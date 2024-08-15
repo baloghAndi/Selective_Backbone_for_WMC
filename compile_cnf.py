@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     cnf_file =  sys.argv[1]
     part = sys.argv[2]
-    stats_file = "./22percent_compilations_medium3_25partialSB.csv"
+    stats_file = "./22percent_compilations_medium4_25partialSB.csv"
     if part != "":
         stats_file = "./22percent_compilations_medium3_25partialSB_part"+str(part)+".csv"
 # error_file = "./22percent_compilations_medium3_error.txt"
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     # error_writer.writerow([cnf_file])
     weights_file = cnf_file.replace(".cnf", "_w3.w" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
     #weights_file =  weights_file.replace("./", "../../../input/Dataset_preproc/")   
-    weights_file = weights_file.replace("_temphybrid_wmcdynamic_partialSB", "" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
+    weights_file = weights_file.replace("temphybrid_wmcdynamic_p_22percent_medium4_partialSBs", "" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
     # if "error" in weights_file:
     #     weights_file = weights_file.split("_error")[0]+"_w3.w"
         #weights_file = weights_file.replace("temp_sb_comp/", "")
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     nb_nodes = 0
     nb_edges = 0
     comp_time = 0
-    for line in output:
+    for line in output:sss
         if "Number of nodes:" in line:
             nb_nodes = int(line.split(" ")[-1].strip())
         elif "Number of edges:" in line:
