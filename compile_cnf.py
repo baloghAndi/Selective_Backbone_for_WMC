@@ -10,9 +10,11 @@ if __name__ == "__main__":
                "obj"]
 
     cnf_file =  sys.argv[1]
-    #part = sys.argv[2]
+    part = sys.argv[2]
     stats_file = "./22percent_compilations_medium3_25partialSB.csv"
-    # error_file = "./22percent_compilations_medium3_error.txt"
+    if part != "":
+        stats_file = "./22percent_compilations_medium3_25partialSB_part"+str(part)+".csv"
+# error_file = "./22percent_compilations_medium3_error.txt"
 
     f = open(stats_file, "a+")
     # ferror = open(error_file, "a+")
