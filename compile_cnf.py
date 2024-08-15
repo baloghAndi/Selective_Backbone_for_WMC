@@ -26,7 +26,7 @@ if __name__ == "__main__":
     # error_writer.writerow([cnf_file])
     weights_file = cnf_file.replace(".cnf", "_w3.w" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
     #weights_file =  weights_file.replace("./", "../../../input/Dataset_preproc/")   
-    weights_file = weights_file.replace("temphybrid_wmcdynamic_p_22percent_medium4_partialSBs", "" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
+    weights_file = weights_file.replace("_temphybrid_wmcdynamic_p_22percent_medium4_partialSB", "" ) #"./input/Dataset_preproc/03_iscas85_c880.isc_w3.w"
     # if "error" in weights_file:
     #     weights_file = weights_file.split("_error")[0]+"_w3.w"
         #weights_file = weights_file.replace("temp_sb_comp/", "")
