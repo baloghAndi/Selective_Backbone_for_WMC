@@ -2,7 +2,7 @@
 
 folder="./input/Dataset_preproc/"
 for i in $folder*.cnf; do
-    if [[ $i = *"temphybrid_wmcdynamic__22percent_medium4_partialSB"* ]] ; then
+    if [[ $i = *"temphybrid_wmcdynamic_22percent_medium4_partialSB"* ]] ; then
       echo $i
       foldername="${i%%"temphybrid_wmcdynamic_p_22percent_medium4_partialSBs"*}"".cnf"
       filename="${foldername##*/}"
