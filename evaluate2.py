@@ -610,13 +610,14 @@ def get_best_variable_percentage(sample_size = 50):
     fig = plt.figure(figsize=(10, 7))
     ax1 = fig.add_subplot(111)
     x = [i for i in range(len(medians))]
-    ax1.scatter(x, medians)
-    ax1.plot(x, medians)
+    ax1.scatter(x, medians, color=mcolors.CSS4_COLORS["plum"],marker="^")
+    ax1.plot(x, medians, color=mcolors.CSS4_COLORS["plum"])
     plt.grid()
     plt.xlabel("Percent of variables assigned")
     plt.ylabel("Median adjusted ratio of hybrid_WMC ") #TODO: redo
     plt.xticks([i for i in range(0,len(medians)+1,5)], [i*2 for i in range(0,len(medians)+1,5)])
     # plt.show()
+
     plt.savefig("./results_aaai_final/identify_22p.png")
 
     print(len(all_ars))
@@ -1148,6 +1149,54 @@ def log_plot_percentage_experiment(percent=22):
     print("no_init: ", no_init)
     print("expr_count: ", expr_count)
 
+def time_on_obtaining_22sb_medium_instances():
+    all_medium =['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '03_iscas85_c880_isc.cnf', '04_iscas89_s1196_bench.cnf', '04_iscas89_s1238_bench.cnf', '04_iscas89_s1423_bench.cnf', '04_iscas89_s1488_bench.cnf', '04_iscas89_s1494_bench.cnf', '04_iscas89_s641_bench.cnf', '04_iscas89_s713_bench.cnf', '04_iscas89_s820_bench.cnf', '04_iscas89_s832_bench.cnf', '04_iscas89_s838_1_bench.cnf', '04_iscas89_s953_bench.cnf', '05_iscas93_s1196_bench.cnf', '05_iscas93_s1269_bench.cnf', '05_iscas93_s1512_bench.cnf', '05_iscas93_s635_bench.cnf', '05_iscas93_s938_bench.cnf', '05_iscas93_s967_bench.cnf', '05_iscas93_s991_bench.cnf', '06_iscas99_b04.cnf', '06_iscas99_b07.cnf', '06_iscas99_b11.cnf', '06_iscas99_b13.cnf', '07_blocks_right_2_p_t4.cnf', '07_blocks_right_2_p_t5.cnf', '07_blocks_right_3_p_t2.cnf', '08_bomb_b10_t5_p_t1.cnf', '08_bomb_b5_t1_p_t3.cnf', '08_bomb_b5_t1_p_t4.cnf', '08_bomb_b5_t1_p_t5.cnf', '08_bomb_b5_t5_p_t2.cnf', '09_coins_p05_p_t2.cnf', '09_coins_p10_p_t1.cnf', '10_comm_p03_p_t1.cnf', '11_emptyroom_d16_g8_p_t2.cnf', '11_emptyroom_d28_g14_corners_p_t1.cnf', '11_emptyroom_d4_g2_p_t10.cnf', '11_emptyroom_d4_g2_p_t9.cnf', '11_emptyroom_d8_g4_p_t4.cnf', '14_safe_safe_10_p_t10.cnf', '14_safe_safe_30_p_t3.cnf', '14_safe_safe_30_p_t4.cnf', '14_safe_safe_30_p_t5.cnf', '14_safe_safe_30_p_t6.cnf', '15_sort_num_s_3_p_t10.cnf', '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t6.cnf', '07_blocks_right_2_p_t7.cnf', '07_blocks_right_2_p_t8.cnf', '07_blocks_right_2_p_t9.cnf', '07_blocks_right_3_p_t3.cnf', '07_blocks_right_3_p_t4.cnf', '07_blocks_right_3_p_t5.cnf', '07_blocks_right_4_p_t2.cnf', '07_blocks_right_4_p_t3.cnf', '07_blocks_right_5_p_t1.cnf', '07_blocks_right_5_p_t2.cnf', '07_blocks_right_6_p_t1.cnf', '08_bomb_b5_t1_p_t6.cnf', '08_bomb_b5_t1_p_t7.cnf', '08_bomb_b5_t1_p_t8.cnf', '08_bomb_b5_t5_p_t3.cnf', '09_coins_p01_p_t2.cnf', '09_coins_p01_p_t3.cnf', '09_coins_p01_p_t4.cnf', '09_coins_p01_p_t5.cnf', '09_coins_p02_p_t2.cnf', '09_coins_p02_p_t3.cnf', '09_coins_p02_p_t4.cnf', '09_coins_p02_p_t5.cnf', '09_coins_p03_p_t2.cnf', '09_coins_p03_p_t3.cnf', '09_coins_p03_p_t4.cnf', '09_coins_p03_p_t5.cnf', '09_coins_p04_p_t2.cnf', '09_coins_p04_p_t3.cnf', '09_coins_p04_p_t4.cnf', '09_coins_p04_p_t5.cnf', '09_coins_p05_p_t3.cnf', '09_coins_p05_p_t4.cnf', '09_coins_p05_p_t5.cnf', '09_coins_p10_p_t2.cnf', '10_comm_p01_p_t3.cnf', '10_comm_p01_p_t4.cnf', '10_comm_p01_p_t5.cnf', '10_comm_p01_p_t6.cnf', '10_comm_p02_p_t2.cnf', '10_comm_p02_p_t3.cnf', '10_comm_p03_p_t2.cnf', '10_comm_p04_p_t1.cnf', '10_comm_p05_p_t1.cnf', '11_emptyroom_d12_g6_p_t3.cnf', '11_emptyroom_d12_g6_p_t4.cnf', '11_emptyroom_d12_g6_p_t5.cnf', '11_emptyroom_d12_g6_p_t6.cnf', '11_emptyroom_d12_g6_p_t7.cnf', '11_emptyroom_d16_g8_p_t3.cnf', '11_emptyroom_d16_g8_p_t4.cnf', '11_emptyroom_d16_g8_p_t5.cnf', '11_emptyroom_d20_g10_corners_p_t2.cnf', '11_emptyroom_d20_g10_corners_p_t3.cnf', '11_emptyroom_d20_g10_corners_p_t4.cnf', '11_emptyroom_d24_g12_p_t2.cnf', '11_emptyroom_d24_g12_p_t3.cnf', '11_emptyroom_d28_g14_corners_p_t2.cnf', '11_emptyroom_d28_g14_corners_p_t3.cnf', '11_emptyroom_d8_g4_p_t10.cnf', '11_emptyroom_d8_g4_p_t5.cnf', '11_emptyroom_d8_g4_p_t6.cnf', '11_emptyroom_d8_g4_p_t7.cnf', '11_emptyroom_d8_g4_p_t8.cnf', '11_emptyroom_d8_g4_p_t9.cnf', '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t5.cnf', '13_ring2_r6_p_t6.cnf', '13_ring2_r6_p_t7.cnf', '13_ring2_r6_p_t8.cnf', '13_ring2_r6_p_t9.cnf', '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t4.cnf', '13_ring2_r8_p_t5.cnf', '13_ring2_r8_p_t6.cnf', '13_ring2_r8_p_t7.cnf', '13_ring2_r8_p_t8.cnf', '13_ring2_r8_p_t9.cnf', '13_ring_3_p_t10.cnf', '13_ring_3_p_t7.cnf', '13_ring_3_p_t8.cnf', '13_ring_3_p_t9.cnf', '13_ring_4_p_t10.cnf', '13_ring_4_p_t5.cnf', '13_ring_4_p_t6.cnf', '13_ring_4_p_t7.cnf', '13_ring_4_p_t8.cnf', '13_ring_4_p_t9.cnf', '13_ring_5_p_t10.cnf', '13_ring_5_p_t4.cnf', '13_ring_5_p_t5.cnf', '13_ring_5_p_t6.cnf', '13_ring_5_p_t7.cnf', '13_ring_5_p_t8.cnf', '13_ring_5_p_t9.cnf', '14_safe_safe_30_p_t7.cnf', '14_safe_safe_30_p_t8.cnf', '14_safe_safe_30_p_t9.cnf', '15_sort_num_s_4_p_t4.cnf', '15_sort_num_s_4_p_t5.cnf', '15_sort_num_s_4_p_t6.cnf', '15_sort_num_s_4_p_t7.cnf', '15_sort_num_s_4_p_t8.cnf', '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_5_p_t3.cnf', '15_sort_num_s_5_p_t4.cnf', '15_sort_num_s_6_p_t1.cnf', '15_sort_num_s_6_p_t2.cnf', '15_sort_num_s_7_p_t1.cnf', '16_uts_k2_p_t4.cnf', '16_uts_k2_p_t5.cnf', '16_uts_k2_p_t6.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf', '16_uts_k2_p_t9.cnf', '16_uts_k3_p_t2.cnf', '16_uts_k3_p_t3.cnf', '16_uts_k3_p_t4.cnf', '16_uts_k4_p_t1.cnf', '16_uts_k4_p_t2.cnf', '16_uts_k5_p_t1.cnf']
+
+    percent_expr_data_m3 = ExprData(columns)
+    stats_file = "./results_aaai3/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium3_p_dynamic_p22.csv"
+    # stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p22_details.csv"
+    percent_expr_data_m3.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
+                                      filter_timeout=False,
+                                      filter_conflict=False)
+    selective_backbone_line_m3 = percent_expr_data_m3.get_line(-1)
+
+    percent_expr_data_m1 = ExprData(columns)
+    stats_file_m1 = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_p22_dynamic.csv"
+    percent_expr_data_m1.read_stats_file(stats_file_m1, full_expr_only=False, min_nb_expr=1, padding=False,
+                                         filter_timeout=False,
+                                         filter_conflict=False)
+    selective_backbone_line_m1 = percent_expr_data_m1.get_line(1)
+
+    percent_expr_data_m2 = ExprData(columns)
+    stats_file = "./results_aaai2/Dataset_preproc_hybrid_wmc/" + "dataset_stats_medium2_p_dynamic_p22_details.csv"
+    percent_expr_data_m2.read_stats_file(stats_file, full_expr_only=False, min_nb_expr=1, padding=False,
+                                      filter_timeout=False,
+                                      filter_conflict=False)
+    selective_backbone_line_m2 = percent_expr_data_m2.get_line(-1)
+
+    print(len(selective_backbone_line_m1))
+    print(len(selective_backbone_line_m2))
+    print(len(selective_backbone_line_m3))
+
+    comp_time = {}
+    time_index = columns.index("time")
+    for e in all_medium:
+        if e not in comp_time:
+            comp_time[e] = []
+        if e in selective_backbone_line_m1:
+            comp_time[e].append(selective_backbone_line_m1[e][time_index])
+        if e in selective_backbone_line_m2:
+            comp_time[e].append(selective_backbone_line_m2[e][time_index])
+        if e in selective_backbone_line_m3:
+            comp_time[e].append(selective_backbone_line_m3[e][time_index])
+    times = []
+    for e in comp_time:
+        if len(comp_time[e]) > 0:
+            times.append(max(comp_time[e]))
+            print(e, comp_time[e])
+    print(times)
+    print(max(times), min(times), sum(times)/len(times), statistics.median(times))
+
 def recreate_partial_cnf():
     fname = "./results_aaai3/Dataset_preproc_hybrid_wmc/dataset_stats_medium3_p_dynamic_p22.csv"
     stats_file = "./results_aaai3/Dataset_preproc_hybrid_wmc/dataset_stats_medium3_p_dynamic_p22_recreated_temp.csv"
@@ -1208,16 +1257,21 @@ def recreate_partial_cnf():
 
 def evaluate_prediction():
     medium3_partialSB = ['03_iscas85_c1355_isc.cnf', '03_iscas85_c1908_isc.cnf', '05_iscas93_s1269_bench.cnf',
-               '06_iscas99_b04.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf',
-               '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t5.cnf',
-               '07_blocks_right_2_p_t8.cnf', '07_blocks_right_3_p_t5.cnf', '07_blocks_right_5_p_t2.cnf',
-               '07_blocks_right_6_p_t1.cnf',
-               '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t9.cnf',
-               '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t8.cnf', '13_ring2_r8_p_t9.cnf', '13_ring_5_p_t10.cnf',
-               '13_ring_5_p_t6.cnf',
-               '15_sort_num_s_4_p_t7.cnf', '15_sort_num_s_4_p_t8.cnf',
-               '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_6_p_t1.cnf',
-               '15_sort_num_s_7_p_t1.cnf']
+                         '06_iscas99_b04.cnf', '16_uts_k2_p_t7.cnf', '16_uts_k2_p_t8.cnf',
+                         '07_blocks_right_2_p_t10.cnf', '07_blocks_right_2_p_t5.cnf',
+                         '07_blocks_right_2_p_t8.cnf', '07_blocks_right_3_p_t5.cnf', '07_blocks_right_5_p_t2.cnf',
+                         '07_blocks_right_6_p_t1.cnf',
+                         '13_ring2_r6_p_t10.cnf', '13_ring2_r6_p_t9.cnf',
+                         '13_ring2_r8_p_t10.cnf', '13_ring2_r8_p_t8.cnf', '13_ring2_r8_p_t9.cnf', '13_ring_5_p_t10.cnf',
+                         '13_ring_5_p_t6.cnf',
+                         '15_sort_num_s_4_p_t7.cnf', '15_sort_num_s_4_p_t8.cnf',
+                         '15_sort_num_s_4_p_t9.cnf', '15_sort_num_s_5_p_t2.cnf', '15_sort_num_s_6_p_t1.cnf',
+                         '15_sort_num_s_7_p_t1.cnf']
+    medium4_conflict_fullSB = ['04_iscas89_s1494_bench.cnf', '04_iscas89_s820_bench.cnf', '04_iscas89_s832_bench.cnf',
+                               '04_iscas89_s953_bench.cnf', '05_iscas93_s967_bench.cnf' ]
+    medium3_conflict_partialSB = ["07_blocks_right_2_p_t5.cnf", "07_blocks_right_2_p_t10.cnf", "07_blocks_right_2_p_t8.cnf",
+                                  '07_blocks_right_3_p_t5.cnf', "07_blocks_right_5_p_t2.cnf",  "13_ring2_r6_p_t9.cnf",
+                                  "13_ring_5_p_t6.cnf"]
     fname = "./results_aaai_final/Dataset_preproc_final_hybrid_wmc/ratio_at_p22_allmedium.csv"
     f = open(fname, "r")
     # fname_pSB = "./results_aaai2/Dataset_preproc_hybrid_wmc/22percent_compilations_partialSB.csv"
@@ -1272,7 +1326,7 @@ def evaluate_prediction():
                     #     print("second part")
                 else:
                     print("partial:", expr_name, (sb_compilation[0] * 100) / sb_compilation[nb_vars_index])
-                    if expr_name not in medium3_partialSB:
+                    if( expr_name not in medium3_partialSB ) and (expr_name not in medium4_conflict_fullSB):
                         print("weird")
                         exit(6)
                 # if expr_name in partial_SB:
@@ -1281,6 +1335,10 @@ def evaluate_prediction():
     print(expr_no_init, len(expr_no_init))
     print(expr_partial_sb, len(expr_partial_sb))
     print(len(expr_full_sb))
+
+    print(len(all_init_compilation))
+    print(list(all_init_compilation.keys()))
+    exit(9)
 
     all_ratios={}
     ratios={}
@@ -1316,7 +1374,6 @@ def evaluate_prediction():
 
     print(len(conflict_fullSB))
     print(conflict_fullSB)
-    exit(8)
 
     partial_ratios = {}
     for e in expr_partial_sb:
@@ -1330,7 +1387,26 @@ def evaluate_prediction():
     sorted_exprs = dict(sorted(all_ratios.items(), key=lambda kv: kv[1]))
     nb_expr= len(sorted_exprs)
     y = [sorted_exprs[k] for k in sorted_exprs]
-    colors = ["blue" if e in expr_full_sb else "orange" for e in sorted_exprs ]
+    colors =[]
+    #colors : green: 22percent compilation(expr_full_sb), orange: conflict(medium4_conflict_fullSB, medium3_conflict_partialSB),
+    # yellow: timeout(in medium3 but not in medium3_conflict_partialSB)
+    bar_labels = []# ['red', 'blue', '_red', 'orange']
+    # bar_colors = ['tab:red', 'tab:blue', 'tab:red', 'tab:orange']
+
+    for e in sorted_exprs:
+        if e in expr_full_sb:
+            colors.append("tab:green")
+            bar_labels.append("22 percent SB")
+        elif e in medium4_conflict_fullSB or e in medium3_conflict_partialSB:
+            colors.append("tab:blue")
+            bar_labels.append("conflict SB")
+        elif e in medium3_partialSB and e not in medium3_conflict_partialSB:
+            colors.append("tab:orange")
+            bar_labels.append("timeout SB")
+        else:
+            print("something wrong", e)
+            exit(12)
+    print(colors)
     fig = plt.figure(figsize=(10, 7))
     ax1 = fig.add_subplot(111)
     x = [i for i in range(nb_expr)]
@@ -1354,9 +1430,17 @@ def evaluate_prediction():
     # fig.tight_layout()
     # plt.yticks([i for i in range(300)])
     # plt.xticks(instance_sizes)
-    plt.ylim(0.01, max(y) + 10)
+    plt.ylim(0.001,  5000)
+    # plt.ylim(0.01, max(y) + 100)
     plt.yscale("log")
     plt.grid()
+    green_patch = plt.Line2D([0], [0], color='green', lw=4, label='Intances with 22% of variables assigned')
+    orange_patch = plt.Line2D([0], [0], color='orange', lw=4,
+                              label='Intances with less than 22% of variables assigned due to conflict')
+    blue_patch = plt.Line2D([0], [0], color='blue', lw=4,
+                            label='Intances with less than 22% of variables assigned due to timeout')
+    plt.legend(handles=[green_patch, orange_patch, blue_patch])
+
     # plt.show()
     plt.savefig("./results_aaai_final/Dataset_preproc_final_hybrid_wmc/"  + "ratio_at_p"+str(22)+"_ordered_log.png")
     partial_with_init = list(set(expr_partial_sb)-set(expr_no_init))
@@ -1545,10 +1629,10 @@ def update_SB_file():
 
 if __name__ == "__main__":
     # plot_percentage_experiments()
-
+    time_on_obtaining_22sb_medium_instances()
     # get_medium_instances()
     # recreate_partial_cnf()
-    evaluate_prediction()
+    # evaluate_prediction()
     # read_medium2()
     # filer_instances()
     # get_best_variable_percentage(50)
